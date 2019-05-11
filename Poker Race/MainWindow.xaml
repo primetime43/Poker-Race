@@ -227,8 +227,6 @@
         <GroupBox x:Name="groupBox_Copy1" Grid.Column="3" HorizontalAlignment="Left" Height="263" Margin="780,676,0,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle3}"/>
         <GroupBox x:Name="groupBox_Copy" Grid.Column="3" HorizontalAlignment="Left" Height="263" Margin="493,676,0,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle2}"/>
         <GroupBox x:Name="groupBox" Grid.Column="3" HorizontalAlignment="Left" Height="263" Margin="220,676,0,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle1}"/>
-        <Button x:Name="button" Content="Show Diamond" Grid.Column="3" HorizontalAlignment="Left" Height="76" Margin="1097,29,0,0" VerticalAlignment="Top" Width="289" Click="Button_Click"/>
-        <Button x:Name="button_Copy" Content="Hide Diamond" Grid.Column="3" HorizontalAlignment="Left" Height="66" Margin="1412,125,0,0" VerticalAlignment="Top" Width="289" Click="Button_Click_1"/>
 
         <!-- Images for selection -->
         <Image x:Name="image1" Source="Poker Cards/10_of_clubs.png" HorizontalAlignment="Left" Height="235" VerticalAlignment="Top" Width="165" Margin="239,690,0,0" Grid.Column="3" MouseDown="Image1_MouseDown"/>
@@ -238,7 +236,7 @@
         <Image x:Name="image5" Source="Poker Cards/10_of_clubs.png" HorizontalAlignment="Left" Height="235" VerticalAlignment="Top" Width="165" Margin="1365,690,0,0" Grid.Column="3" MouseDown="Image5_MouseDown"/>
         <!-- Images -->
 
-        <ProgressBar x:Name="progressBar1" Grid.ColumnSpan="4" HorizontalAlignment="Left" Height="110" Margin="220,96,0,0" VerticalAlignment="Top" Width="757"/>
+        <ProgressBar x:Name="progressBar1" HorizontalAlignment="Left" Height="70" Margin="126,88,0,0" VerticalAlignment="Top" Width="365"/>
         <Label x:Name="label" Content="High Card:&#xA;" HorizontalAlignment="Left" Height="62" Margin="324,323,0,0" VerticalAlignment="Top" Width="188" FontSize="36"/>
         <Label x:Name="label_Copy" Content="6700" HorizontalAlignment="Left" Height="62" Margin="517,323,0,0" VerticalAlignment="Top" Width="188" FontSize="36"/>
 
@@ -249,6 +247,11 @@
         <Image x:Name="handCard4" HorizontalAlignment="Left" Height="145" Margin="965,476,0,0" VerticalAlignment="Top" Width="101" Source="Poker Cards/10_of_clubs.png"/>
         <Image x:Name="handCard5" HorizontalAlignment="Left" Height="145" Margin="1097,476,0,0" VerticalAlignment="Top" Width="105" Source="Poker Cards/10_of_clubs.png"/>
         <!-- Images -->
+
+        <Label x:Name="label1" Content="Score: " HorizontalAlignment="Left" Height="61" Margin="726,97,0,0" VerticalAlignment="Top" Width="176" FontSize="36"/>
+        <Label x:Name="label1_Copy" Content="0" HorizontalAlignment="Left" Height="61" Margin="890,97,0,0" VerticalAlignment="Top" Width="410" FontSize="36"/>
+        <Label x:Name="label1_Copy1" Content="Hand: " HorizontalAlignment="Left" Height="61" Margin="726,184,0,0" VerticalAlignment="Top" Width="124" FontSize="36"/>
+        <Label x:Name="label1_Copy2" HorizontalAlignment="Left" Height="61" Margin="890,184,0,0" VerticalAlignment="Top" Width="410" FontSize="36"/>
 
     </Grid>
 </Window>

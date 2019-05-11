@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -15,21 +16,24 @@ namespace Poker_Race
     {
         private static Random rnd = new Random();
         private static ArrayList listOfCards;
+        public static string[] cards = new string[5];
+        public static Dictionary<string, Dictionary<string, int>> cardMap;
         public MainWindow()
         {
             InitializeComponent();
             listOfCards = new ArrayList();
-            DirectoryInfo d = new DirectoryInfo(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\Poker Cards");//Assuming Test is your Folder
+            DirectoryInfo d = new DirectoryInfo(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\Poker Cards");//Assuming Test is your Folder
             FileInfo[] Files = d.GetFiles("*.png"); //Getting Text files
             foreach (FileInfo file in Files)
             {
                 listOfCards.Add(file.Name);
             }
-            image1.Source = randomGenerateCard();
-            image2.Source = randomGenerateCard();
-            image3.Source = randomGenerateCard();
-            image4.Source = randomGenerateCard();
-            image5.Source = randomGenerateCard();
+            createCardDictionary();
+            image1.Source = generateRandomCard();
+            image2.Source = generateRandomCard();
+            image3.Source = generateRandomCard();
+            image4.Source = generateRandomCard();
+            image5.Source = generateRandomCard();
             handCard1.Source = null;
             handCard2.Source = null;
             handCard3.Source = null;
@@ -37,19 +41,7 @@ namespace Poker_Race
             handCard5.Source = null;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            //var uriSource = new Uri("Poker Cards/queen_of_spades2.png", UriKind.Relative);
-            image1.Source = new BitmapImage(uriSource);
-            progressBar1.Value = progressBar1.Value + 1;
-        }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            image1.Source = null;
-        }
-
-        private BitmapImage randomGenerateCard()
+        private BitmapImage generateRandomCard()
         {
             uriSource = new Uri("Poker Cards/" + listOfCards[rnd.Next(listOfCards.Count)].ToString(), UriKind.Relative);//random number generated between 0 - 51
             return new BitmapImage(uriSource);
@@ -60,31 +52,31 @@ namespace Poker_Race
         private void Image1_MouseDown(object sender, MouseButtonEventArgs e)
         {
             addCardToHand(image1.Source.ToString().Split('/').Last());
-            image1.Source = randomGenerateCard();
+            image1.Source = generateRandomCard();
         }
 
         private void Image2_MouseDown(object sender, MouseButtonEventArgs e)
         {
             addCardToHand(image2.Source.ToString().Split('/').Last());
-            image2.Source = randomGenerateCard();
+            image2.Source = generateRandomCard();
         }
 
         private void Image3_MouseDown(object sender, MouseButtonEventArgs e)
         {
             addCardToHand(image3.Source.ToString().Split('/').Last());
-            image3.Source = randomGenerateCard();
+            image3.Source = generateRandomCard();
         }
 
         private void Image4_MouseDown(object sender, MouseButtonEventArgs e)
         {
             addCardToHand(image4.Source.ToString().Split('/').Last());
-            image4.Source = randomGenerateCard();
+            image4.Source = generateRandomCard();
         }
 
         private void Image5_MouseDown(object sender, MouseButtonEventArgs e)
         {
             addCardToHand(image5.Source.ToString().Split('/').Last());
-            image5.Source = randomGenerateCard();
+            image5.Source = generateRandomCard();
         }
 
         private void addCardToHand(string selectedCard)
@@ -93,24 +85,71 @@ namespace Poker_Race
             if (handCard1.Source == null)
             {
                 handCard1.Source = new BitmapImage(uriSource);
+                cards[0] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
             }
             else if(handCard2.Source == null)
             {
                 handCard2.Source = new BitmapImage(uriSource);
+                cards[1] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
             }
             else if(handCard3.Source == null)
             {
                 handCard3.Source = new BitmapImage(uriSource);
+                cards[2] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
             }
             else if(handCard4.Source == null)
             {
                 handCard4.Source = new BitmapImage(uriSource);
+                cards[3] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
             }
             else if(handCard5.Source == null)
             {
                 handCard5.Source = new BitmapImage(uriSource);
+                cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
+                //determine hand after this
+                label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), label1_Copy2);
+                handCard1.Source = null;
+                handCard2.Source = null;
+                handCard3.Source = null;
+                handCard4.Source = null;
+                handCard5.Source = null;
             }
         }
         //
+
+        private void createCardDictionary()
+        {
+            //cardSuit, Dictionary (outer)
+            //cardName, cardValue (inner)
+            cardMap = new Dictionary<string, Dictionary<string, int>>();//key is suit, submap's key is card name
+            string card, cardSuit;
+            int cardValue;
+            for (int i = 0; i < listOfCards.Count; i++)
+            {
+                card = listOfCards[i].ToString().Substring(0, listOfCards[i].ToString().IndexOf('.'));
+                cardSuit = card.Split('_').Last();
+
+                if (!int.TryParse(card.Split('_').First(), out cardValue))//if its a number, it will set cardValue, if not a number returns false but ! makes it true, so enter and check value
+                {
+                    string value = card.Split('_').First().ToLower();
+                    if (value == "jack")
+                        cardValue = 11;
+                    else if (value == "queen")
+                        cardValue = 12;
+                    else if (value == "king")
+                        cardValue = 13;
+                    else if (value == "ace")
+                        cardValue = 14;
+                }
+
+                if (!cardMap.ContainsKey(cardSuit))//doesn't contain the key yet, so add it
+                {
+                    cardMap.Add(cardSuit, new Dictionary<string, int>());//adds the suit to be the key and creates a dictionary for it for outer dictionary
+                    cardMap[cardSuit].Add(card, cardValue); //added to inner dictionary
+                }
+                else
+                    cardMap[cardSuit].Add(card, cardValue);//added to inner dictionary
+            }
+        }
     }
 }
