@@ -3,15 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
 namespace Poker_Race
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private static Random rnd = new Random();
@@ -79,7 +77,7 @@ namespace Poker_Race
             image5.Source = generateRandomCard();
         }
 
-        private void addCardToHand(string selectedCard)
+        private async void addCardToHand(string selectedCard)
         {
             uriSource = new Uri("Poker Cards/" + selectedCard, UriKind.Relative);
             if (handCard1.Source == null)
@@ -108,11 +106,29 @@ namespace Poker_Race
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
                 //determine hand after this
                 label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), label1_Copy2);
+                image1.IsEnabled = false;
+                image2.IsEnabled = false;
+                image3.IsEnabled = false;
+                image4.IsEnabled = false;
+                image5.IsEnabled = false;
+                await Task.Delay(1500);//adjust later
+                image1.IsEnabled = true;
+                image2.IsEnabled = true;
+                image3.IsEnabled = true;
+                image4.IsEnabled = true;
+                image5.IsEnabled = true;
                 handCard1.Source = null;
                 handCard2.Source = null;
                 handCard3.Source = null;
                 handCard4.Source = null;
                 handCard5.Source = null;
+
+                //create new random hand
+                image1.Source = generateRandomCard();
+                image2.Source = generateRandomCard();
+                image3.Source = generateRandomCard();
+                image4.Source = generateRandomCard();
+                image5.Source = generateRandomCard();
             }
         }
         //

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Poker_Race"
         mc:Ignorable="d"
-        Title="Poker Race" Height="1002.929" Width="1765.5" Background="{x:Null}" Icon="kpoker.ico" WindowStartupLocation="CenterScreen">
+        Title="Poker Race" Height="1002.929" Width="1765.5" Background="{x:Null}" Icon="kpoker.ico" WindowStartupLocation="CenterScreen" WindowState="Maximized">
     <Window.Resources>
         <BorderGapMaskConverter x:Key="BorderGapMaskConverter"/>
         <Style x:Key="GroupBoxStyle1" TargetType="{x:Type GroupBox}">
@@ -214,44 +214,48 @@
         </Style>
     </Window.Resources>
     <Grid Background="ForestGreen">
-        <GroupBox x:Name="groupBox2" HorizontalAlignment="Left" Height="177" Margin="517,457,0,0" VerticalAlignment="Top" Width="708" Style="{DynamicResource GroupBoxStyle6}"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="197*"/>
+            <ColumnDefinition Width="682*"/>
+        </Grid.ColumnDefinitions>
+        <GroupBox x:Name="groupBox2" HorizontalAlignment="Center" Height="177" Margin="122.538,460,533,0" VerticalAlignment="Top" Width="708" Style="{DynamicResource GroupBoxStyle6}" Grid.Column="1"/>
 
-        <GroupBox x:Name="groupBox1" Header="POINT CHART" Foreground="Yellow" HorizontalAlignment="Right" Height="169" Margin="0,245,274,0" VerticalAlignment="Top" Width="1192" FontSize="42">
+        <GroupBox x:Name="groupBox1" Header="POINT CHART" Foreground="Yellow" HorizontalAlignment="Right" Height="169" Margin="0,245,274,0" VerticalAlignment="Top" Width="1192" FontSize="42" Grid.ColumnSpan="2">
             <GroupBox.Effect>
                 <DropShadowEffect/>
             </GroupBox.Effect>
         </GroupBox>
-        <GroupBox x:Name="groupBox_Copy3" Grid.Column="3" HorizontalAlignment="Left" Height="263" Margin="1343,676,0,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle5}"/>
+        <GroupBox x:Name="groupBox_Copy3" HorizontalAlignment="Center" Height="263" Margin="946.538,676,216,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle5}" Grid.Column="1"/>
 
-        <GroupBox x:Name="groupBox_Copy2" Grid.Column="3" HorizontalAlignment="Left" Height="263" Margin="1058,676,0,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle4}"/>
-        <GroupBox x:Name="groupBox_Copy1" Grid.Column="3" HorizontalAlignment="Left" Height="263" Margin="780,676,0,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle3}"/>
-        <GroupBox x:Name="groupBox_Copy" Grid.Column="3" HorizontalAlignment="Left" Height="263" Margin="493,676,0,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle2}"/>
-        <GroupBox x:Name="groupBox" Grid.Column="3" HorizontalAlignment="Left" Height="263" Margin="220,676,0,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle1}"/>
+        <GroupBox x:Name="groupBox_Copy2" HorizontalAlignment="Center" Height="263" Margin="666.538,676,496,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle4}" Grid.Column="1"/>
+        <GroupBox x:Name="groupBox_Copy1" HorizontalAlignment="Center" Height="263" Margin="381.538,676,781,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle3}" Grid.Column="1"/>
+        <GroupBox x:Name="groupBox_Copy" HorizontalAlignment="Center" Height="263" Margin="95.538,676,1067,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle2}" Grid.Column="1"/>
+        <GroupBox x:Name="groupBox" HorizontalAlignment="Center" Height="263" Margin="218,676,1339,0" VerticalAlignment="Top" Width="201" Background="Gray" Style="{DynamicResource GroupBoxStyle1}" Grid.ColumnSpan="2"/>
 
         <!-- Images for selection -->
-        <Image x:Name="image1" Source="Poker Cards/10_of_clubs.png" HorizontalAlignment="Left" Height="235" VerticalAlignment="Top" Width="165" Margin="239,690,0,0" Grid.Column="3" MouseDown="Image1_MouseDown"/>
-        <Image x:Name="image2" Source="Poker Cards/8_of_diamonds.png" HorizontalAlignment="Left" Height="235" Margin="515,690,0,0" VerticalAlignment="Top" Width="167" Grid.Column="3" MouseDown="Image2_MouseDown"/>
-        <Image x:Name="image3" Source="Poker Cards/2_of_clubs.png" Grid.Column="3" HorizontalAlignment="Left" Height="235" Margin="799,690,0,0" VerticalAlignment="Top" Width="166" MouseDown="Image3_MouseDown"/>
-        <Image x:Name="image4" Source="Poker Cards/8_of_diamonds.png" HorizontalAlignment="Left" Height="235" Margin="1079,690,0,0" VerticalAlignment="Top" Width="167" Grid.Column="3" MouseDown="Image4_MouseDown"/>
-        <Image x:Name="image5" Source="Poker Cards/10_of_clubs.png" HorizontalAlignment="Left" Height="235" VerticalAlignment="Top" Width="165" Margin="1365,690,0,0" Grid.Column="3" MouseDown="Image5_MouseDown"/>
+        <Image x:Name="image1" Source="Poker Cards/10_of_clubs.png" HorizontalAlignment="Center" Height="235" VerticalAlignment="Top" Width="165" Margin="236,690,1357,0" MouseDown="Image1_MouseDown" Grid.ColumnSpan="2"/>
+        <Image x:Name="image2" Source="Poker Cards/8_of_diamonds.png" HorizontalAlignment="Center" Height="235" Margin="115.538,690,1082,0" VerticalAlignment="Top" Width="166" MouseDown="Image2_MouseDown" Grid.Column="1"/>
+        <Image x:Name="image3" Source="Poker Cards/2_of_clubs.png" HorizontalAlignment="Center" Height="235" Margin="402.538,690,795,0" VerticalAlignment="Top" Width="166" MouseDown="Image3_MouseDown" Grid.Column="1"/>
+        <Image x:Name="image4" Source="Poker Cards/8_of_diamonds.png" HorizontalAlignment="Center" Height="235" Margin="683.538,690,513,0" VerticalAlignment="Top" Width="167" MouseDown="Image4_MouseDown" Grid.Column="1"/>
+        <Image x:Name="image5" Source="Poker Cards/10_of_clubs.png" HorizontalAlignment="Center" Height="235" VerticalAlignment="Top" Width="165" Margin="967.538,690,231,0" MouseDown="Image5_MouseDown" Grid.Column="1"/>
         <!-- Images -->
 
-        <ProgressBar x:Name="progressBar1" HorizontalAlignment="Left" Height="70" Margin="126,88,0,0" VerticalAlignment="Top" Width="365"/>
-        <Label x:Name="label" Content="High Card:&#xA;" HorizontalAlignment="Left" Height="62" Margin="324,323,0,0" VerticalAlignment="Top" Width="188" FontSize="36"/>
-        <Label x:Name="label_Copy" Content="6700" HorizontalAlignment="Left" Height="62" Margin="517,323,0,0" VerticalAlignment="Top" Width="188" FontSize="36"/>
+        <ProgressBar x:Name="progressBar1" HorizontalAlignment="Left" Height="70" Margin="126,88,0,0" VerticalAlignment="Top" Width="365" Grid.ColumnSpan="2"/>
+        <Label x:Name="label" Content="High Card:&#xA;" HorizontalAlignment="Left" Height="62" Margin="324,323,0,0" VerticalAlignment="Top" Width="188" FontSize="36" Grid.ColumnSpan="2"/>
+        <Label x:Name="label_Copy" Content="6700" HorizontalAlignment="Left" Height="62" Margin="122.538,323,0,0" VerticalAlignment="Top" Width="188" FontSize="36" Grid.Column="1"/>
 
         <!-- Images for hand -->
-        <Image x:Name="handCard1" HorizontalAlignment="Left" Height="145" Margin="554,476,0,0" VerticalAlignment="Top" Width="104" Source="Poker Cards/10_of_clubs.png"/>
-        <Image x:Name="handCard2" HorizontalAlignment="Left" Height="145" Margin="692,476,0,0" VerticalAlignment="Top" Width="107" Source="Poker Cards/10_of_clubs.png"/>
-        <Image x:Name="handCard3" HorizontalAlignment="Left" Height="145" Margin="829,476,0,0" VerticalAlignment="Top" Width="104" Source="Poker Cards/10_of_clubs.png"/>
-        <Image x:Name="handCard4" HorizontalAlignment="Left" Height="145" Margin="965,476,0,0" VerticalAlignment="Top" Width="101" Source="Poker Cards/10_of_clubs.png"/>
-        <Image x:Name="handCard5" HorizontalAlignment="Left" Height="145" Margin="1097,476,0,0" VerticalAlignment="Top" Width="105" Source="Poker Cards/10_of_clubs.png"/>
+        <Image x:Name="handCard1" HorizontalAlignment="Center" Height="145" Margin="151.538,476,1108,0" VerticalAlignment="Top" Width="104" Source="Poker Cards/10_of_clubs.png" Grid.Column="1"/>
+        <Image x:Name="handCard2" HorizontalAlignment="Center" Height="145" Margin="283.538,476,973,0" VerticalAlignment="Top" Width="107" Source="Poker Cards/10_of_clubs.png" Grid.Column="1"/>
+        <Image x:Name="handCard3" HorizontalAlignment="Center" Height="145" Margin="417.538,476,842,0" VerticalAlignment="Top" Width="104" Source="Poker Cards/10_of_clubs.png" Grid.Column="1"/>
+        <Image x:Name="handCard4" HorizontalAlignment="Center" Height="145" Margin="561.538,476,701,0" VerticalAlignment="Top" Width="101" Source="Poker Cards/10_of_clubs.png" Grid.Column="1"/>
+        <Image x:Name="handCard5" HorizontalAlignment="Center" Height="145" Margin="695.538,476,563,0" VerticalAlignment="Top" Width="105" Source="Poker Cards/10_of_clubs.png" Grid.Column="1"/>
         <!-- Images -->
 
-        <Label x:Name="label1" Content="Score: " HorizontalAlignment="Left" Height="61" Margin="726,97,0,0" VerticalAlignment="Top" Width="176" FontSize="36"/>
-        <Label x:Name="label1_Copy" Content="0" HorizontalAlignment="Left" Height="61" Margin="890,97,0,0" VerticalAlignment="Top" Width="410" FontSize="36"/>
-        <Label x:Name="label1_Copy1" Content="Hand: " HorizontalAlignment="Left" Height="61" Margin="726,184,0,0" VerticalAlignment="Top" Width="124" FontSize="36"/>
-        <Label x:Name="label1_Copy2" HorizontalAlignment="Left" Height="61" Margin="890,184,0,0" VerticalAlignment="Top" Width="410" FontSize="36"/>
+        <Label x:Name="label1" Content="Score: " HorizontalAlignment="Left" Height="61" Margin="331.538,97,0,0" VerticalAlignment="Top" Width="176" FontSize="36" Grid.Column="1"/>
+        <Label x:Name="label1_Copy" Content="0" HorizontalAlignment="Left" Height="61" Margin="495.538,97,0,0" VerticalAlignment="Top" Width="410" FontSize="36" Grid.Column="1"/>
+        <Label x:Name="label1_Copy1" Content="Hand: " HorizontalAlignment="Left" Height="61" Margin="331.538,184,0,0" VerticalAlignment="Top" Width="124" FontSize="36" Grid.Column="1"/>
+        <Label x:Name="label1_Copy2" HorizontalAlignment="Left" Height="61" Margin="495.538,184,0,0" VerticalAlignment="Top" Width="410" FontSize="36" Grid.Column="1"/>
 
     </Grid>
 </Window>
