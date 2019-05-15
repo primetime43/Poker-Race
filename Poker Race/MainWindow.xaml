@@ -263,24 +263,24 @@
                 <Viewbox Margin="-1,0,0,10" VerticalAlignment="Bottom">
                     <Grid>
                         <!-- Images for selection -->
-                        <GroupBox x:Name="groupBox" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263"  VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle1}" Margin="377,0,1193,0" Padding="10">
-                            <Image x:Name="image1" Source="Poker Cards/10_of_clubs.png" Width="176" HorizontalAlignment="Center"   MouseDown="Image1_MouseDown"/>
+                        <GroupBox x:Name="groupBox" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263"  VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle1}" Margin="348,0,1222,0" Padding="10">
+                            <Image x:Name="image1" Source="Poker Cards/10_of_clubs.png" Width="215" HorizontalAlignment="Center"   MouseDown="Image1_MouseDown" Margin="-27,0,-32,0"/>
                         </GroupBox>
 
                         <GroupBox x:Name="groupBox_Copy" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center"  Height="263"  VerticalAlignment="Top" Background="Gray" Style="{DynamicResource GroupBoxStyle2}" Margin="570,-1,1000,0" Padding="10">
-                            <Image x:Name="image2" Source="Poker Cards/8_of_diamonds.png" Width="176" HorizontalAlignment="Center" MouseDown="Image2_MouseDown"/>
+                            <Image x:Name="image2" Source="Poker Cards/8_of_diamonds.png" Width="216" HorizontalAlignment="Center" MouseDown="Image2_MouseDown" Margin="-28,0,-32,0"/>
                         </GroupBox>
 
-                        <GroupBox x:Name="groupBox_Copy1" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263"  VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle3}" Margin="763,-1,807,0" Padding="10">
-                            <Image x:Name="image3" Source="Poker Cards/2_of_clubs.png" Width="176" HorizontalAlignment="Center"  MouseDown="Image3_MouseDown"/>
+                        <GroupBox x:Name="groupBox_Copy1" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263"  VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle3}" Margin="788,-1,782,0" Padding="10">
+                            <Image x:Name="image3" Source="Poker Cards/2_of_clubs.png" Width="226" HorizontalAlignment="Center"  MouseDown="Image3_MouseDown" Margin="-38,0,-32,0"/>
                         </GroupBox>
 
-                        <GroupBox x:Name="groupBox_Copy2" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263" VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle4}" Margin="956,-1,614,0" Padding="10">
-                            <Image x:Name="image4" Source="Poker Cards/8_of_diamonds.png" Width="176" HorizontalAlignment="Center" MouseDown="Image4_MouseDown"/>
+                        <GroupBox x:Name="groupBox_Copy2" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263" VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle4}" Margin="1001,-1,569,0" Padding="10">
+                            <Image x:Name="image4" Source="Poker Cards/8_of_diamonds.png" Width="215" HorizontalAlignment="Center" MouseDown="Image4_MouseDown" Margin="-27,0,-32,0"/>
                         </GroupBox>
 
-                        <GroupBox x:Name="groupBox_Copy3" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263" VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle5}" Margin="1149,-1,421,0" Padding="10">
-                            <Image x:Name="image5" Source="Poker Cards/10_of_clubs.png" Width="176" HorizontalAlignment="Center" MouseDown="Image5_MouseDown"/>
+                        <GroupBox x:Name="groupBox_Copy3" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263" VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle5}" Margin="1217,-1,353,0" Padding="10">
+                            <Image x:Name="image5" Source="Poker Cards/10_of_clubs.png" Width="217" HorizontalAlignment="Center" MouseDown="Image5_MouseDown" Margin="-29,0,-32,0"/>
                         </GroupBox>
 
                         <!-- Images -->
@@ -288,15 +288,19 @@
                 </Viewbox>
 
                 <Grid Margin="275,444,287,313"  >
-                    <Border BorderBrush="White" BorderThickness="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="77*"/>
+                        <RowDefinition Height="100*"/>
+                    </Grid.RowDefinitions>
+                    <Border BorderBrush="White" BorderThickness="1" Margin="238,0,221,-23" Grid.RowSpan="2">
 
                     </Border>
                     <!-- Images for hand -->
-                    <Image x:Name="handCard1" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="145"  Source="Poker Cards/10_of_clubs.png" Margin="317,0,779,0" />
-                    <Image x:Name="handCard2" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="145"   Source="Poker Cards/10_of_clubs.png" Margin="422,0,674,0" />
-                    <Image x:Name="handCard3" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="145"   Source="Poker Cards/10_of_clubs.png" Margin="527,0,569,0" />
-                    <Image x:Name="handCard4" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center"  Width="100" Height="145"   Source="Poker Cards/10_of_clubs.png" Margin="632,0,464,0" />
-                    <Image x:Name="handCard5" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="145"  Source="Poker Cards/10_of_clubs.png" Margin="737,0,359,0" />
+                    <Image x:Name="handCard1" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="140" Height="176"  Source="Poker Cards/10_of_clubs.png" Margin="263,10,793,-9" Grid.RowSpan="2" />
+                    <Image x:Name="handCard2" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="144" Height="176"   Source="Poker Cards/10_of_clubs.png" Margin="398,10,654,-9" Grid.RowSpan="2" />
+                    <Image x:Name="handCard3" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="126" Height="176"   Source="Poker Cards/10_of_clubs.png" Margin="542,10,528,-9" Grid.RowSpan="2" />
+                    <Image x:Name="handCard4" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center"  Width="129" Height="176"   Source="Poker Cards/10_of_clubs.png" Margin="678,10,389,-9" Grid.RowSpan="2" />
+                    <Image x:Name="handCard5" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="131" Height="176"  Source="Poker Cards/10_of_clubs.png" Margin="812,10,253,-9" Grid.RowSpan="2" />
                     <!-- Images -->
                 </Grid>
 
