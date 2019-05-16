@@ -119,6 +119,16 @@ namespace Poker_Race
 
         public static bool isStraight()
         {
+            //consider ace (14) as a 1 or 14 below in if
+            if (values[0] == 2 && values[1] == 3 && values[2] == 4 && values[3] == 5 && values[4] == 14)
+            {
+                values[4] = 1;
+                values.Sort();
+                return values.Zip(values.Skip(1), (a, b) => (a + 1) == b).All(x => x);
+            }
+            else if(values[0] == 10 && values[1] == 11 && values[2] == 12 && values[3] == 13 && values[4] == 14)
+                return values.Zip(values.Skip(1), (a, b) => (a + 1) == b).All(x => x);
+
             return values.Zip(values.Skip(1), (a, b) => (a + 1) == b).All(x => x);
         }
 
@@ -129,7 +139,12 @@ namespace Poker_Race
 
         public static bool isFourOfAKind()
         {
-            var result = suits.GroupBy(i => i).Select(i => new { Suit = i.Key, Count = i.Count() });
+            var result = values.GroupBy(i => i).Select(i => new { Suit = i.Key, Count = i.Count() });
+            foreach (var item in result)
+            {
+                if (item.Count == 4)
+                    return true;
+            }
             return false;
         }
 

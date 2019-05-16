@@ -13,19 +13,20 @@ namespace Poker_Race
     public partial class MainWindow : Window
     {
         private static Random rnd = new Random();
-        private static ArrayList listOfCards;
+        private static ArrayList backUpListOfCards, listOfCards;
         public static string[] cards = new string[5];
         public static Dictionary<string, Dictionary<string, int>> cardMap;
         public MainWindow()
         {
             InitializeComponent();
-            listOfCards = new ArrayList();
+            backUpListOfCards = new ArrayList();
             DirectoryInfo d = new DirectoryInfo(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\Poker Cards");
             FileInfo[] Files = d.GetFiles("*.png"); //Getting Text files
             foreach (FileInfo file in Files)
             {
-                listOfCards.Add(file.Name);
+                backUpListOfCards.Add(file.Name);
             }
+            listOfCards = new ArrayList(backUpListOfCards);
             createCardDictionary();
             image1.Source = generateRandomCard();
             image2.Source = generateRandomCard();
@@ -41,7 +42,9 @@ namespace Poker_Race
 
         private BitmapImage generateRandomCard()
         {
-            uriSource = new Uri("Poker Cards/" + listOfCards[rnd.Next(listOfCards.Count)].ToString(), UriKind.Relative);//random number generated between 0 - 51
+            int num = rnd.Next(listOfCards.Count);
+            uriSource = new Uri("Poker Cards/" + listOfCards[num].ToString(), UriKind.Relative);//random number generated between 0 - 51
+            listOfCards.RemoveAt(num);
             return new BitmapImage(uriSource);
         }
 
@@ -104,14 +107,17 @@ namespace Poker_Race
             {
                 handCard5.Source = new BitmapImage(uriSource);
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
-                //determine hand after this
+                //determine hand
                 label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), label1_Copy2);
+                //disable temp
                 image1.IsEnabled = false;
                 image2.IsEnabled = false;
                 image3.IsEnabled = false;
                 image4.IsEnabled = false;
                 image5.IsEnabled = false;
-                await Task.Delay(1500);//adjust later
+                listOfCards.Clear();
+                listOfCards = new ArrayList(backUpListOfCards);//reset cards to full deck after round played
+                await Task.Delay(1500);//wait 1.5 seconds to show new card hands
                 image1.IsEnabled = true;
                 image2.IsEnabled = true;
                 image3.IsEnabled = true;

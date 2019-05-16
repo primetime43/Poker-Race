@@ -264,7 +264,7 @@
                     <Grid>
                         <!-- Images for selection -->
                         <GroupBox x:Name="groupBox" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center" Height="263"  VerticalAlignment="Top"  Background="Gray" Style="{DynamicResource GroupBoxStyle1}" Margin="348,0,1222,0" Padding="10">
-                            <Image x:Name="image1" Source="Poker Cards/10_of_clubs.png" Width="215" HorizontalAlignment="Center"   MouseDown="Image1_MouseDown" Margin="-27,0,-32,0"/>
+                            <Image x:Name="image1" Source="Poker Cards/10_of_clubs.png" Width="215" HorizontalAlignment="Center"  MouseDown="Image1_MouseDown" Margin="-27,0,-32,0"/>
                         </GroupBox>
 
                         <GroupBox x:Name="groupBox_Copy" UseLayoutRounding="True" Width="188" SnapsToDevicePixels="True" HorizontalAlignment="Center"  Height="263"  VerticalAlignment="Top" Background="Gray" Style="{DynamicResource GroupBoxStyle2}" Margin="570,-1,1000,0" Padding="10">
