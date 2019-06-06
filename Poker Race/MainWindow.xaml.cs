@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -28,16 +30,7 @@ namespace Poker_Race
             }
             listOfCards = new ArrayList(backUpListOfCards);
             createCardDictionary();
-            image1.Source = generateRandomCard();
-            image2.Source = generateRandomCard();
-            image3.Source = generateRandomCard();
-            image4.Source = generateRandomCard();
-            image5.Source = generateRandomCard();
-            handCard1.Source = null;
-            handCard2.Source = null;
-            handCard3.Source = null;
-            handCard4.Source = null;
-            handCard5.Source = null;
+            createNewHand();
         }
 
         private BitmapImage generateRandomCard()
@@ -118,25 +111,75 @@ namespace Poker_Race
                 listOfCards.Clear();
                 listOfCards = new ArrayList(backUpListOfCards);//reset cards to full deck after round played
                 await Task.Delay(1500);//wait 1.5 seconds to show new card hands
-                image1.IsEnabled = true;
-                image2.IsEnabled = true;
-                image3.IsEnabled = true;
-                image4.IsEnabled = true;
-                image5.IsEnabled = true;
-                handCard1.Source = null;
-                handCard2.Source = null;
-                handCard3.Source = null;
-                handCard4.Source = null;
-                handCard5.Source = null;
-
-                //create new random hand
-                image1.Source = generateRandomCard();
-                image2.Source = generateRandomCard();
-                image3.Source = generateRandomCard();
-                image4.Source = generateRandomCard();
-                image5.Source = generateRandomCard();
+                await Task.Run(() => stopWorker());//don't continue until method returns
+                createNewHand();
             }
         }
+
+        private void stopWorker()
+        {
+            worker.CancelAsync();
+            while (worker.IsBusy) { }
+            return;
+        }
+
+        private static BackgroundWorker worker;
+        private void startTimerBar()
+        {
+            worker = new BackgroundWorker();
+            if (!worker.IsBusy)
+            {
+                timerBar.Value = 60;
+                worker.WorkerSupportsCancellation = true;
+                worker.WorkerReportsProgress = true;
+                worker.DoWork += worker_DoWork;
+                worker.ProgressChanged += worker_ProgressChanged;
+                worker.RunWorkerAsync();
+            }
+            else
+                MessageBox.Show("Can't run the worker twice!");
+        }
+
+        void worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            for (int i = 60; i >= 0; i--)
+            {
+                Console.WriteLine("Value: " + i);
+                if(!worker.CancellationPending)
+                {
+                    (sender as BackgroundWorker).ReportProgress(i);
+                    Thread.Sleep(1000);
+                }
+            }
+        }
+
+        void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            timerBar.Value = e.ProgressPercentage;
+        }
+
+        private void createNewHand()
+        {
+            startTimerBar();
+            image1.IsEnabled = true;
+            image2.IsEnabled = true;
+            image3.IsEnabled = true;
+            image4.IsEnabled = true;
+            image5.IsEnabled = true;
+            handCard1.Source = null;
+            handCard2.Source = null;
+            handCard3.Source = null;
+            handCard4.Source = null;
+            handCard5.Source = null;
+
+            //create new random hand
+            image1.Source = generateRandomCard();
+            image2.Source = generateRandomCard();
+            image3.Source = generateRandomCard();
+            image4.Source = generateRandomCard();
+            image5.Source = generateRandomCard();
+        }
+
         //
 
         private void createCardDictionary()
