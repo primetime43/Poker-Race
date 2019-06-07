@@ -12,13 +12,13 @@ using System.Windows.Media.Imaging;
 
 namespace Poker_Race
 {
-    public partial class MainWindow : Window
+    public partial class GameMainWindow : Window
     {
-        private static Random rnd = new Random();
-        private static ArrayList backUpListOfCards, listOfCards;
+        protected static Random rnd = new Random();
+        public static ArrayList backUpListOfCards, listOfCards;
         public static string[] cards = new string[5];
         public static Dictionary<string, Dictionary<string, int>> cardMap;
-        public MainWindow()
+        public GameMainWindow()
         {
             InitializeComponent();
             backUpListOfCards = new ArrayList();
@@ -45,35 +45,35 @@ namespace Poker_Race
         //Button onClick actions
         private void Image1_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHand(image1.Source.ToString().Split('/').Last());
+            addCardToHandAsync(image1.Source.ToString().Split('/').Last());
             image1.Source = generateRandomCard();
         }
 
         private void Image2_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHand(image2.Source.ToString().Split('/').Last());
+            addCardToHandAsync(image2.Source.ToString().Split('/').Last());
             image2.Source = generateRandomCard();
         }
 
         private void Image3_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHand(image3.Source.ToString().Split('/').Last());
+            addCardToHandAsync(image3.Source.ToString().Split('/').Last());
             image3.Source = generateRandomCard();
         }
 
         private void Image4_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHand(image4.Source.ToString().Split('/').Last());
+            addCardToHandAsync(image4.Source.ToString().Split('/').Last());
             image4.Source = generateRandomCard();
         }
 
         private void Image5_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHand(image5.Source.ToString().Split('/').Last());
+            addCardToHandAsync(image5.Source.ToString().Split('/').Last());
             image5.Source = generateRandomCard();
         }
 
-        private async void addCardToHand(string selectedCard)
+        private async Task addCardToHandAsync(string selectedCard)
         {
             uriSource = new Uri("Poker Cards/" + selectedCard, UriKind.Relative);
             if (handCard1.Source == null)
@@ -81,39 +81,42 @@ namespace Poker_Race
                 handCard1.Source = new BitmapImage(uriSource);
                 cards[0] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
             }
-            else if(handCard2.Source == null)
+            else if (handCard2.Source == null)
             {
                 handCard2.Source = new BitmapImage(uriSource);
                 cards[1] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
             }
-            else if(handCard3.Source == null)
+            else if (handCard3.Source == null)
             {
                 handCard3.Source = new BitmapImage(uriSource);
                 cards[2] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
             }
-            else if(handCard4.Source == null)
+            else if (handCard4.Source == null)
             {
                 handCard4.Source = new BitmapImage(uriSource);
                 cards[3] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
             }
-            else if(handCard5.Source == null)
+            else if (handCard5.Source == null)
             {
                 handCard5.Source = new BitmapImage(uriSource);
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
-                //determine hand
-                label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), label1_Copy2);
-                //disable temp
-                image1.IsEnabled = false;
-                image2.IsEnabled = false;
-                image3.IsEnabled = false;
-                image4.IsEnabled = false;
-                image5.IsEnabled = false;
-                listOfCards.Clear();
-                listOfCards = new ArrayList(backUpListOfCards);//reset cards to full deck after round played
-                await Task.Delay(1500);//wait 1.5 seconds to show new card hands
+                label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), label1_Copy2);//determine the user's hand
                 await Task.Run(() => stopWorker());//don't continue until method returns
-                createNewHand();
+                startNewRound();
             }
+        }
+
+        private async void startNewRound()
+        {
+            image1.IsEnabled = false;
+            image2.IsEnabled = false;
+            image3.IsEnabled = false;
+            image4.IsEnabled = false;
+            image5.IsEnabled = false;
+            listOfCards.Clear();
+            listOfCards = new ArrayList(backUpListOfCards);//reset cards to full deck after round played
+            await Task.Delay(1500);//wait 1.5 seconds to show new card hands
+            createNewHand();
         }
 
         private void stopWorker()
@@ -129,7 +132,7 @@ namespace Poker_Race
             worker = new BackgroundWorker();
             if (!worker.IsBusy)
             {
-                timerBar.Value = 60;
+                timerBar.Value = 30;
                 worker.WorkerSupportsCancellation = true;
                 worker.WorkerReportsProgress = true;
                 worker.DoWork += worker_DoWork;
@@ -140,14 +143,16 @@ namespace Poker_Race
                 MessageBox.Show("Can't run the worker twice!");
         }
 
+        private static int counter;
         void worker_DoWork(object sender, DoWorkEventArgs e)
         {
-            for (int i = 60; i >= 0; i--)
+            counter = 30;
+            for (; counter >= 0; counter--)
             {
-                Console.WriteLine("Value: " + i);
+                Console.WriteLine("Value: " + counter);
                 if(!worker.CancellationPending)
                 {
-                    (sender as BackgroundWorker).ReportProgress(i);
+                    (sender as BackgroundWorker).ReportProgress(counter);
                     Thread.Sleep(1000);
                 }
             }
@@ -156,11 +161,19 @@ namespace Poker_Race
         void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             timerBar.Value = e.ProgressPercentage;
+            if (timerBar.Minimum == e.ProgressPercentage)
+            {
+                worker.CancelAsync();
+                AutoClosingMessageBox.Show("You've run out of time!", "Out of time", 3000);
+                startNewRound();
+                Console.WriteLine("Out of time");
+            }
         }
 
-        private void createNewHand()
+        protected void createNewHand()
         {
             startTimerBar();
+            //check();
             image1.IsEnabled = true;
             image2.IsEnabled = true;
             image3.IsEnabled = true;
@@ -215,6 +228,35 @@ namespace Poker_Race
                 else
                     cardMap[cardSuit].Add(card, cardValue);//added to inner dictionary
             }
+        }
+
+        class AutoClosingMessageBox
+        {
+            Timer _timeoutTimer;
+            string _caption;
+            AutoClosingMessageBox(string text, string caption, int timeout)
+            {
+                _caption = caption;
+                _timeoutTimer = new Timer(OnTimerElapsed,
+                    null, timeout, Timeout.Infinite);
+                MessageBox.Show(text, caption);
+            }
+            public static void Show(string text, string caption, int timeout)
+            {
+                new AutoClosingMessageBox(text, caption, timeout);
+            }
+            void OnTimerElapsed(object state)
+            {
+                IntPtr mbWnd = FindWindow(null, _caption);
+                if (mbWnd != IntPtr.Zero)
+                    SendMessage(mbWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                _timeoutTimer.Dispose();
+            }
+            const int WM_CLOSE = 0x0010;
+            [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+            static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+            [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+            static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
         }
     }
 }

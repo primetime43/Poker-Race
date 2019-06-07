@@ -4,7 +4,7 @@ using System.Windows.Controls;
 
 namespace Poker_Race
 {
-    class PokerHand : MainWindow
+    class PokerHand : GameMainWindow
     {
         private static int awardedPoints;
         private static List<int> values;
