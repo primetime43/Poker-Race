@@ -19,7 +19,7 @@ namespace Poker_Race
         public static string[] cards = new string[5];
         public static Dictionary<string, Dictionary<string, int>> cardMap;
         private static string usersHand;
-        private static int round;
+        private static int round, totalScore;
         public GameMainWindow()
         {
             InitializeComponent();
@@ -104,9 +104,11 @@ namespace Poker_Race
             {
                 handCard5.Source = new BitmapImage(uriSource);
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
-                label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), ref usersHand);//determine the user's hand
+                totalScore = PokerHand.determinePokerHand(int.Parse(scoreLabel.Content.ToString()), ref usersHand);//determine the user's hand
                 textBlockUserHand.Text = usersHand;
-                //AutoClosingMessageBox.Show(usersHand, "User's Hand", 3000);
+                //modify horse's position here with the scoreTest value
+
+                scoreLabel.Content = totalScore;
                 await Task.Run(() => stopWorker());//don't continue until method returns
                 startNewRound();
             }
@@ -171,7 +173,6 @@ namespace Poker_Race
             {
                 worker.CancelAsync();
                 AutoClosingMessageBox.Show("You've run out of time!", "Out of time", 3000);
-                MessageBox.Show("Here");
                 startNewRound();
             }
         }

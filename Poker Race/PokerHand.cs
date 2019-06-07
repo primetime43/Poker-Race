@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Controls;
+using System;
 
 namespace Poker_Race
 {
@@ -81,6 +81,9 @@ namespace Poker_Race
                 //handlbl.Content = "High Card";
                 userHand = "High Card";
             }
+
+            Console.WriteLine("Award points for round: " + awardedPoints);
+
             return score += awardedPoints;
         }
 

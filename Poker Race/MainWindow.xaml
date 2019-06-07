@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Poker_Race"
         mc:Ignorable="d"
         Title="Poker Race" Height="967.929" Width="1757.5" Background="{x:Null}" Icon="kpoker.ico" WindowStartupLocation="CenterScreen" WindowState="Maximized">
     <Window.Resources>
@@ -482,11 +481,21 @@
 
         </Style>
 
+        <!-- Testing custom progress bar for user racing -->
+
+        <ControlTemplate x:Key="Progressbar2" TargetType="ProgressBar">
+            <Canvas x:Name= "horseMove">
+                <ProgressBar x:Name="pgbar" Visibility="Visible" Width="{Binding ElementName=StatusGrid,Path=ActualWidth}" Background="Transparent" Value="{TemplateBinding Value}" />
+                <Image Source="horse-racing.png" Height="72px" Margin="500,0"/>
+            </Canvas>
+        </ControlTemplate>
+
 
         <!--  -->
 
-
     </Window.Resources>
+
+
     <Grid Background="ForestGreen" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="142*"/>
@@ -497,7 +506,7 @@
             <Grid>
                 <Grid Width="731" Margin="516,358,511,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="81" Background="Black">
                     <Label x:Name="label1_Copy2" HorizontalAlignment="Left" Height="61"  VerticalAlignment="Top" Width="410" FontSize="36" Margin="182,51,0,0"/>
-                    <TextBlock x:Name="textBlockUserHand" TextAlignment="Center" HorizontalAlignment="Left" Height="60" Margin="124,4,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="482" FontSize="48" FontFamily="Elephant" Foreground="#FFC7CF24"/>
+                    <TextBlock x:Name="textBlockUserHand" TextAlignment="Center" HorizontalAlignment="Left" Height="60" Margin="124,4,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="482" FontSize="48" FontFamily="Elephant" Foreground="#FFC7CF24"/>
                     <Border BorderBrush="Gold" BorderThickness="4" HorizontalAlignment="Left" Height="81" VerticalAlignment="Top" Width="731"/>
                 </Grid>
 
@@ -575,11 +584,14 @@
                     <Image x:Name="handCard5" UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="131" Height="176"  Source="Poker Cards/10_of_clubs.png" Margin="812,10,253,-9" Grid.RowSpan="2" />
                     <!-- Images -->
                 </Grid>
-                <ProgressBar x:Name="timerBar" HorizontalAlignment="Center" Height="43" Margin="25,26,639,0" VerticalAlignment="Top" Width="1094" Maximum="30" Minimum="0" Style="{StaticResource CountDownProgressBarStyle}"/>
-                <TextBlock x:Name="textBlockRound" TextAlignment="Center" Background="#FFBA05F0" HorizontalAlignment="Left" Height="128" Margin="1297,358,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="196" FontSize="48" FontFamily="Elephant" Foreground="#FFC7CF24"/>
-                <Label x:Name="label1" Content="Score: " HorizontalAlignment="Left" Height="61" VerticalAlignment="Top" Width="176" FontSize="36" Margin="1218,26,0,0" />
-                <Label x:Name="label1_Copy" Content="0" HorizontalAlignment="Left" Height="61"  VerticalAlignment="Top" Width="175" FontSize="36" Margin="1376,25,0,0" />
-                <Border BorderBrush="Gold" BorderThickness="4" Margin="1297,358,265,447"/>
+                <ProgressBar x:Name="timerBar" HorizontalAlignment="Center" Height="43" Margin="78,26,586,0" VerticalAlignment="Top" Width="1094" Maximum="30" Minimum="0" Style="{StaticResource CountDownProgressBarStyle}"/>
+                <TextBlock x:Name="textBlockRound" TextAlignment="Center" Background="#FFBA05F0" HorizontalAlignment="Left" Height="128" Margin="1275,358,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="196" FontSize="48" FontFamily="Elephant" Foreground="#FFC7CF24"/>
+                <Label x:Name="label1" Content="Score: " HorizontalAlignment="Left" Height="61" VerticalAlignment="Top" Width="176" FontSize="36" Margin="1209,10,0,0" />
+                <Label x:Name="scoreLabel" Content="0" HorizontalAlignment="Left" Height="61"  VerticalAlignment="Top" Width="175" FontSize="36" Margin="1367,10,0,0" />
+                <Border BorderBrush="Gold" BorderThickness="4" Margin="1275,358,287,447"/>
+
+                <!--Progress bar for user's horse-->
+                <ProgressBar x:Name="userProgressBar" Value="{Binding ProgressbarValue}" Template="{StaticResource Progressbar2}" HorizontalAlignment="Center" Height="74" Margin="78,90,56,0" VerticalAlignment="Top" Width="1100" Maximum="60000" Minimum="0"/>
             </Grid>
         </Viewbox>
     </Grid>
