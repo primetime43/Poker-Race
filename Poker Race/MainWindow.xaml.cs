@@ -19,11 +19,13 @@ namespace Poker_Race
         public static string[] cards = new string[5];
         public static Dictionary<string, Dictionary<string, int>> cardMap;
         private static string usersHand;
+        private static int round;
         public GameMainWindow()
         {
             InitializeComponent();
-            textBlock.Text = "";
+            textBlockUserHand.Text = "";
             backUpListOfCards = new ArrayList();
+            round = 0;
             DirectoryInfo d = new DirectoryInfo(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\Poker Cards");
             FileInfo[] Files = d.GetFiles("*.png"); //Getting Text files
             foreach (FileInfo file in Files)
@@ -103,7 +105,7 @@ namespace Poker_Race
                 handCard5.Source = new BitmapImage(uriSource);
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
                 label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), ref usersHand);//determine the user's hand
-                textBlock.Text = usersHand;
+                textBlockUserHand.Text = usersHand;
                 //AutoClosingMessageBox.Show(usersHand, "User's Hand", 3000);
                 await Task.Run(() => stopWorker());//don't continue until method returns
                 startNewRound();
@@ -120,7 +122,7 @@ namespace Poker_Race
             listOfCards.Clear();
             listOfCards = new ArrayList(backUpListOfCards);//reset cards to full deck after round played
             await Task.Delay(1500);//wait 1.5 seconds to show new card hands
-            textBlock.Text = "";
+            textBlockUserHand.Text = "";
             createNewHand();
         }
 
@@ -154,7 +156,6 @@ namespace Poker_Race
             counter = 30;
             for (; counter >= 0; counter--)
             {
-                Console.WriteLine("Value: " + counter);
                 if(!worker.CancellationPending)
                 {
                     (sender as BackgroundWorker).ReportProgress(counter);
@@ -170,6 +171,7 @@ namespace Poker_Race
             {
                 worker.CancelAsync();
                 AutoClosingMessageBox.Show("You've run out of time!", "Out of time", 3000);
+                MessageBox.Show("Here");
                 startNewRound();
             }
         }
@@ -177,7 +179,6 @@ namespace Poker_Race
         protected void createNewHand()
         {
             startTimerBar();
-            //check();
             image1.IsEnabled = true;
             image2.IsEnabled = true;
             image3.IsEnabled = true;
@@ -195,6 +196,7 @@ namespace Poker_Race
             image3.Source = generateRandomCard();
             image4.Source = generateRandomCard();
             image5.Source = generateRandomCard();
+            textBlockRound.Text = "Round\n" + ++round;
         }
 
         //

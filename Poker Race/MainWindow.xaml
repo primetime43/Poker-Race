@@ -495,12 +495,10 @@
 
         <Viewbox Grid.ColumnSpan="2">
             <Grid>
-                <Grid Width="731"  Margin="516,358,511,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="81" Background="Black">
-
-                    <Label x:Name="label1" Content="Score: " HorizontalAlignment="Left" Height="61" VerticalAlignment="Top" Width="176" FontSize="36" Margin="921,-303,0,0" />
-                    <Label x:Name="label1_Copy" Content="0" HorizontalAlignment="Left" Height="61"  VerticalAlignment="Top" Width="175" FontSize="36" Margin="1067,-303,-38,0" />
+                <Grid Width="731" Margin="516,358,511,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="81" Background="Black">
                     <Label x:Name="label1_Copy2" HorizontalAlignment="Left" Height="61"  VerticalAlignment="Top" Width="410" FontSize="36" Margin="182,51,0,0"/>
-                    <TextBlock x:Name="textBlock" TextAlignment="Center" HorizontalAlignment="Left" Height="60" Margin="124,4,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="482" FontSize="48" FontFamily="Elephant" Foreground="#FFC7CF24"/>
+                    <TextBlock x:Name="textBlockUserHand" TextAlignment="Center" HorizontalAlignment="Left" Height="60" Margin="124,4,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="482" FontSize="48" FontFamily="Elephant" Foreground="#FFC7CF24"/>
+                    <Border BorderBrush="Gold" BorderThickness="4" HorizontalAlignment="Left" Height="81" VerticalAlignment="Top" Width="731"/>
                 </Grid>
 
 
@@ -578,6 +576,10 @@
                     <!-- Images -->
                 </Grid>
                 <ProgressBar x:Name="timerBar" HorizontalAlignment="Center" Height="43" Margin="25,26,639,0" VerticalAlignment="Top" Width="1094" Maximum="30" Minimum="0" Style="{StaticResource CountDownProgressBarStyle}"/>
+                <TextBlock x:Name="textBlockRound" TextAlignment="Center" Background="#FFBA05F0" HorizontalAlignment="Left" Height="128" Margin="1297,358,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="196" FontSize="48" FontFamily="Elephant" Foreground="#FFC7CF24"/>
+                <Label x:Name="label1" Content="Score: " HorizontalAlignment="Left" Height="61" VerticalAlignment="Top" Width="176" FontSize="36" Margin="1218,26,0,0" />
+                <Label x:Name="label1_Copy" Content="0" HorizontalAlignment="Left" Height="61"  VerticalAlignment="Top" Width="175" FontSize="36" Margin="1376,25,0,0" />
+                <Border BorderBrush="Gold" BorderThickness="4" Margin="1297,358,265,447"/>
             </Grid>
         </Viewbox>
     </Grid>
