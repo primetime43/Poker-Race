@@ -18,9 +18,11 @@ namespace Poker_Race
         public static ArrayList backUpListOfCards, listOfCards;
         public static string[] cards = new string[5];
         public static Dictionary<string, Dictionary<string, int>> cardMap;
+        private static string usersHand;
         public GameMainWindow()
         {
             InitializeComponent();
+            textBlock.Text = "";
             backUpListOfCards = new ArrayList();
             DirectoryInfo d = new DirectoryInfo(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\Poker Cards");
             FileInfo[] Files = d.GetFiles("*.png"); //Getting Text files
@@ -45,35 +47,35 @@ namespace Poker_Race
         //Button onClick actions
         private void Image1_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHandAsync(image1.Source.ToString().Split('/').Last());
+            addCardToHand(image1.Source.ToString().Split('/').Last());
             image1.Source = generateRandomCard();
         }
 
         private void Image2_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHandAsync(image2.Source.ToString().Split('/').Last());
+            addCardToHand(image2.Source.ToString().Split('/').Last());
             image2.Source = generateRandomCard();
         }
 
         private void Image3_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHandAsync(image3.Source.ToString().Split('/').Last());
+            addCardToHand(image3.Source.ToString().Split('/').Last());
             image3.Source = generateRandomCard();
         }
 
         private void Image4_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHandAsync(image4.Source.ToString().Split('/').Last());
+            addCardToHand(image4.Source.ToString().Split('/').Last());
             image4.Source = generateRandomCard();
         }
 
         private void Image5_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            addCardToHandAsync(image5.Source.ToString().Split('/').Last());
+            addCardToHand(image5.Source.ToString().Split('/').Last());
             image5.Source = generateRandomCard();
         }
 
-        private async Task addCardToHandAsync(string selectedCard)
+        private async Task addCardToHand(string selectedCard)
         {
             uriSource = new Uri("Poker Cards/" + selectedCard, UriKind.Relative);
             if (handCard1.Source == null)
@@ -100,7 +102,9 @@ namespace Poker_Race
             {
                 handCard5.Source = new BitmapImage(uriSource);
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
-                label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), label1_Copy2);//determine the user's hand
+                label1_Copy.Content = PokerHand.determinePokerHand(int.Parse(label1_Copy.Content.ToString()), ref usersHand);//determine the user's hand
+                textBlock.Text = usersHand;
+                //AutoClosingMessageBox.Show(usersHand, "User's Hand", 3000);
                 await Task.Run(() => stopWorker());//don't continue until method returns
                 startNewRound();
             }
@@ -116,6 +120,7 @@ namespace Poker_Race
             listOfCards.Clear();
             listOfCards = new ArrayList(backUpListOfCards);//reset cards to full deck after round played
             await Task.Delay(1500);//wait 1.5 seconds to show new card hands
+            textBlock.Text = "";
             createNewHand();
         }
 
@@ -161,12 +166,11 @@ namespace Poker_Race
         void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             timerBar.Value = e.ProgressPercentage;
-            if (timerBar.Minimum == e.ProgressPercentage)
+            if (timerBar.Minimum == e.ProgressPercentage)//user runs out of time when progress bar hits zero
             {
                 worker.CancelAsync();
                 AutoClosingMessageBox.Show("You've run out of time!", "Out of time", 3000);
                 startNewRound();
-                Console.WriteLine("Out of time");
             }
         }
 
@@ -237,8 +241,7 @@ namespace Poker_Race
             AutoClosingMessageBox(string text, string caption, int timeout)
             {
                 _caption = caption;
-                _timeoutTimer = new Timer(OnTimerElapsed,
-                    null, timeout, Timeout.Infinite);
+                _timeoutTimer = new Timer(OnTimerElapsed,null, timeout, Timeout.Infinite);
                 MessageBox.Show(text, caption);
             }
             public static void Show(string text, string caption, int timeout)

@@ -10,7 +10,8 @@ namespace Poker_Race
         private static List<int> values;
         private static List<string> suits;
         private static bool isFlush;
-        public static int determinePokerHand(int score, Label handlbl)
+        //public static int determinePokerHand(int score, Label handlbl)
+        public static int determinePokerHand(int score, ref string userHand)
         {
             values = new List<int>();
             suits = new List<string>();
@@ -32,52 +33,53 @@ namespace Poker_Race
             if (isRoyalFlush())
             {
                 awardedPoints = 37500;
-                handlbl.Content = "Royal Flush";
+                userHand = "Royal Flush";
             }
             else if (isStraightFlush())
             {
                 awardedPoints = 28500;
-                handlbl.Content = "Straight Flush";
+                userHand = "Straight Flush";
             }
             else if (isFourOfAKind())
             {
                 awardedPoints = 22500;
-                handlbl.Content = "Four of a kind";
+                userHand = "Four of a kind";
             }
             else if (isFullHouse())
             {
                 awardedPoints = 18700;
-                handlbl.Content = "Full House";
+                userHand = "Full House";
             }
             else if (isFlush)
             {
                 awardedPoints = 15000;
-                handlbl.Content = "Flush";
+                userHand = "Flush";
             }
             else if (isStraight())
             {
                 awardedPoints = 12000;
-                handlbl.Content = "Straight";
+                userHand = "Straight";
             }
             else if (isThreeOfAKind())
             {
                 awardedPoints = 9000;
-                handlbl.Content = "Three of a kind";
+                userHand = "Three of a kind";
             }
             else if (isTwoPair())
             {
                 awardedPoints = 6700;
-                handlbl.Content = "Two Pair";
+                userHand = "Two Pair";
             }
             else if (isPair())
             {
                 awardedPoints = 4500;
-                handlbl.Content = "Pair";
+                userHand = "Pair";
             }
             else//high card
             {
                 awardedPoints = values[4];
-                handlbl.Content = "High Card";
+                //handlbl.Content = "High Card";
+                userHand = "High Card";
             }
             return score += awardedPoints;
         }
