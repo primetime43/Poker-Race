@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -19,7 +20,7 @@ namespace Poker_Race
         public static string[] cards = new string[5];
         public static Dictionary<string, Dictionary<string, int>> cardMap;
         private static string usersHand;
-        private static int round, totalScore;
+        private static int round, newScore, overallScore;
         public GameMainWindow()
         {
             InitializeComponent();
@@ -104,11 +105,14 @@ namespace Poker_Race
             {
                 handCard5.Source = new BitmapImage(uriSource);
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
-                totalScore = PokerHand.determinePokerHand(int.Parse(scoreLabel.Content.ToString()), ref usersHand);//determine the user's hand
+                newScore = PokerHand.determinePokerHand(int.Parse(scoreLabel.Content.ToString()), ref usersHand);//determine the user's hand (takes current score and adds the awarded points)
                 textBlockUserHand.Text = usersHand;
-                //modify horse's position here with the scoreTest value
+                overallScore = (int)(newScore + timerBar.Value);
+                scoreLabel.Content = overallScore;//current hand plus timer value
 
-                scoreLabel.Content = totalScore;
+                //modify horse's position here with the scoreTest value
+                userProgressBar.Value = overallScore;
+
                 await Task.Run(() => stopWorker());//don't continue until method returns
                 startNewRound();
             }
@@ -263,6 +267,13 @@ namespace Poker_Race
             static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
             [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
             static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
+        }
+
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            DatabaseTools test = new DatabaseTools();
+            test.connectToDatabase();
         }
     }
 }
