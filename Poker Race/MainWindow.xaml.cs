@@ -21,7 +21,7 @@ namespace Poker_Race
         public static string[] cards = new string[5];
         public static Dictionary<string, Dictionary<string, int>> cardMap;
         private static string usersHand;
-        private static int round, newScore, overallScore;
+        private static int round, newScore, overallScore, currentHandValue;
         public static ProgressBar _pBar;
         public GameMainWindow()
         {
@@ -108,16 +108,44 @@ namespace Poker_Race
             {
                 handCard5.Source = new BitmapImage(uriSource);
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
-                newScore = PokerHand.determinePokerHand(int.Parse(scoreLabel.Content.ToString()), ref usersHand);//determine the user's hand (takes current score and adds the awarded points)
+                newScore = PokerHand.determinePokerHand(int.Parse(scoreLabel.Content.ToString()), ref usersHand, ref currentHandValue);//determine the user's hand (takes current score and adds the awarded points)
                 textBlockUserHand.Text = usersHand;
                 overallScore = (int)(newScore + timerBar.Value);
                 scoreLabel.Content = overallScore;//current hand plus timer value
 
                 //modify horse's position here with the overallScore value
-                userProgressBar.Value = overallScore;
+                moveHorse();
+
+                //userProgressBar.Value = overallScore;
 
                 await Task.Run(() => stopWorker());//don't continue until method returns
                 startNewRound();
+            }
+        }
+
+        private static BackgroundWorker horseWorker;
+        private void moveHorse()
+        {
+            horseWorker = new BackgroundWorker();
+            if (!horseWorker.IsBusy)
+            {
+                horseWorker.WorkerSupportsCancellation = true;
+                horseWorker.WorkerReportsProgress = true;
+                horseWorker.DoWork += worker_MoveHorse;
+                horseWorker.RunWorkerAsync();
+            }
+            else
+                MessageBox.Show("Can't run the worker twice!");
+        }
+
+        void worker_MoveHorse(object sender, DoWorkEventArgs e)
+        {
+            for (int i = 0; i < currentHandValue; i++)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    userProgressBar.Value += 1;
+                });
             }
         }
 

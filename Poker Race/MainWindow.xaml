@@ -597,7 +597,7 @@
                 <Border BorderBrush="Gold" BorderThickness="4" Margin="1275,358,287,447"/>
 
                 <!--Progress bar for user's horse-->
-                <ProgressBar x:Name="userProgressBar" Style="{StaticResource myStyle}" HorizontalAlignment="Center" Height="74" Margin="44,85,46,0" VerticalAlignment="Top" Width="1668" Maximum="60000" Minimum="0" SmallChange="10"/>
+                <ProgressBar x:Name="userProgressBar" Style="{StaticResource myStyle}" HorizontalAlignment="Center" Height="74" Margin="44,85,46,0" VerticalAlignment="Top" Width="1668" Maximum="60000" Minimum="0"/>
             </Grid>
         </Viewbox>
     </Grid>

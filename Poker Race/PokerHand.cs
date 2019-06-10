@@ -11,7 +11,7 @@ namespace Poker_Race
         private static List<string> suits;
         private static bool isFlush;
         //public static int determinePokerHand(int score, Label handlbl)
-        public static int determinePokerHand(int score, ref string userHand)
+        public static int determinePokerHand(int score, ref string userHand, ref int currentHandValue)
         {
             values = new List<int>();
             suits = new List<string>();
@@ -83,7 +83,7 @@ namespace Poker_Race
             }
 
             //Console.WriteLine("Award points for round: " + awardedPoints);
-
+            currentHandValue = awardedPoints;
             return score += awardedPoints;
         }
 
