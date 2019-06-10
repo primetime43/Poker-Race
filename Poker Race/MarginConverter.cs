@@ -9,7 +9,8 @@ namespace Poker_Race
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return new Thickness(~~(System.Convert.ToInt32(value) / 60), 0, 0, 0);
+            //return new Thickness(~~(System.Convert.ToInt32(value) / 60), 0, 0, 0);
+            return new Thickness(Math.Max(0, ((int)Math.Round(System.Convert.ToInt32(value) * (GameMainWindow._pBar.Width / GameMainWindow._pBar.Maximum))) - 100), 0, 0, 0);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -19,7 +20,8 @@ namespace Poker_Race
 
         object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return new Thickness(~~(System.Convert.ToInt32(value) / 60), 0, 0, 0);
+            //return new Thickness(~~(System.Convert.ToInt32(value) / 60), 0, 0, 0);
+            return new Thickness(Math.Max(0, ((int)Math.Round(System.Convert.ToInt32(value) * (GameMainWindow._pBar.Width / GameMainWindow._pBar.Maximum))) - 100), 0, 0, 0);
         }
     }
 }

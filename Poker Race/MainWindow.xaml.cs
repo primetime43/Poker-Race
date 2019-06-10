@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -21,9 +22,11 @@ namespace Poker_Race
         public static Dictionary<string, Dictionary<string, int>> cardMap;
         private static string usersHand;
         private static int round, newScore, overallScore;
+        public static ProgressBar _pBar;
         public GameMainWindow()
         {
             InitializeComponent();
+            _pBar = userProgressBar;
             textBlockUserHand.Text = "";
             backUpListOfCards = new ArrayList();
             round = 0;
@@ -110,7 +113,7 @@ namespace Poker_Race
                 overallScore = (int)(newScore + timerBar.Value);
                 scoreLabel.Content = overallScore;//current hand plus timer value
 
-                //modify horse's position here with the scoreTest value
+                //modify horse's position here with the overallScore value
                 userProgressBar.Value = overallScore;
 
                 await Task.Run(() => stopWorker());//don't continue until method returns

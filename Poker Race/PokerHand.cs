@@ -82,7 +82,7 @@ namespace Poker_Race
                 userHand = "High Card";
             }
 
-            Console.WriteLine("Award points for round: " + awardedPoints);
+            //Console.WriteLine("Award points for round: " + awardedPoints);
 
             return score += awardedPoints;
         }

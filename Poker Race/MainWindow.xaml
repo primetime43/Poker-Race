@@ -480,24 +480,12 @@
 
         <!-- Testing custom progress bar for user racing -->
 
-        <!---
-        <ControlTemplate x:Key="Progressbar2" TargetType="ProgressBar">
-            <Canvas x:Name= "horseMove">
-                <ProgressBar x:Name="pgbar" Visibility="Visible" Width="{Binding ElementName=StatusGrid,Path=ActualWidth}" Background="Transparent" Value="{TemplateBinding Value}" />
-                <Image x:Name="horseImage" Source="horse-racing.png" Height="72px" Margin="500,0"/>
-            </Canvas>
-        </ControlTemplate>
-        -->
-
         <local:MarginConverter x:Key="marginConverter"></local:MarginConverter>
         <Style x:Key="myStyle" TargetType="{x:Type ProgressBar}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
-                        <!---<Canvas Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
-                            <Image x:Name="myImage" Source="horse-racing.png" Height="72px" Margin="{Binding ElementName=userProgressBar, Mode=TwoWay, Path=Value, Converter={StaticResource marginConverter}}"></Image>
-                        </Canvas> -->
-                        <Border BorderBrush="#BBC6C4" BorderThickness="1" CornerRadius="5" Padding="1" Background="Green">
+                        <Border BorderBrush="#BBC6C4" BorderThickness="1" CornerRadius="5" Padding="1" Background="#ead0a8">
                             <Grid x:Name="Race_Track" >
                                 <Canvas Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
                                 <Image x:Name="myImage" Source="horse-racing.png" Height="72px" Margin="{Binding ElementName=userProgressBar, Mode=TwoWay, Path=Value, Converter={StaticResource marginConverter}}"></Image>
@@ -609,7 +597,7 @@
                 <Border BorderBrush="Gold" BorderThickness="4" Margin="1275,358,287,447"/>
 
                 <!--Progress bar for user's horse-->
-                <ProgressBar x:Name="userProgressBar" Style="{StaticResource myStyle}" HorizontalAlignment="Center" Height="74" Margin="66,85,24,0" VerticalAlignment="Top" Width="1668" Maximum="60000" Minimum="0" SmallChange="10"/>
+                <ProgressBar x:Name="userProgressBar" Style="{StaticResource myStyle}" HorizontalAlignment="Center" Height="74" Margin="44,85,46,0" VerticalAlignment="Top" Width="1668" Maximum="60000" Minimum="0" SmallChange="10"/>
             </Grid>
         </Viewbox>
     </Grid>
