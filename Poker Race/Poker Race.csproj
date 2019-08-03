@@ -75,6 +75,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="GameMainPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="HomePage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -84,6 +92,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DatabaseTools.cs" />
+    <Compile Include="GameMainPage.xaml.cs">
+      <DependentUpon>GameMainPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="HomePage.xaml.cs">
+      <DependentUpon>HomePage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="MarginConverter.cs" />
     <Compile Include="PokerHand.cs" />
     <Compile Include="MainWindow.xaml.cs">

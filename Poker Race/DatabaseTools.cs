@@ -1,34 +1,27 @@
-﻿using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using System.Net;
 using System.Windows;
 
 namespace Poker_Race
 {
     class DatabaseTools
     {
-        public void connectToDatabase()
+        public void connectToDatabase(string playerName, string score)
         {
             try
             {
-                MySqlConnection connection = new MySqlConnection("datasource=localhost;port=3306;username=;password=");
-                connection.Open();
-                if (connection.State == ConnectionState.Open)
-                {
-                    MessageBox.Show("Connected");
-                }
-                else
-                {
-                    MessageBox.Show("Not Connected");
-                }
+                //HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://primetime43.x10host.com/PokerRace/updateTable.php" + "?name=" + playerName + "&score=" + score);
+
+                /*HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                StreamReader input = new StreamReader(response.GetResponseStream());*/
+
+                var webClient = new WebClient();
+                //Console.WriteLine("http://primetime43.x10host.com/PokerRace/updateTable.php" + "?name=" + playerName + "&score=" + score);
+                webClient.DownloadString("http://primetime43.x10host.com/PokerRace/updateTable.php" + "?name=" + playerName + "&score=" + score);
             }
-            catch (Exception ex)
+            catch (Exception Except)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show(Except.ToString());
             }
         }
 

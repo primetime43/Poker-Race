@@ -1,0 +1,25 @@
+﻿<Page x:Class="Poker_Race.HomePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Poker_Race"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="HomePage">
+
+    <Grid Background="ForestGreen" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Viewbox Margin="73,26,88,49">
+            <Grid HorizontalAlignment="Center" Height="361" VerticalAlignment="Top" Width="642">
+                <TextBlock 
+                        x:Name="textBlock" TextAlignment="Center" HorizontalAlignment="Left" Height="60" Margin="46,22,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="560" FontSize="40" FontFamily="Elephant" Foreground="Gold">
+                    <TextBlock.Effect>
+                        <DropShadowEffect ShadowDepth="8" Direction="330" Color="Black" Opacity="0.6" BlurRadius="4"/>
+                    </TextBlock.Effect><Run Text="Welcome To Poker Race!"/>
+                </TextBlock>
+                <Button x:Name="button" Content="New Game" Margin="239,258,224,33" Click="Button_Click" />
+            </Grid>
+        </Viewbox>
+
+    </Grid>
+</Page>

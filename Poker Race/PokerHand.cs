@@ -4,7 +4,7 @@ using System;
 
 namespace Poker_Race
 {
-    class PokerHand : GameMainWindow
+    class PokerHand : GameMainPage
     {
         private static int awardedPoints;
         private static List<int> values;
