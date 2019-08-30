@@ -1,17 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Poker_Race
 {
@@ -20,14 +9,36 @@ namespace Poker_Race
     /// </summary>
     public partial class HomePage : Page
     {
+        public static string username;
         public HomePage()
         {
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void startGame(object sender, RoutedEventArgs e)
         {
-            this.NavigationService.Navigate(new GameMainPage());
+            if (usernameTextBox.Text.Equals("Enter Your Name") || usernameTextBox.Text.Length < 3)
+            {
+                GameMainPage.AutoClosingMessageBox.Show("You must enter your name (min length 3)", "Error", 1600);
+                usernameTextBox.Text = "Enter Your Name";
+            }
+            else
+            {
+                username = usernameTextBox.Text;
+                this.NavigationService.Navigate(new GameMainPage());
+            }
+        }
+
+
+        private void UsernameTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            usernameTextBox.Clear();
+        }
+
+        private void UsernameTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if(string.IsNullOrEmpty(usernameTextBox.Text))
+                usernameTextBox.Text = "Enter Your Name";
         }
     }
 }

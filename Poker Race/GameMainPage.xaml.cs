@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -124,9 +123,9 @@ namespace Poker_Race
 
                 if (overallScore >= userProgressBar.Maximum)//testing
                 {
+                    new DatabaseTools().connectToDatabase(HomePage.username, overallScore.ToString());
                     MessageBox.Show("You've won with " + overallScore + " points!");
-                    string username = "Mike Dudas";
-                    new DatabaseTools().connectToDatabase(username, overallScore.ToString());
+                    this.NavigationService.Navigate(new HomePage());
                 }
                 else
                     startNewRound();
@@ -289,7 +288,7 @@ namespace Poker_Race
             }
         }
 
-        class AutoClosingMessageBox
+        public class AutoClosingMessageBox
         {
             Timer _timeoutTimer;
             string _caption;

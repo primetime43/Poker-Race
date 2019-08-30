@@ -124,7 +124,7 @@ namespace Poker_Race
 
         public static bool isStraight()
         {
-            //consider ace (14) as a 1 or 14 below in if
+            //consider ace (14) as a 1 or 14 in code below
             if (values[0] == 2 && values[1] == 3 && values[2] == 4 && values[3] == 5 && values[4] == 14)
             {
                 values[4] = 1;
