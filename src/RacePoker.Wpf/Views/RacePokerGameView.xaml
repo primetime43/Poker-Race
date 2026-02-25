@@ -542,6 +542,44 @@
                 </Grid>
 
             <StackPanel Grid.Row="1" HorizontalAlignment="Center">
+                <!-- HAND ROW: 5 slots that fill up as you pick -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,4">
+                    <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ItemsControl ItemsSource="{Binding ActiveSeat.Cards}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,0">
+                                    <!-- Card face (shown when card exists) -->
+                                    <Border Width="72" Height="100" CornerRadius="5"
+                                            BorderBrush="#556688" BorderThickness="1.5"
+                                            Background="White"
+                                            Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}}">
+                                        <Image Source="{Binding Card, Converter={StaticResource CardToImage}}"
+                                               Stretch="Uniform" Margin="2"/>
+                                    </Border>
+                                    <!-- Empty slot placeholder (shown when no card) -->
+                                    <Border Width="72" Height="100" CornerRadius="5"
+                                            BorderBrush="#222244" BorderThickness="1.5"
+                                            Background="#0a0a1a"
+                                            Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                                        <TextBlock Text="?" Foreground="#222244" FontSize="24"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                </StackPanel>
+
                 <!-- SELECTION ROW: 5 face-up cards to pick from -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2">
                     <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
@@ -582,44 +620,6 @@
                     <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
                                VerticalAlignment="Center" Margin="10,0,0,0"
                                Visibility="{Binding ActiveSeat.ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
-                </StackPanel>
-
-                <!-- HAND ROW: 5 slots that fill up as you pick -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,2">
-                    <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
-                               VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <ItemsControl ItemsSource="{Binding ActiveSeat.Cards}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="2,0">
-                                    <!-- Card face (shown when card exists) -->
-                                    <Border Width="72" Height="100" CornerRadius="5"
-                                            BorderBrush="#556688" BorderThickness="1.5"
-                                            Background="White"
-                                            Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}}">
-                                        <Image Source="{Binding Card, Converter={StaticResource CardToImage}}"
-                                               Stretch="Uniform" Margin="2"/>
-                                    </Border>
-                                    <!-- Empty slot placeholder (shown when no card) -->
-                                    <Border Width="72" Height="100" CornerRadius="5"
-                                            BorderBrush="#222244" BorderThickness="1.5"
-                                            Background="#0a0a1a"
-                                            Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                                        <TextBlock Text="?" Foreground="#222244" FontSize="24"
-                                                   FontWeight="Bold" HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
-                               VerticalAlignment="Center" Margin="10,0,0,0"/>
                 </StackPanel>
 
                 <!-- Continue button (only when auto-advance is disabled) -->
