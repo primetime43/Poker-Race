@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +17,7 @@ namespace Poker_Race
     public partial class GameMainPage : Page
     {
         protected static Random rnd = new Random();
-        public static ArrayList backUpListOfCards, listOfCards;
+        public static List<string> backUpListOfCards, listOfCards;
         public static string[] cards = new string[5];
         public static Dictionary<string, Dictionary<string, int>> cardMap;
         private static string usersHand;
@@ -30,22 +28,31 @@ namespace Poker_Race
             InitializeComponent();
             _pBar = userProgressBar;
             textBlockUserHand.Text = "";
-            backUpListOfCards = new ArrayList();
-            round = 0;
-            DirectoryInfo d = new DirectoryInfo(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\Poker Cards");
-            FileInfo[] Files = d.GetFiles("*.png"); //Getting Image files
-            foreach (FileInfo file in Files)
+            backUpListOfCards = new List<string>
             {
-                backUpListOfCards.Add(file.Name);
-            }
-            listOfCards = new ArrayList(backUpListOfCards);
+                "2_of_clubs.png", "2_of_diamonds.png", "2_of_hearts.png", "2_of_spades.png",
+                "3_of_clubs.png", "3_of_diamonds.png", "3_of_hearts.png", "3_of_spades.png",
+                "4_of_clubs.png", "4_of_diamonds.png", "4_of_hearts.png", "4_of_spades.png",
+                "5_of_clubs.png", "5_of_diamonds.png", "5_of_hearts.png", "5_of_spades.png",
+                "6_of_clubs.png", "6_of_diamonds.png", "6_of_hearts.png", "6_of_spades.png",
+                "7_of_clubs.png", "7_of_diamonds.png", "7_of_hearts.png", "7_of_spades.png",
+                "8_of_clubs.png", "8_of_diamonds.png", "8_of_hearts.png", "8_of_spades.png",
+                "9_of_clubs.png", "9_of_diamonds.png", "9_of_hearts.png", "9_of_spades.png",
+                "10_of_clubs.png", "10_of_diamonds.png", "10_of_hearts.png", "10_of_spades.png",
+                "jack_of_clubs.png", "jack_of_diamonds.png", "jack_of_hearts.png", "jack_of_spades.png",
+                "queen_of_clubs.png", "queen_of_diamonds.png", "queen_of_hearts.png", "queen_of_spades.png",
+                "king_of_clubs.png", "king_of_diamonds.png", "king_of_hearts.png", "king_of_spades.png",
+                "ace_of_clubs.png", "ace_of_diamonds.png", "ace_of_hearts.png", "ace_of_spades.png"
+            };
+            round = 0;
+            listOfCards = new List<string>(backUpListOfCards);
             createCardDictionary();
             createNewHand();//starts the game. Modify eventually to play a new game etc
         }
         private BitmapImage generateRandomCard()
         {
             int num = rnd.Next(listOfCards.Count);
-            uriSource = new Uri("Poker Cards/" + listOfCards[num].ToString(), UriKind.Relative);//random number generated between 0 - 51
+            uriSource = new Uri("Poker Cards/" + listOfCards[num], UriKind.Relative);//random number generated between 0 - 51
             listOfCards.RemoveAt(num);
             return new BitmapImage(uriSource);
         }
@@ -166,7 +173,7 @@ namespace Poker_Race
             image4.IsEnabled = false;
             image5.IsEnabled = false;
             listOfCards.Clear();
-            listOfCards = new ArrayList(backUpListOfCards);//reset cards to full deck after round played
+            listOfCards = new List<string>(backUpListOfCards);//reset cards to full deck after round played
             await Task.Delay(1500);//wait 1.5 seconds to show new card hands
             textBlockUserHand.Text = "";
             createNewHand();
@@ -262,7 +269,7 @@ namespace Poker_Race
             int cardValue;
             for (int i = 0; i < listOfCards.Count; i++)
             {
-                card = listOfCards[i].ToString().Substring(0, listOfCards[i].ToString().IndexOf('.'));
+                card = listOfCards[i].Substring(0, listOfCards[i].IndexOf('.'));
                 cardSuit = card.Split('_').Last();
 
                 if (!int.TryParse(card.Split('_').First(), out cardValue))//if its a number, it will set cardValue, if not a number returns false but ! makes it true, so enter and check value

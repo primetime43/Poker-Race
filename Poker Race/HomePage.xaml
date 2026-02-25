@@ -3,7 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:gif="http://wpfanimatedgif.codeplex.com"
+      xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
       xmlns:local="clr-namespace:Poker_Race"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
@@ -26,7 +26,7 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
-                <Image x:Name="image" gif:ImageBehavior.AnimatedSource="flashing_lights.gif" gif:ImageBehavior.RepeatBehavior="Forever" HorizontalAlignment="Center" Height="201" VerticalAlignment="Center"  Width="560" Margin="46,10,36,150" Stretch="Fill" />
+                <Image x:Name="image" gif:AnimationBehavior.SourceUri="flashing_lights.gif" gif:AnimationBehavior.RepeatBehavior="Forever" HorizontalAlignment="Center" Height="201" VerticalAlignment="Center"  Width="560" Margin="46,10,36,150" Stretch="Fill" />
                 <TextBlock 
                         x:Name="textBlock" TextAlignment="Center" HorizontalAlignment="Left" Height="60" Margin="46,37,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="560" FontSize="40" FontFamily="Elephant" Foreground="Gold">
                     <TextBlock.Effect>
