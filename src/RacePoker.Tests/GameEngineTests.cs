@@ -40,35 +40,6 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void JoinSeat_FreeByDefault()
-    {
-        var engine = CreateEngine();
-        var result = engine.JoinSeat(0);
-        Assert.True(result);
-        Assert.Equal(0, engine.Seats[0].Credits);
-    }
-
-    [Fact]
-    public void JoinSeat_RequiresCreditsWhenCostSet()
-    {
-        var settings = new GameSettings { CreditCostPerRound = 1 };
-        var engine = CreateEngine(settings);
-        var result = engine.JoinSeat(0);
-        Assert.False(result);
-        Assert.Equal(SeatStatus.Empty, engine.Seats[0].Status);
-    }
-
-    [Fact]
-    public void JoinSeat_DeductsCreditWhenCostSet()
-    {
-        var settings = new GameSettings { CreditCostPerRound = 1 };
-        var engine = CreateEngine(settings);
-        engine.AddCredit(0, 5);
-        engine.JoinSeat(0);
-        Assert.Equal(4, engine.Seats[0].Credits);
-    }
-
-    [Fact]
     public void PressDeal_StartsPickingFromSeatJoin()
     {
         var engine = CreateEngine();
@@ -257,7 +228,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void MultipleSeats_BothMustCompleteBeforeRacing()
+    public void MultipleSeats_TurnBasedPicking()
     {
         var engine = CreateEngine();
         engine.JoinSeat(0);
@@ -265,14 +236,19 @@ public class GameEngineTests
         engine.PressDeal(0); // start dealing for both
 
         Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Equal(0, engine.ActiveSeatIndex);
 
-        // Seat 0 picks all 5
+        // Seat 0 picks all 5 — turn passes to seat 1
         PickAllCards(engine, 0);
-        Assert.Equal(GamePhase.Picking, engine.Phase); // still picking, waiting for seat 1
+        Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Equal(1, engine.ActiveSeatIndex);
+        Assert.True(engine.Seats[0].IsHandComplete);
+        Assert.False(engine.Seats[1].IsHandComplete);
 
-        // Seat 1 picks all 5
+        // Seat 1 picks all 5 — both done, advance to Racing
         PickAllCards(engine, 1);
-        Assert.Equal(GamePhase.Racing, engine.Phase); // now both complete
+        Assert.Equal(GamePhase.Racing, engine.Phase);
+        Assert.True(engine.Seats[1].IsHandComplete);
     }
 
     [Fact]
@@ -354,6 +330,29 @@ public class GameEngineTests
     }
 
     [Fact]
+    public void MultipleSeats_TimeoutAutoFillsActiveAndAdvances()
+    {
+        var settings = new GameSettings { PickingTimeoutSeconds = 1.0 };
+        var engine = CreateEngine(settings);
+        engine.JoinSeat(0);
+        engine.JoinSeat(1);
+        engine.PressDeal(0);
+
+        Assert.Equal(0, engine.ActiveSeatIndex);
+
+        // Timeout seat 0 — auto-fills their hand, advances to seat 1
+        engine.Tick(TimeSpan.FromSeconds(2));
+        Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Equal(1, engine.ActiveSeatIndex);
+        Assert.True(engine.Seats[0].IsHandComplete);
+
+        // Timeout seat 1 — auto-fills, all done → Racing
+        engine.Tick(TimeSpan.FromSeconds(2));
+        Assert.Equal(GamePhase.Racing, engine.Phase);
+        Assert.True(engine.Seats[1].IsHandComplete);
+    }
+
+    [Fact]
     public void CannotJoinDuringPicking()
     {
         var engine = CreateEngine();
@@ -362,16 +361,6 @@ public class GameEngineTests
 
         var result = engine.JoinSeat(1);
         Assert.False(result);
-    }
-
-    [Fact]
-    public void AddCredit_IncreasesBalance()
-    {
-        var engine = CreateEngine();
-        engine.AddCredit(0, 3);
-        Assert.Equal(3, engine.Seats[0].Credits);
-        engine.AddCredit(0, 2);
-        Assert.Equal(5, engine.Seats[0].Credits);
     }
 
     [Fact]

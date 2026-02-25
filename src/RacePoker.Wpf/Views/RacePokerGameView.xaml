@@ -151,7 +151,7 @@
                       X1="50" Y1="51" X2="5000" Y2="51" Stroke="#44FFFFFF" StrokeThickness="1"
                       Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}"/>
 
-                <!-- Lane labels (left side) -->
+                <!-- Lane labels (left side) — P1 highlighted as active -->
                 <Border Grid.Row="0" Grid.Column="0" Background="#22000000"
                         Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -469,28 +469,55 @@
              A new random card replaces it in the selection row.
              ════════════════════════════════════════════════ -->
         <Border Grid.Row="3" Grid.RowSpan="2" Background="#0e0e1c" Margin="4,2,4,0" Padding="4,4"
-                Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                Visibility="{Binding IsInGame, Converter={StaticResource BoolToVisibility}}">
             <Grid>
-                <!-- Round badge (top-right) -->
-                <Border Style="{StaticResource RoundBadge}" HorizontalAlignment="Right"
-                        VerticalAlignment="Top" Margin="0,0,4,0">
-                    <TextBlock Text="{Binding RoundDisplay}" Foreground="White"
-                               FontSize="13" FontWeight="Bold"/>
-                </Border>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                <!-- Hand result name (top-center, shown after scoring) -->
-                <TextBlock Text="{Binding SeatViewModels[0].HandName}"
-                           Foreground="{StaticResource GoldAccent}" FontSize="16"
-                           FontWeight="Bold" HorizontalAlignment="Center"
-                           VerticalAlignment="Top" Margin="0,2,0,0"/>
+                <!-- Top info bar: Player badge | Hand result | Round badge -->
+                <Grid Grid.Row="0" Margin="4,2,4,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-            <StackPanel HorizontalAlignment="Center" Margin="0,24,0,0">
+                    <!-- Active player badge (left) — dynamic color per active seat -->
+                    <Border Grid.Column="0" CornerRadius="6" Padding="10,4"
+                            Background="{Binding ActiveSeat.SeatColorBrush}"
+                            BorderBrush="{Binding ActiveSeat.SeatColorBrush}" BorderThickness="2">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#x265E;" Foreground="White" FontSize="16"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding ActiveSeat.SeatLabel}"
+                                       Foreground="White" FontSize="14" FontWeight="Bold"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Hand result name (center) -->
+                    <TextBlock Grid.Column="1" Text="{Binding ActiveSeat.HandName}"
+                               Foreground="{StaticResource GoldAccent}" FontSize="18"
+                               FontWeight="Bold" HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+
+                    <!-- Round badge (right) -->
+                    <Border Grid.Column="2" Style="{StaticResource RoundBadge}"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding RoundDisplay}" Foreground="White"
+                                   FontSize="13" FontWeight="Bold"/>
+                    </Border>
+                </Grid>
+
+            <StackPanel Grid.Row="1" HorizontalAlignment="Center">
                 <!-- SELECTION ROW: 5 face-up cards to pick from -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2">
                     <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
                                VerticalAlignment="Center" Margin="0,0,10,0"
-                               Visibility="{Binding SeatViewModels[0].ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
-                    <ItemsControl ItemsSource="{Binding SeatViewModels[0].SelectionCards}">
+                               Visibility="{Binding ActiveSeat.ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
+                    <ItemsControl ItemsSource="{Binding ActiveSeat.SelectionCards}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
@@ -524,14 +551,14 @@
                     </ItemsControl>
                     <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
                                VerticalAlignment="Center" Margin="10,0,0,0"
-                               Visibility="{Binding SeatViewModels[0].ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
+                               Visibility="{Binding ActiveSeat.ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
                 </StackPanel>
 
                 <!-- HAND ROW: 5 slots that fill up as you pick -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,2">
                     <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
                                VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <ItemsControl ItemsSource="{Binding SeatViewModels[0].Cards}">
+                    <ItemsControl ItemsSource="{Binding ActiveSeat.Cards}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
@@ -565,56 +592,13 @@
                                VerticalAlignment="Center" Margin="10,0,0,0"/>
                 </StackPanel>
 
-                <!-- Continue button (shown during RoundEnd) -->
+                <!-- Continue button (only when auto-advance is disabled) -->
                 <Button Style="{StaticResource ActionBtn}" Content="CONTINUE"
-                        Command="{Binding SeatViewModels[0].ContinueCommand}"
-                        Visibility="{Binding SeatViewModels[0].CanContinue, Converter={StaticResource BoolToVisibility}}"
+                        Command="{Binding ActiveSeat.ContinueCommand}"
+                        Visibility="{Binding ShowContinueButton, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Center" Margin="0,4,0,0" FontSize="14" Padding="20,6"/>
             </StackPanel>
             </Grid>
-        </Border>
-
-        <!-- ════════════════════════════════════════════════
-             ROW 5 — OTHER PLAYER CARD BACKS (seats 1-3)
-             ════════════════════════════════════════════════ -->
-        <Border Grid.Row="5" Background="#090914" Margin="4,2,4,4" Padding="4">
-            <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center">
-                <!-- Player 2 card backs -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2"
-                            Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="P2" Foreground="#FF8844" FontSize="11" FontWeight="Bold"
-                               VerticalAlignment="Center" Margin="0,0,8,0" Width="24"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                </StackPanel>
-
-                <!-- Player 3 card backs -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2"
-                            Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="P3" Foreground="#44DD44" FontSize="11" FontWeight="Bold"
-                               VerticalAlignment="Center" Margin="0,0,8,0" Width="24"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                </StackPanel>
-
-                <!-- Player 4 card backs -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2"
-                            Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="P4" Foreground="#FFDD44" FontSize="11" FontWeight="Bold"
-                               VerticalAlignment="Center" Margin="0,0,8,0" Width="24"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
-                </StackPanel>
-            </StackPanel>
         </Border>
 
         <!-- ════ GAME OVER OVERLAY ════ -->

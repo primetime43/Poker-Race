@@ -18,6 +18,7 @@ public class MainViewModel : ViewModelBase
 
     private GamePhase _phase;
     private int _round;
+    private SeatViewModel? _activeSeat;
 
     public GamePhase Phase
     {
@@ -32,6 +33,7 @@ public class MainViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsShellMode));
                 OnPropertyChanged(nameof(PhaseDisplay));
                 OnPropertyChanged(nameof(RoundDisplay));
+                OnPropertyChanged(nameof(ShowContinueButton));
             }
         }
     }
@@ -40,6 +42,15 @@ public class MainViewModel : ViewModelBase
     {
         get => _round;
         private set => SetProperty(ref _round, value);
+    }
+
+    /// <summary>
+    /// The currently active seat's ViewModel. Card area binds to this.
+    /// </summary>
+    public SeatViewModel? ActiveSeat
+    {
+        get => _activeSeat;
+        private set => SetProperty(ref _activeSeat, value);
     }
 
     public string PhaseDisplay => Phase switch
@@ -70,6 +81,7 @@ public class MainViewModel : ViewModelBase
 
     public int FinishDistance => _engine.Settings.FinishDistance;
     public int MaxRounds => _engine.Settings.MaxRounds;
+    public bool ShowContinueButton => Phase == GamePhase.RoundEnd && !_engine.Settings.AutoAdvanceEnabled;
 
     public ICommand PressStartCommand { get; }
     public ICommand ExitGameCommand { get; }
@@ -103,13 +115,13 @@ public class MainViewModel : ViewModelBase
         {
             var seatVm = new SeatViewModel(i,
                 joinAction: seatId => _engine.JoinSeat(seatId),
-                leaveAction: seatId => _engine.LeaveSeat(seatId),
-                addCreditAction: seatId => _engine.AddCredit(seatId),
                 dealAction: seatId => _engine.PressDeal(seatId),
                 continueAction: seatId => _engine.PressContinue(seatId),
                 pickCardAction: (seatId, cardIdx) => _engine.PickCard(seatId, cardIdx));
             SeatViewModels.Add(seatVm);
         }
+
+        ActiveSeat = SeatViewModels[0];
 
         _timer = new DispatcherTimer
         {
@@ -172,6 +184,8 @@ public class MainViewModel : ViewModelBase
 
     public void HandleKeyDown(Key key)
     {
+        var active = _engine.ActiveSeatIndex;
+
         switch (key)
         {
             // Player buttons 1-4 (in shell: join+start, in game: various)
@@ -195,15 +209,15 @@ public class MainViewModel : ViewModelBase
             // Deal for seat 1
             case Key.Space: _engine.PressDeal(0); break;
 
-            // Pick selection cards 1-5 for seat 0
-            case Key.F1: _engine.PickCard(0, 0); break;
-            case Key.F2: _engine.PickCard(0, 1); break;
-            case Key.F3: _engine.PickCard(0, 2); break;
-            case Key.F4: _engine.PickCard(0, 3); break;
-            case Key.F5: _engine.PickCard(0, 4); break;
+            // Pick selection cards 1-5 for the ACTIVE seat
+            case Key.F1: _engine.PickCard(active, 0); break;
+            case Key.F2: _engine.PickCard(active, 1); break;
+            case Key.F3: _engine.PickCard(active, 2); break;
+            case Key.F4: _engine.PickCard(active, 3); break;
+            case Key.F5: _engine.PickCard(active, 4); break;
 
-            // Continue for seat 1
-            case Key.Enter: _engine.PressContinue(0); break;
+            // Continue (advances all seats)
+            case Key.Enter: _engine.PressContinue(active); break;
 
             // Exit game / return to shell
             case Key.Escape:
@@ -243,11 +257,17 @@ public class MainViewModel : ViewModelBase
         Phase = _engine.Phase;
         Round = _engine.Round;
 
+        var activeIdx = _engine.ActiveSeatIndex;
+
         for (int i = 0; i < SeatViewModels.Count; i++)
         {
             SeatViewModels[i].CurrentPhase = Phase;
+            SeatViewModels[i].IsActiveSeat = (i == activeIdx);
             SeatViewModels[i].UpdateFromSeat(_engine.Seats[i]);
         }
+
+        if (activeIdx >= 0 && activeIdx < SeatViewModels.Count)
+            ActiveSeat = SeatViewModels[activeIdx];
     }
 
     private void RefreshHighScores()

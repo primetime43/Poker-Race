@@ -29,7 +29,6 @@
     <converters:CardToImageConverter x:Key="CardToImage"/>
     <converters:ScoreToMarginConverter x:Key="ScoreToMargin"/>
     <converters:PhaseToVisibilityConverter x:Key="PhaseToVisibility"/>
-    <converters:SeatStatusToColorConverter x:Key="SeatStatusToColor"/>
 
     <!-- Base Text Style -->
     <Style TargetType="TextBlock">

@@ -12,6 +12,7 @@ public class GameEngine
 
     public GamePhase Phase { get; private set; } = GamePhase.Attract;
     public int Round { get; private set; }
+    public int ActiveSeatIndex { get; private set; }
     public Seat[] Seats { get; }
     public PointTable PointTable { get; set; }
     public GameSettings Settings { get; }
@@ -43,11 +44,7 @@ public class GameEngine
         if (seat is null || seat.Status != SeatStatus.Empty)
             return false;
 
-        if (seat.Credits < Settings.CreditCostPerRound)
-            return false;
-
         seat.Status = SeatStatus.Joined;
-        seat.Credits -= Settings.CreditCostPerRound;
 
         if (Phase == GamePhase.Attract)
             SetPhase(GamePhase.SeatJoin);
@@ -75,17 +72,6 @@ public class GameEngine
         return true;
     }
 
-    public bool AddCredit(int seatId, int amount = 1)
-    {
-        var seat = GetSeat(seatId);
-        if (seat is null || amount <= 0)
-            return false;
-
-        seat.Credits += amount;
-        OnStateChanged();
-        return true;
-    }
-
     /// <summary>
     /// Start dealing from SeatJoin phase. Deals 5 selection cards to each seat.
     /// </summary>
@@ -104,12 +90,13 @@ public class GameEngine
 
     /// <summary>
     /// Pick a card from the selection row during Picking phase.
-    /// The picked card is added to the player's hand, and a new random card
-    /// replaces it in the selection row.
+    /// Only the active seat can pick cards (turn-based).
     /// </summary>
     public bool PickCard(int seatId, int selectionIndex)
     {
         if (Phase != GamePhase.Picking)
+            return false;
+        if (seatId != ActiveSeatIndex)
             return false;
 
         var seat = GetSeat(seatId);
@@ -129,16 +116,11 @@ public class GameEngine
         var replacement = deck.Draw(1);
         seat.SelectionCards[selectionIndex] = replacement[0];
 
-        // If this seat's hand is complete, auto-evaluate
+        // If this seat's hand is complete, evaluate and advance turn
         if (seat.IsHandComplete)
         {
             EvaluateSeat(seat);
-        }
-
-        // If ALL joined seats have complete hands, advance to Racing
-        if (AllJoinedSeats().All(s => s.IsHandComplete))
-        {
-            SetPhase(GamePhase.Racing);
+            AdvanceActiveOrRace();
         }
         else
         {
@@ -157,11 +139,7 @@ public class GameEngine
         if (seat is null || seat.Status != SeatStatus.Joined)
             return false;
 
-        seat.IsReadyToContinue = true;
-
-        if (AllJoinedSeats().All(s => s.IsReadyToContinue))
-            AdvanceFromRoundEnd();
-
+        AdvanceFromRoundEnd();
         OnStateChanged();
         return true;
     }
@@ -175,13 +153,14 @@ public class GameEngine
             case GamePhase.Picking:
                 if (_phaseTimer >= Settings.PickingTimeoutSeconds)
                 {
-                    // Auto-fill remaining hands with random picks
-                    foreach (var seat in AllJoinedSeats().Where(s => !s.IsHandComplete))
+                    // Timeout: auto-fill the active seat and advance to next
+                    var activeSeat = GetSeat(ActiveSeatIndex);
+                    if (activeSeat != null && !activeSeat.IsHandComplete)
                     {
-                        AutoFillHand(seat);
-                        EvaluateSeat(seat);
+                        AutoFillHand(activeSeat);
+                        EvaluateSeat(activeSeat);
                     }
-                    SetPhase(GamePhase.Racing);
+                    AdvanceActiveOrRace();
                 }
                 break;
 
@@ -237,7 +216,29 @@ public class GameEngine
             seat.Hand = Array.Empty<Card>();
         }
 
+        ActiveSeatIndex = AllJoinedSeats().First().SeatId;
         SetPhase(GamePhase.Picking);
+    }
+
+    /// <summary>
+    /// Advance to the next seat that hasn't completed their hand,
+    /// or transition to Racing if all seats are done.
+    /// </summary>
+    private void AdvanceActiveOrRace()
+    {
+        var nextSeat = AllJoinedSeats().FirstOrDefault(s => !s.IsHandComplete);
+        if (nextSeat != null)
+        {
+            ActiveSeatIndex = nextSeat.SeatId;
+            _phaseTimer = 0; // reset per-player picking timer
+            OnStateChanged();
+        }
+        else
+        {
+            // All players done — show first player's hand during racing
+            ActiveSeatIndex = AllJoinedSeats().First().SeatId;
+            SetPhase(GamePhase.Racing);
+        }
     }
 
     private void AutoFillHand(Seat seat)
@@ -285,26 +286,6 @@ public class GameEngine
         }
         else
         {
-            // Deduct credits for next round
-            foreach (var seat in AllJoinedSeats())
-            {
-                if (seat.Credits < Settings.CreditCostPerRound)
-                {
-                    seat.Status = SeatStatus.Folded;
-                }
-                else
-                {
-                    seat.Credits -= Settings.CreditCostPerRound;
-                }
-            }
-
-            // If no seats left with credits, game over
-            if (!Seats.Any(s => s.Status == SeatStatus.Joined))
-            {
-                SetPhase(GamePhase.GameOver);
-                return;
-            }
-
             StartDealing();
         }
     }

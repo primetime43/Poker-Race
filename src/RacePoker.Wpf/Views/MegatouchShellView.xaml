@@ -23,7 +23,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Main attract content: Logo (left) + High Scores (right) -->
@@ -74,11 +73,6 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Credits display -->
-                        <TextBlock Foreground="#556677" FontSize="11" Margin="0,20,0,0"
-                                   HorizontalAlignment="Center">
-                            <Run Text="0" Foreground="#889999"/> <Run Text="CREDITS"/>
-                        </TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -172,11 +166,6 @@
                 </Grid>
             </Border>
 
-            <!-- Bottom credits line -->
-            <TextBlock Grid.Row="2" Foreground="#445566" FontSize="10"
-                       Margin="4,4,4,2">
-                <Run Text="0 CREDITS"/>
-            </TextBlock>
         </Grid>
 
         <!-- ════════════════════════════════════════════════

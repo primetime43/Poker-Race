@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Windows.Media;
 using RacePoker.Core.Enums;
 using RacePoker.Core.Models;
 
@@ -8,21 +9,38 @@ namespace RacePoker.Wpf.ViewModels;
 public class SeatViewModel : ViewModelBase
 {
     private readonly Action<int> _joinAction;
-    private readonly Action<int> _leaveAction;
-    private readonly Action<int> _addCreditAction;
     private readonly Action<int> _dealAction;
     private readonly Action<int> _continueAction;
     private readonly Action<int, int> _pickCardAction;
 
     private SeatStatus _status;
-    private int _credits;
     private int _totalScore;
     private int _roundPoints;
     private string _handName = "";
     private GamePhase _currentPhase;
+    private bool _isActiveSeat;
 
     public int SeatId { get; }
     public string SeatLabel => $"Player {SeatId + 1}";
+
+    public bool IsActiveSeat
+    {
+        get => _isActiveSeat;
+        set
+        {
+            if (SetProperty(ref _isActiveSeat, value))
+                UpdateSelectionCanPick();
+        }
+    }
+
+    public Brush SeatColorBrush => SeatId switch
+    {
+        0 => new SolidColorBrush(Color.FromRgb(0xFF, 0x44, 0x44)),
+        1 => new SolidColorBrush(Color.FromRgb(0x44, 0x88, 0xFF)),
+        2 => new SolidColorBrush(Color.FromRgb(0x44, 0xDD, 0x44)),
+        3 => new SolidColorBrush(Color.FromRgb(0xFF, 0xDD, 0x44)),
+        _ => Brushes.White
+    };
 
     /// <summary>
     /// The 5 face-up selection cards the player picks from.
@@ -47,12 +65,6 @@ public class SeatViewModel : ViewModelBase
                 OnPropertyChanged(nameof(CanDeal));
             }
         }
-    }
-
-    public int Credits
-    {
-        get => _credits;
-        set => SetProperty(ref _credits, value);
     }
 
     public int TotalScore
@@ -106,30 +118,22 @@ public class SeatViewModel : ViewModelBase
     public bool ShowSelectionCards => IsJoined && CurrentPhase == GamePhase.Picking;
 
     public ICommand JoinCommand { get; }
-    public ICommand LeaveCommand { get; }
-    public ICommand AddCreditCommand { get; }
     public ICommand DealCommand { get; }
     public ICommand ContinueCommand { get; }
 
     public SeatViewModel(int seatId,
         Action<int> joinAction,
-        Action<int> leaveAction,
-        Action<int> addCreditAction,
         Action<int> dealAction,
         Action<int> continueAction,
         Action<int, int> pickCardAction)
     {
         SeatId = seatId;
         _joinAction = joinAction;
-        _leaveAction = leaveAction;
-        _addCreditAction = addCreditAction;
         _dealAction = dealAction;
         _continueAction = continueAction;
         _pickCardAction = pickCardAction;
 
         JoinCommand = new RelayCommand(() => _joinAction(SeatId));
-        LeaveCommand = new RelayCommand(() => _leaveAction(SeatId));
-        AddCreditCommand = new RelayCommand(() => _addCreditAction(SeatId));
         DealCommand = new RelayCommand(() => _dealAction(SeatId));
         ContinueCommand = new RelayCommand(() => _continueAction(SeatId));
 
@@ -153,7 +157,6 @@ public class SeatViewModel : ViewModelBase
     public void UpdateFromSeat(Seat seat)
     {
         Status = seat.Status;
-        Credits = seat.Credits;
         TotalScore = seat.TotalScore;
         RoundPoints = seat.RoundPoints;
         HandName = seat.HandName;
@@ -176,7 +179,7 @@ public class SeatViewModel : ViewModelBase
 
     private void UpdateSelectionCanPick()
     {
-        bool canPick = IsJoined && CurrentPhase == GamePhase.Picking;
+        bool canPick = IsJoined && CurrentPhase == GamePhase.Picking && IsActiveSeat;
         // Check if hand is already complete (5 cards)
         bool handComplete = Cards.Count(c => c.Card != null) >= 5;
 
