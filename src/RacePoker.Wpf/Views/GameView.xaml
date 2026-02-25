@@ -1,0 +1,132 @@
+<UserControl x:Class="RacePoker.Wpf.Views.GameView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:RacePoker.Wpf.Views"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1280">
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Bar: Phase, Round, Credits -->
+        <Border Grid.Row="0" Background="{StaticResource PanelBrush}" Padding="12,6">
+            <DockPanel>
+                <TextBlock Text="{Binding PhaseDisplay}" Style="{StaticResource PhaseText}"
+                           DockPanel.Dock="Left"/>
+                <TextBlock Text="{Binding RoundDisplay}" Style="{StaticResource PhaseText}"
+                           DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock FontSize="13" Foreground="#888" Margin="20,0">
+                        <Run Text="P1: "/><Run Text="{Binding SeatViewModels[0].Credits, Mode=OneWay}" Foreground="White"/><Run Text="cr"/>
+                    </TextBlock>
+                    <TextBlock FontSize="13" Foreground="#888" Margin="20,0">
+                        <Run Text="P2: "/><Run Text="{Binding SeatViewModels[1].Credits, Mode=OneWay}" Foreground="White"/><Run Text="cr"/>
+                    </TextBlock>
+                    <TextBlock FontSize="13" Foreground="#888" Margin="20,0">
+                        <Run Text="P3: "/><Run Text="{Binding SeatViewModels[2].Credits, Mode=OneWay}" Foreground="White"/><Run Text="cr"/>
+                    </TextBlock>
+                    <TextBlock FontSize="13" Foreground="#888" Margin="20,0">
+                        <Run Text="P4: "/><Run Text="{Binding SeatViewModels[3].Credits, Mode=OneWay}" Foreground="White"/><Run Text="cr"/>
+                    </TextBlock>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Race Track -->
+        <Border Grid.Row="1" Background="{StaticResource TrackGreenBrush}"
+                BorderBrush="#2a6e2a" BorderThickness="0,2"
+                Margin="10,6" Padding="10,6" CornerRadius="4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Finish Line Markers -->
+                <Canvas Grid.Row="0" Height="18" Margin="0,0,0,2">
+                    <TextBlock Canvas.Left="0" Text="0" Foreground="#aaa" FontSize="10"/>
+                    <TextBlock Canvas.Left="180" Text="30K" Foreground="#aaa" FontSize="10"/>
+                    <TextBlock Canvas.Left="370" Text="60K" Foreground="#aaa" FontSize="10"/>
+                    <TextBlock Canvas.Left="560" Text="90K" Foreground="#aaa" FontSize="10"/>
+                    <TextBlock Canvas.Left="750" Text="120K" Foreground="#aaa" FontSize="10"/>
+                    <TextBlock Canvas.Right="0" Text="FINISH" Foreground="{StaticResource AccentBrush}"
+                               FontSize="11" FontWeight="Bold"/>
+                </Canvas>
+
+                <!-- Horse 1 -->
+                <Grid Grid.Row="1" Height="28" Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                    <Border Background="{StaticResource Horse0Brush}" CornerRadius="3"
+                            Height="22" Width="24" HorizontalAlignment="Left"
+                            Margin="{Binding SeatViewModels[0].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                        <TextBlock Text="1" Foreground="White" FontWeight="Bold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+
+                <!-- Horse 2 -->
+                <Grid Grid.Row="2" Height="28" Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                    <Border Background="{StaticResource Horse1Brush}" CornerRadius="3"
+                            Height="22" Width="24" HorizontalAlignment="Left"
+                            Margin="{Binding SeatViewModels[1].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                        <TextBlock Text="2" Foreground="White" FontWeight="Bold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+
+                <!-- Horse 3 -->
+                <Grid Grid.Row="3" Height="28" Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                    <Border Background="{StaticResource Horse2Brush}" CornerRadius="3"
+                            Height="22" Width="24" HorizontalAlignment="Left"
+                            Margin="{Binding SeatViewModels[2].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                        <TextBlock Text="3" Foreground="White" FontWeight="Bold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+
+                <!-- Horse 4 -->
+                <Grid Grid.Row="4" Height="28" Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                    <Border Background="{StaticResource Horse3Brush}" CornerRadius="3"
+                            Height="22" Width="24" HorizontalAlignment="Left"
+                            Margin="{Binding SeatViewModels[3].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                        <TextBlock Text="4" Foreground="White" FontWeight="Bold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+
+                <!-- Track lines -->
+                <Border Grid.Row="5" Height="1" Background="#2a6e2a" Margin="0,4,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Game Over Overlay -->
+        <Border Grid.Row="1" Grid.RowSpan="2"
+                Background="#CC000000" CornerRadius="8"
+                Visibility="{Binding Phase, Converter={StaticResource PhaseToVisibility}, ConverterParameter=GameOver}"
+                Margin="10">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="GAME OVER" Style="{StaticResource TitleText}" FontSize="52"/>
+                <TextBlock Text="Press ESC or button to return" FontSize="16" Foreground="#888"
+                           HorizontalAlignment="Center" Margin="0,10"/>
+                <Button Style="{StaticResource JoinButton}" Content="RETURN TO MENU"
+                        Command="{Binding PressStartCommand}" Margin="0,20" FontSize="18"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Seat Panels (4 across bottom) -->
+        <UniformGrid Grid.Row="2" Columns="4" Margin="4,2,4,4">
+            <views:SeatPanel DataContext="{Binding SeatViewModels[0]}"/>
+            <views:SeatPanel DataContext="{Binding SeatViewModels[1]}"/>
+            <views:SeatPanel DataContext="{Binding SeatViewModels[2]}"/>
+            <views:SeatPanel DataContext="{Binding SeatViewModels[3]}"/>
+        </UniformGrid>
+    </Grid>
+</UserControl>

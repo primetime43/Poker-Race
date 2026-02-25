@@ -1,0 +1,12 @@
+{
+  "RoyalFlush": 37500,
+  "StraightFlush": 28500,
+  "FourOfAKind": 22500,
+  "FullHouse": 18700,
+  "Flush": 15000,
+  "Straight": 12000,
+  "ThreeOfAKind": 9000,
+  "TwoPair": 6700,
+  "OnePair": 4500,
+  "HighCard": 0
+}

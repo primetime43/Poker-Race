@@ -1,0 +1,533 @@
+<UserControl x:Class="RacePoker.Wpf.Views.RacePokerGameView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1280">
+
+    <!-- ══════════════════════════════════════════════════════════
+         RACE POKER IN-GAME VIEW — Megatouch Cabinet Layout
+         Vertical stack: Track → Markers → Point Chart → Result → Cards
+         ══════════════════════════════════════════════════════════ -->
+    <Grid Background="#080810">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="42"/>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ════════════════════════════════════════════════
+             ROW 0 — TOP BAR
+             Left: progress bar + HI-SCORE
+             Right: ? X buttons + player score boxes
+             ════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#0c0c1a" BorderBrush="#1a1a33" BorderThickness="0,0,0,1">
+            <Grid Margin="8,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Timer progress + HI-SCORE -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Timer progress bar -->
+                    <Border Width="110" Height="12" CornerRadius="6" Background="#111122"
+                            BorderBrush="#333355" BorderThickness="1" Margin="0,0,10,0">
+                        <Border CornerRadius="5" HorizontalAlignment="Left" Width="80">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#DD2222" Offset="0"/>
+                                    <GradientStop Color="#DDAA22" Offset="0.5"/>
+                                    <GradientStop Color="#44DD44" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Border>
+                    <TextBlock Text="HI-SCORE" Foreground="#8899AA" FontSize="11"
+                               FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="0" Foreground="{StaticResource GoldAccent}" FontSize="13"
+                               FontWeight="Bold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Center: Phase display -->
+                <TextBlock Grid.Column="1" Text="{Binding PhaseDisplay}"
+                           Foreground="#556677" FontSize="13" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                <!-- Right: ? X + player score boxes -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource HelpBtn}" Content="?" Margin="0,0,4,0"/>
+                    <Button Style="{StaticResource CloseBtn}" Content="X"
+                            Command="{Binding ExitGameCommand}" Margin="0,0,10,0"/>
+
+                    <!-- P1 Score -->
+                    <Border Style="{StaticResource ScoreBox}"
+                            Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="1" Foreground="#FF4444" FontSize="14" FontWeight="Bold"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Style="{StaticResource ScoreLED}"
+                                       Text="{Binding SeatViewModels[0].TotalScore, StringFormat=N0}"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- P2 Score -->
+                    <Border Style="{StaticResource ScoreBox}"
+                            Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="2" Foreground="#FF8844" FontSize="14" FontWeight="Bold"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Style="{StaticResource ScoreLED}"
+                                       Text="{Binding SeatViewModels[1].TotalScore, StringFormat=N0}"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- P3 Score -->
+                    <Border Style="{StaticResource ScoreBox}"
+                            Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="3" Foreground="#44DD44" FontSize="14" FontWeight="Bold"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Style="{StaticResource ScoreLED}"
+                                       Text="{Binding SeatViewModels[2].TotalScore, StringFormat=N0}"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- P4 Score -->
+                    <Border Style="{StaticResource ScoreBox}"
+                            Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="4" Foreground="#FFDD44" FontSize="14" FontWeight="Bold"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Style="{StaticResource ScoreLED}"
+                                       Text="{Binding SeatViewModels[3].TotalScore, StringFormat=N0}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ════════════════════════════════════════════════
+             ROW 1 — RACE TRACK (full width)
+             ════════════════════════════════════════════════ -->
+        <Border Grid.Row="1" Style="{StaticResource TrackPanel}" Margin="4,4,4,0" Padding="8,4">
+            <Grid>
+                <!-- Hash marks along bottom edge -->
+                <ItemsControl VerticalAlignment="Bottom" Margin="30,0,30,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
+                </ItemsControl>
+
+                <!-- Finish line (right edge) -->
+                <Border HorizontalAlignment="Right" Width="4" Background="#DDFFFFFF" Margin="0,0,8,0"/>
+                <TextBlock Text="FINISH" Foreground="#CCFFFFFF" FontSize="10" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,16,0"/>
+
+                <!-- Horse lanes -->
+                <StackPanel VerticalAlignment="Center" Margin="16,0,16,0">
+                    <!-- Horse 1 (Red) -->
+                    <Grid Height="48" Margin="0,2"
+                          Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <Border Background="#DD3333" CornerRadius="4"
+                                Width="36" Height="32" HorizontalAlignment="Left"
+                                Margin="{Binding SeatViewModels[0].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                            <TextBlock Text="1" Foreground="White" FontWeight="Bold"
+                                       FontSize="16" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <Line X1="0" Y1="46" X2="2000" Y2="46" Stroke="#33FFFFFF"
+                              StrokeDashArray="4,4" StrokeThickness="0.5"/>
+                    </Grid>
+
+                    <!-- Horse 2 (Blue) -->
+                    <Grid Height="48" Margin="0,2"
+                          Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <Border Background="#3366DD" CornerRadius="4"
+                                Width="36" Height="32" HorizontalAlignment="Left"
+                                Margin="{Binding SeatViewModels[1].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                            <TextBlock Text="2" Foreground="White" FontWeight="Bold"
+                                       FontSize="16" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <Line X1="0" Y1="46" X2="2000" Y2="46" Stroke="#33FFFFFF"
+                              StrokeDashArray="4,4" StrokeThickness="0.5"/>
+                    </Grid>
+
+                    <!-- Horse 3 (Green) -->
+                    <Grid Height="48" Margin="0,2"
+                          Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <Border Background="#33AA33" CornerRadius="4"
+                                Width="36" Height="32" HorizontalAlignment="Left"
+                                Margin="{Binding SeatViewModels[2].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                            <TextBlock Text="3" Foreground="White" FontWeight="Bold"
+                                       FontSize="16" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <Line X1="0" Y1="46" X2="2000" Y2="46" Stroke="#33FFFFFF"
+                              StrokeDashArray="4,4" StrokeThickness="0.5"/>
+                    </Grid>
+
+                    <!-- Horse 4 (Yellow) -->
+                    <Grid Height="48" Margin="0,2"
+                          Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <Border Background="#CCAA22" CornerRadius="4"
+                                Width="36" Height="32" HorizontalAlignment="Left"
+                                Margin="{Binding SeatViewModels[3].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                            <TextBlock Text="4" Foreground="White" FontWeight="Bold"
+                                       FontSize="16" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ════════════════════════════════════════════════
+             ROW 2 — SCORE MARKERS (red ovals, full width)
+             ════════════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="#0a0a18" Padding="0,3">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
+                    <TextBlock Text="6,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                </Border>
+                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
+                    <TextBlock Text="12,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                </Border>
+                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
+                    <TextBlock Text="18,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                </Border>
+                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
+                    <TextBlock Text="24,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                </Border>
+                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
+                    <TextBlock Text="30,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                </Border>
+                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
+                    <TextBlock Text="36,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                </Border>
+                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
+                    <TextBlock Text="42,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                </Border>
+                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
+                    <TextBlock Text="48,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- ════════════════════════════════════════════════
+             ROW 3 — POINT CHART (horizontal 5-col × 2-row)
+             ════════════════════════════════════════════════ -->
+        <Border Grid.Row="3" Background="#0c0c22" BorderBrush="#222244" BorderThickness="1"
+                Margin="4,2,4,0" Padding="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Row 1: High Card, 2 Pair, Straight, Full House, Str.Flush -->
+                <Border Grid.Row="0" Grid.Column="0" BorderBrush="#222244" BorderThickness="0,0,1,1"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="High Card" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Face Value" Foreground="#889999"
+                                   FontSize="10" FontStyle="Italic" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" BorderBrush="#222244" BorderThickness="0,0,1,1"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="2 Pair" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="6,700" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="2" BorderBrush="#222244" BorderThickness="0,0,1,1"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="Straight" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="12,000" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="3" BorderBrush="#222244" BorderThickness="0,0,1,1"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="Full House" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="18,700" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="4" BorderBrush="#222244" BorderThickness="0,0,0,1"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="Str. Flush" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="28,500" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Row 2: Any Pair, 3 of a Kind, Flush, 4 of a Kind, Royal Flush -->
+                <Border Grid.Row="1" Grid.Column="0" BorderBrush="#222244" BorderThickness="0,0,1,0"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="Any Pair" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="4,500" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" BorderBrush="#222244" BorderThickness="0,0,1,0"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="3 Of A Kind" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="9,000" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="2" BorderBrush="#222244" BorderThickness="0,0,1,0"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="Flush" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="15,000" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="3" BorderBrush="#222244" BorderThickness="0,0,1,0"
+                        Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="4 Of A Kind" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="22,500" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="4" Padding="6,3">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="Royal Flush" Foreground="{StaticResource GoldAccent}"
+                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="37,500" Foreground="White"
+                                   FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ════════════════════════════════════════════════
+             ROW 4 — HAND RESULT BAR + ROUND BADGE
+             ════════════════════════════════════════════════ -->
+        <Border Grid.Row="4" Background="#0a0a14" BorderBrush="{StaticResource GoldAccent}"
+                BorderThickness="0,2" Margin="4,2,4,0" Padding="12,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Hand result name -->
+                <TextBlock Grid.Column="0" Text="{Binding SeatViewModels[0].HandName}"
+                           Foreground="{StaticResource GoldAccent}" FontSize="18"
+                           FontWeight="Bold" VerticalAlignment="Center"
+                           HorizontalAlignment="Center"/>
+
+                <!-- Round badge -->
+                <Border Grid.Column="1" Style="{StaticResource RoundBadge}"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding RoundDisplay}" Foreground="White"
+                               FontSize="13" FontWeight="Bold"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ════════════════════════════════════════════════
+             ROW 5 — CARD AREA: Selection Row + Hand Row (seat 0)
+             Click a selection card to add it to your hand.
+             A new random card replaces it in the selection row.
+             ════════════════════════════════════════════════ -->
+        <Border Grid.Row="5" Background="#0e0e1c" Margin="4,2,4,0" Padding="4,4"
+                Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel HorizontalAlignment="Center">
+                <!-- SELECTION ROW: 5 face-up cards to pick from -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2">
+                    <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="0,0,10,0"
+                               Visibility="{Binding SeatViewModels[0].ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
+                    <ItemsControl ItemsSource="{Binding SeatViewModels[0].SelectionCards}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding ToggleHoldCommand}"
+                                        IsEnabled="{Binding CanToggle}"
+                                        Cursor="Hand" Background="Transparent"
+                                        BorderThickness="0" Padding="0" Margin="3,0">
+                                    <Grid>
+                                        <Border Width="86" Height="120" CornerRadius="6"
+                                                BorderBrush="#556688" BorderThickness="1.5"
+                                                Background="White">
+                                            <Image Source="{Binding Card, Converter={StaticResource CardToImage}}"
+                                                   Stretch="Uniform" Margin="3"/>
+                                        </Border>
+                                        <!-- Highlight glow when clickable -->
+                                        <Border Width="86" Height="120" CornerRadius="6"
+                                                BorderThickness="2" Opacity="0.5"
+                                                Visibility="{Binding CanToggle, Converter={StaticResource BoolToVisibility}}">
+                                            <Border.BorderBrush>
+                                                <SolidColorBrush Color="#00DDDD"/>
+                                            </Border.BorderBrush>
+                                        </Border>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="10,0,0,0"
+                               Visibility="{Binding SeatViewModels[0].ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
+                </StackPanel>
+
+                <!-- HAND ROW: 5 slots that fill up as you pick -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,2">
+                    <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ItemsControl ItemsSource="{Binding SeatViewModels[0].Cards}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,0">
+                                    <!-- Card face (shown when card exists) -->
+                                    <Border Width="72" Height="100" CornerRadius="5"
+                                            BorderBrush="#556688" BorderThickness="1.5"
+                                            Background="White"
+                                            Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}}">
+                                        <Image Source="{Binding Card, Converter={StaticResource CardToImage}}"
+                                               Stretch="Uniform" Margin="2"/>
+                                    </Border>
+                                    <!-- Empty slot placeholder (shown when no card) -->
+                                    <Border Width="72" Height="100" CornerRadius="5"
+                                            BorderBrush="#222244" BorderThickness="1.5"
+                                            Background="#0a0a1a"
+                                            Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                                        <TextBlock Text="?" Foreground="#222244" FontSize="24"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                </StackPanel>
+
+                <!-- Continue button (shown during RoundEnd) -->
+                <Button Style="{StaticResource ActionBtn}" Content="CONTINUE"
+                        Command="{Binding SeatViewModels[0].ContinueCommand}"
+                        Visibility="{Binding SeatViewModels[0].CanContinue, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Center" Margin="0,4,0,0" FontSize="14" Padding="20,6"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ════════════════════════════════════════════════
+             ROW 6 — OTHER PLAYER CARD BACKS (seats 1-3)
+             ════════════════════════════════════════════════ -->
+        <Border Grid.Row="6" Background="#090914" Margin="4,2,4,4" Padding="4">
+            <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center">
+                <!-- Player 2 card backs -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2"
+                            Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="P2" Foreground="#FF8844" FontSize="11" FontWeight="Bold"
+                               VerticalAlignment="Center" Margin="0,0,8,0" Width="24"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                </StackPanel>
+
+                <!-- Player 3 card backs -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2"
+                            Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="P3" Foreground="#44DD44" FontSize="11" FontWeight="Bold"
+                               VerticalAlignment="Center" Margin="0,0,8,0" Width="24"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                </StackPanel>
+
+                <!-- Player 4 card backs -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2"
+                            Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="P4" Foreground="#FFDD44" FontSize="11" FontWeight="Bold"
+                               VerticalAlignment="Center" Margin="0,0,8,0" Width="24"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                    <Border Style="{StaticResource CardBack}" Width="52" Height="72"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ════ GAME OVER OVERLAY ════ -->
+        <Border Grid.RowSpan="7" Background="#DD000010"
+                Visibility="{Binding Phase, Converter={StaticResource PhaseToVisibility}, ConverterParameter=GameOver}">
+            <Border Background="#CC080818" CornerRadius="12" Padding="40,30"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="0" BlurRadius="30" Opacity="0.8" Color="#000000"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="GAME OVER" Foreground="{StaticResource GoldAccent}"
+                               FontSize="42" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <TextBlock Foreground="#667788" FontSize="14" HorizontalAlignment="Center"
+                               Margin="0,8,0,0">
+                        <Run Text="Press ESC or click to return"/>
+                    </TextBlock>
+                    <Button Style="{StaticResource ActionBtn}" Content="RETURN TO MENU"
+                            Command="{Binding ExitGameCommand}" Margin="0,16,0,0"
+                            FontSize="16" Padding="24,10"/>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>

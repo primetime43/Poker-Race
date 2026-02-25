@@ -1,0 +1,345 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:RacePoker.Wpf.Converters">
+
+    <!-- ══════════ MEGATOUCH CABINET COLORS ══════════ -->
+    <SolidColorBrush x:Key="ShellBgBrush" Color="#080818"/>
+    <SolidColorBrush x:Key="PanelBgBrush" Color="#10102a"/>
+    <SolidColorBrush x:Key="PanelBorderBrush" Color="#2a2a55"/>
+    <SolidColorBrush x:Key="TealAccent" Color="#00d4d4"/>
+    <SolidColorBrush x:Key="TealMid" Color="#009999"/>
+    <SolidColorBrush x:Key="TealDark" Color="#005555"/>
+    <SolidColorBrush x:Key="GoldAccent" Color="#FFD700"/>
+    <SolidColorBrush x:Key="ScoreGreen" Color="#00FF88"/>
+    <SolidColorBrush x:Key="MagentaAccent" Color="#CC44CC"/>
+    <SolidColorBrush x:Key="TrackGreen" Color="#2a8a2a"/>
+    <SolidColorBrush x:Key="TrackFieldGreen" Color="#338833"/>
+    <SolidColorBrush x:Key="CardBackBlue" Color="#1a3060"/>
+    <SolidColorBrush x:Key="RoundBadgeRed" Color="#CC2222"/>
+    <SolidColorBrush x:Key="ChartBg" Color="#0c0c22"/>
+    <SolidColorBrush x:Key="ScoreBoxBg" Color="#0a0a18"/>
+    <SolidColorBrush x:Key="ScoreBoxBorder" Color="#222244"/>
+    <SolidColorBrush x:Key="DimText" Color="#668899"/>
+    <SolidColorBrush x:Key="BrightText" Color="#EEEEFF"/>
+
+    <!-- Background gradient with subtle light-ray glow from bottom-center -->
+    <RadialGradientBrush x:Key="ShellRadialBg" Center="0.5,1.0" RadiusX="0.8" RadiusY="0.9"
+                         GradientOrigin="0.5,1.0">
+        <GradientStop Color="#0a1830" Offset="0"/>
+        <GradientStop Color="#060610" Offset="0.6"/>
+        <GradientStop Color="#030308" Offset="1"/>
+    </RadialGradientBrush>
+
+    <!-- Converters (keep existing) -->
+    <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+    <converters:CardToImageConverter x:Key="CardToImage"/>
+    <converters:ScoreToMarginConverter x:Key="ScoreToMargin"/>
+    <converters:PhaseToVisibilityConverter x:Key="PhaseToVisibility"/>
+    <converters:SeatStatusToColorConverter x:Key="SeatStatusToColor"/>
+
+    <!-- ══════════ GAME TILE BUTTON ══════════ -->
+    <Style x:Key="GameTileBtn" TargetType="Button">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Margin" Value="2"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" Background="{TemplateBinding Background}"
+                            CornerRadius="6" BorderBrush="#44FFFFFF" BorderThickness="1"
+                            Padding="4">
+                        <Border.Effect>
+                            <DropShadowEffect ShadowDepth="1" BlurRadius="3" Opacity="0.4"/>
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextBlock.TextAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="#88FFFFFF"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.85"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════ PLAYER BUTTON (large teal oval) ══════════ -->
+    <Style x:Key="PlayerBtn" TargetType="Button">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Margin" Value="6,4"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinHeight" Value="80"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" CornerRadius="18" BorderThickness="2.5"
+                            BorderBrush="{StaticResource TealAccent}" Padding="8,6">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#00AAAA" Offset="0"/>
+                                <GradientStop Color="#006060" Offset="0.5"/>
+                                <GradientStop Color="#004040" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.Effect>
+                            <DropShadowEffect ShadowDepth="2" BlurRadius="6" Opacity="0.5"
+                                              Color="#00DDDD"/>
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="#44FFFF"/>
+                            <Setter TargetName="bd" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect ShadowDepth="0" BlurRadius="12" Opacity="0.7"
+                                                      Color="#00FFFF"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.85"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.35"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════ HELP (?) BUTTON ══════════ -->
+    <Style x:Key="HelpBtn" TargetType="Button">
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" CornerRadius="18"
+                            Background="{StaticResource MagentaAccent}"
+                            BorderBrush="#FF66DD" BorderThickness="1.5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#DD55DD"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════ CLOSE (X) BUTTON ══════════ -->
+    <Style x:Key="CloseBtn" TargetType="Button">
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" CornerRadius="4"
+                            Background="#AA2244" BorderBrush="#DD3366" BorderThickness="1.5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#CC3355"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════ M BUTTON (small brand circle) ══════════ -->
+    <Style x:Key="BrandBtn" TargetType="Button">
+        <Setter Property="Width" Value="40"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border CornerRadius="20" Background="{StaticResource MagentaAccent}"
+                            BorderBrush="#FF66DD" BorderThickness="1.5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════ ACTION BUTTON (Deal/Draw/Continue) ══════════ -->
+    <Style x:Key="ActionBtn" TargetType="Button">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="MinWidth" Value="80"/>
+        <Setter Property="Padding" Value="14,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" CornerRadius="8"
+                            BorderBrush="{StaticResource TealAccent}" BorderThickness="2"
+                            Padding="{TemplateBinding Padding}">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#226688" Offset="0"/>
+                                <GradientStop Color="#0e2e44" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="#44FFFF"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.35"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════ SCORE BOX ══════════ -->
+    <Style x:Key="ScoreBox" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ScoreBoxBg}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource ScoreBoxBorder}"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Margin" Value="2"/>
+        <Setter Property="MinWidth" Value="70"/>
+    </Style>
+
+    <!-- ══════════ SCORE TEXT (LED style) ══════════ -->
+    <Style x:Key="ScoreLED" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource ScoreGreen}"/>
+        <Setter Property="FontFamily" Value="Consolas"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+    </Style>
+
+    <!-- ══════════ ROUND BADGE ══════════ -->
+    <Style x:Key="RoundBadge" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource RoundBadgeRed}"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="10,4"/>
+    </Style>
+
+    <!-- ══════════ POINT CHART PANEL ══════════ -->
+    <Style x:Key="ChartPanel" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ChartBg}"/>
+        <Setter Property="BorderBrush" Value="#222244"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+
+    <!-- ══════════ CARD BACK STYLE ══════════ -->
+    <Style x:Key="CardBack" TargetType="Border">
+        <Setter Property="Width" Value="72"/>
+        <Setter Property="Height" Value="100"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Margin" Value="2"/>
+        <Setter Property="BorderBrush" Value="#334466"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#1a3565" Offset="0"/>
+                    <GradientStop Color="#0f2040" Offset="0.5"/>
+                    <GradientStop Color="#1a3565" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Card face border -->
+    <Style x:Key="CardFace" TargetType="Border">
+        <Setter Property="Width" Value="72"/>
+        <Setter Property="Height" Value="100"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Margin" Value="2"/>
+        <Setter Property="BorderBrush" Value="#556688"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="Background" Value="White"/>
+    </Style>
+
+    <!-- ══════════ TRACK PANEL ══════════ -->
+    <Style x:Key="TrackPanel" TargetType="Border">
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="BorderBrush" Value="#446644"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#2a7a2a" Offset="0"/>
+                    <GradientStop Color="#1a6a1a" Offset="0.5"/>
+                    <GradientStop Color="#2a7a2a" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════ HIGH SCORE TABLE STYLES ══════════ -->
+    <Style x:Key="HSPanel" TargetType="Border">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#0c1428" Offset="0"/>
+                    <GradientStop Color="#0a1020" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#1a2a44"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,8"/>
+    </Style>
+
+    <!-- ══════════ PILL BAR (Press Player Button) ══════════ -->
+    <Style x:Key="PillBar" TargetType="Border">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#1a1a30" Offset="0"/>
+                    <GradientStop Color="#0a0a1a" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#2a2a55"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="CornerRadius" Value="22"/>
+        <Setter Property="Padding" Value="20,8"/>
+    </Style>
+
+    <!-- ══════════ Existing theme keys for backward compat ══════════ -->
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#080818"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#FFD700"/>
+
+</ResourceDictionary>

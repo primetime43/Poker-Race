@@ -1,0 +1,109 @@
+<UserControl x:Class="RacePoker.Wpf.Views.SeatPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Border Style="{StaticResource SeatPanelBorder}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Seat Header -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,4">
+                <TextBlock Text="{Binding SeatLabel}" FontSize="14" FontWeight="Bold"
+                           Foreground="{StaticResource AccentBrush}" DockPanel.Dock="Left"/>
+                <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="12">
+                    <Run Text="Credits: " Foreground="#888"/>
+                    <Run Text="{Binding Credits, Mode=OneWay}" Foreground="White"/>
+                </TextBlock>
+            </DockPanel>
+
+            <!-- Cards -->
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding Cards}"
+                          Visibility="{Binding ShowCards, Converter={StaticResource BoolToVisibility}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Command="{Binding ToggleHoldCommand}" Cursor="Hand"
+                                IsEnabled="{Binding CanToggle}"
+                                Background="Transparent" BorderThickness="0" Padding="0">
+                            <Border Style="{StaticResource CardBorder}">
+                                <Grid>
+                                    <Image Source="{Binding Card, Converter={StaticResource CardToImage}}"
+                                           Stretch="Uniform" Margin="2"/>
+                                    <!-- Hold Badge -->
+                                    <Border Style="{StaticResource HoldBadge}"
+                                            Visibility="{Binding IsHeld, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="HOLD" Foreground="White" FontSize="11"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Hand Result + Score -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4"
+                        Visibility="{Binding ShowCards, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding HandName}" Foreground="White" FontSize="13" FontWeight="SemiBold"
+                           Margin="0,0,8,0"/>
+                <TextBlock FontSize="13" Foreground="{StaticResource AccentBrush}"
+                           Visibility="{Binding RoundPoints, Converter={StaticResource BoolToVisibility}}">
+                    <Run Text="+"/><Run Text="{Binding RoundPoints, Mode=OneWay, StringFormat=N0}"/>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Total Score -->
+            <TextBlock Grid.Row="3" HorizontalAlignment="Center" Margin="0,2"
+                       Style="{StaticResource ScoreText}"
+                       Visibility="{Binding IsJoined, Converter={StaticResource BoolToVisibility}}">
+                <Run Text="Score: "/><Run Text="{Binding TotalScore, Mode=OneWay, StringFormat=N0}"/>
+            </TextBlock>
+
+            <!-- Action Buttons -->
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                <!-- Join Button (when empty) -->
+                <Button Style="{StaticResource JoinButton}" Content="JOIN"
+                        Command="{Binding JoinCommand}"
+                        Visibility="{Binding CanJoin, Converter={StaticResource BoolToVisibility}}"
+                        Margin="2"/>
+
+                <!-- Deal/Draw Button -->
+                <Button Style="{StaticResource ArcadeButton}"
+                        Content="{Binding DealDrawLabel}"
+                        Command="{Binding DealDrawCommand}"
+                        Visibility="{Binding CanDealDraw, Converter={StaticResource BoolToVisibility}}"
+                        Margin="2"/>
+
+                <!-- Continue Button -->
+                <Button Style="{StaticResource ArcadeButton}" Content="CONTINUE"
+                        Command="{Binding ContinueCommand}"
+                        Visibility="{Binding CanContinue, Converter={StaticResource BoolToVisibility}}"
+                        Margin="2"/>
+
+                <!-- Leave Button -->
+                <Button Style="{StaticResource ArcadeButton}" Content="LEAVE"
+                        Command="{Binding LeaveCommand}"
+                        Visibility="{Binding IsJoined, Converter={StaticResource BoolToVisibility}}"
+                        Margin="2" FontSize="11"/>
+
+                <!-- Add Credit Button -->
+                <Button Style="{StaticResource ArcadeButton}" Content="+CREDIT"
+                        Command="{Binding AddCreditCommand}"
+                        Margin="2" FontSize="11"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
