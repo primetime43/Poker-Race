@@ -125,23 +125,25 @@ public class MainViewModel : ViewModelBase
 
     /// <summary>
     /// Called when a player button (1-4) is pressed on the Megatouch shell.
-    /// Joins the seat and auto-deals to start the game.
+    /// The button index represents the number of players: 0 = 1 player, 3 = 4 players.
+    /// Joins seats 0 through buttonIndex and auto-deals.
     /// </summary>
-    public void PlayerButtonPressed(int seatId)
+    public void PlayerButtonPressed(int buttonIndex)
     {
-        if (seatId < 0 || seatId >= _engine.Settings.MaxSeats)
+        if (buttonIndex < 0 || buttonIndex >= _engine.Settings.MaxSeats)
             return;
 
-        var seat = _engine.Seats[seatId];
-        if (seat.Status == SeatStatus.Empty)
+        // Join seats 0 through buttonIndex
+        for (int i = 0; i <= buttonIndex; i++)
         {
-            _engine.JoinSeat(seatId);
+            if (_engine.Seats[i].Status == SeatStatus.Empty)
+                _engine.JoinSeat(i);
         }
 
         // Auto-deal if we're in SeatJoin
         if (_engine.Phase == GamePhase.SeatJoin)
         {
-            _engine.PressDeal(seatId);
+            _engine.PressDeal(0);
         }
     }
 
