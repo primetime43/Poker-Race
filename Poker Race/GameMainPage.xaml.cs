@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -22,6 +22,7 @@ namespace Poker_Race
         public static Dictionary<string, Dictionary<string, int>> cardMap;
         private static string usersHand;
         private static int round, newScore, overallScore, currentHandValue;
+        private const int MaxRounds = 10;
         public static ProgressBar _pBar;
         public GameMainPage()
         {
@@ -45,14 +46,15 @@ namespace Poker_Race
                 "ace_of_clubs.png", "ace_of_diamonds.png", "ace_of_hearts.png", "ace_of_spades.png"
             };
             round = 0;
+            overallScore = 0;
             listOfCards = new List<string>(backUpListOfCards);
             createCardDictionary();
-            createNewHand();//starts the game. Modify eventually to play a new game etc
+            createNewHand();
         }
         private BitmapImage generateRandomCard()
         {
             int num = rnd.Next(listOfCards.Count);
-            uriSource = new Uri("Poker Cards/" + listOfCards[num], UriKind.Relative);//random number generated between 0 - 51
+            uriSource = new Uri("Poker Cards/" + listOfCards[num], UriKind.Relative);
             listOfCards.RemoveAt(num);
             return new BitmapImage(uriSource);
         }
@@ -116,27 +118,45 @@ namespace Poker_Race
             {
                 handCard5.Source = new BitmapImage(uriSource);
                 cards[4] = selectedCard.Substring(0, selectedCard.IndexOf('.'));
-                newScore = PokerHand.determinePokerHand(int.Parse(scoreLabel.Content.ToString()), ref usersHand, ref currentHandValue);//determine the user's hand (takes current score and adds the awarded points)
+                newScore = PokerHand.determinePokerHand(int.Parse(scoreLabel.Content.ToString()), ref usersHand, ref currentHandValue);
                 textBlockUserHand.Text = usersHand;
                 overallScore = (int)(newScore + timerBar.Value);
-                scoreLabel.Content = overallScore;//current hand plus timer value
+                scoreLabel.Content = overallScore;
 
-                //modify horse's position here with the overallScore value
+                // Dynamically rescale track when score exceeds 75% of current max
+                if (overallScore >= userProgressBar.Maximum * 0.75)
+                {
+                    userProgressBar.Maximum = Math.Ceiling(overallScore / 10000.0) * 10000 + 20000;
+                    updateTrackLabels();
+                }
+
                 moveHorse();
 
-                //userProgressBar.Value = overallScore;
+                await Task.Run(() => stopWorker());
 
-                await Task.Run(() => stopWorker());//don't continue until method returns
-
-                if (overallScore >= userProgressBar.Maximum)//testing
+                if (round >= MaxRounds)
                 {
                     new DatabaseTools().connectToDatabase(HomePage.username, overallScore.ToString());
-                    MessageBox.Show("You've won with " + overallScore + " points!");
+                    MessageBox.Show("Game Over! Final score: " + overallScore + " points!");
                     this.NavigationService.Navigate(new HomePage());
                 }
                 else
                     startNewRound();
             }
+        }
+
+        private void updateTrackLabels()
+        {
+            double max = userProgressBar.Maximum;
+            double step = max / 8.0;
+            scoreMarker1.Text = ((int)step).ToString();
+            scoreMarker2.Text = ((int)(step * 2)).ToString();
+            scoreMarker3.Text = ((int)(step * 3)).ToString();
+            scoreMarker4.Text = ((int)(step * 4)).ToString();
+            scoreMarker5.Text = ((int)(step * 5)).ToString();
+            scoreMarker6.Text = ((int)(step * 6)).ToString();
+            scoreMarker7.Text = ((int)(step * 7)).ToString();
+            scoreMarker8.Text = ((int)max).ToString();
         }
 
         private static BackgroundWorker horseWorker;
@@ -173,8 +193,8 @@ namespace Poker_Race
             image4.IsEnabled = false;
             image5.IsEnabled = false;
             listOfCards.Clear();
-            listOfCards = new List<string>(backUpListOfCards);//reset cards to full deck after round played
-            await Task.Delay(1500);//wait 1.5 seconds to show new card hands
+            listOfCards = new List<string>(backUpListOfCards);
+            await Task.Delay(1500);
             textBlockUserHand.Text = "";
             createNewHand();
         }
@@ -220,19 +240,12 @@ namespace Poker_Race
         void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             timerBar.Value = e.ProgressPercentage;
-            if (timerBar.Minimum == e.ProgressPercentage)//user runs out of time when progress bar hits zero
+            if (timerBar.Minimum == e.ProgressPercentage)
             {
                 worker.CancelAsync();
                 AutoClosingMessageBox.Show("You've run out of time!", "Out of time", 3000);
                 startNewRound();
             }
-        }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            //test.Children.Clear();
-            /*string username = "Mike Dudas";
-            new DatabaseTools().connectToDatabase(username);*/
         }
 
         protected void createNewHand()
@@ -249,22 +262,17 @@ namespace Poker_Race
             handCard4.Source = null;
             handCard5.Source = null;
 
-            //create new random hand
             image1.Source = generateRandomCard();
             image2.Source = generateRandomCard();
             image3.Source = generateRandomCard();
             image4.Source = generateRandomCard();
             image5.Source = generateRandomCard();
-            textBlockRound.Text = "Round\n" + ++round;
+            textBlockRound.Text = "Round " + ++round;
         }
-
-        //
 
         private void createCardDictionary()
         {
-            //cardSuit, Dictionary (outer)
-            //cardName, cardValue (inner)
-            cardMap = new Dictionary<string, Dictionary<string, int>>();//key is suit, submap's key is card name
+            cardMap = new Dictionary<string, Dictionary<string, int>>();
             string card, cardSuit;
             int cardValue;
             for (int i = 0; i < listOfCards.Count; i++)
@@ -272,7 +280,7 @@ namespace Poker_Race
                 card = listOfCards[i].Substring(0, listOfCards[i].IndexOf('.'));
                 cardSuit = card.Split('_').Last();
 
-                if (!int.TryParse(card.Split('_').First(), out cardValue))//if its a number, it will set cardValue, if not a number returns false but ! makes it true, so enter and check value
+                if (!int.TryParse(card.Split('_').First(), out cardValue))
                 {
                     string value = card.Split('_').First().ToLower();
                     if (value == "jack")
@@ -285,13 +293,13 @@ namespace Poker_Race
                         cardValue = 14;
                 }
 
-                if (!cardMap.ContainsKey(cardSuit))//doesn't contain the key yet, so add it
+                if (!cardMap.ContainsKey(cardSuit))
                 {
-                    cardMap.Add(cardSuit, new Dictionary<string, int>());//adds the suit to be the key and creates a dictionary for it for outer dictionary
-                    cardMap[cardSuit].Add(card, cardValue); //added to inner dictionary
+                    cardMap.Add(cardSuit, new Dictionary<string, int>());
+                    cardMap[cardSuit].Add(card, cardValue);
                 }
                 else
-                    cardMap[cardSuit].Add(card, cardValue);//added to inner dictionary
+                    cardMap[cardSuit].Add(card, cardValue);
             }
         }
 
