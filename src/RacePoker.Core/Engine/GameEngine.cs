@@ -9,10 +9,12 @@ public class GameEngine
     private readonly IRng _rng;
     private readonly Dictionary<int, Deck> _decks = new();
     private double _phaseTimer;
+    private bool _turnTransitioning;
 
     public GamePhase Phase { get; private set; } = GamePhase.Attract;
     public int Round { get; private set; }
     public int ActiveSeatIndex { get; private set; }
+    public bool IsTurnTransitioning => _turnTransitioning;
     public Seat[] Seats { get; }
     public PointTable PointTable { get; set; }
     public GameSettings Settings { get; }
@@ -94,7 +96,7 @@ public class GameEngine
     /// </summary>
     public bool PickCard(int seatId, int selectionIndex)
     {
-        if (Phase != GamePhase.Picking)
+        if (Phase != GamePhase.Picking || _turnTransitioning)
             return false;
         if (seatId != ActiveSeatIndex)
             return false;
@@ -116,11 +118,11 @@ public class GameEngine
         var replacement = deck.Draw(1);
         seat.SelectionCards[selectionIndex] = replacement[0];
 
-        // If this seat's hand is complete, evaluate and advance turn
+        // If this seat's hand is complete, evaluate and pause before next turn
         if (seat.IsHandComplete)
         {
             EvaluateSeat(seat);
-            AdvanceActiveOrRace();
+            StartTurnTransition();
         }
         else
         {
@@ -151,16 +153,25 @@ public class GameEngine
         switch (Phase)
         {
             case GamePhase.Picking:
-                if (_phaseTimer >= Settings.PickingTimeoutSeconds)
+                if (_turnTransitioning)
                 {
-                    // Timeout: auto-fill the active seat and advance to next
+                    // Pausing to show completed hand before next player
+                    if (_phaseTimer >= Settings.TurnDelaySeconds)
+                    {
+                        _turnTransitioning = false;
+                        AdvanceActiveOrRace();
+                    }
+                }
+                else if (_phaseTimer >= Settings.PickingTimeoutSeconds)
+                {
+                    // Timeout: auto-fill the active seat
                     var activeSeat = GetSeat(ActiveSeatIndex);
                     if (activeSeat != null && !activeSeat.IsHandComplete)
                     {
                         AutoFillHand(activeSeat);
                         EvaluateSeat(activeSeat);
                     }
-                    AdvanceActiveOrRace();
+                    StartTurnTransition();
                 }
                 break;
 
@@ -196,8 +207,16 @@ public class GameEngine
         }
     }
 
+    private void StartTurnTransition()
+    {
+        _turnTransitioning = true;
+        _phaseTimer = 0;
+        OnStateChanged();
+    }
+
     private void StartDealing()
     {
+        _turnTransitioning = false;
         Round++;
         _phaseTimer = 0;
 

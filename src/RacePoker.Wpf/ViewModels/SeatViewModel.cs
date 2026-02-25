@@ -19,6 +19,7 @@ public class SeatViewModel : ViewModelBase
     private string _handName = "";
     private GamePhase _currentPhase;
     private bool _isActiveSeat;
+    private bool _isTurnTransitioning;
 
     public int SeatId { get; }
     public string SeatLabel => $"Player {SeatId + 1}";
@@ -29,6 +30,16 @@ public class SeatViewModel : ViewModelBase
         set
         {
             if (SetProperty(ref _isActiveSeat, value))
+                UpdateSelectionCanPick();
+        }
+    }
+
+    public bool IsTurnTransitioning
+    {
+        get => _isTurnTransitioning;
+        set
+        {
+            if (SetProperty(ref _isTurnTransitioning, value))
                 UpdateSelectionCanPick();
         }
     }
@@ -179,7 +190,7 @@ public class SeatViewModel : ViewModelBase
 
     private void UpdateSelectionCanPick()
     {
-        bool canPick = IsJoined && CurrentPhase == GamePhase.Picking && IsActiveSeat;
+        bool canPick = IsJoined && CurrentPhase == GamePhase.Picking && IsActiveSeat && !IsTurnTransitioning;
         // Check if hand is already complete (5 cards)
         bool handComplete = Cards.Count(c => c.Card != null) >= 5;
 

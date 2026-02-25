@@ -41,7 +41,11 @@ public class MainViewModel : ViewModelBase
     public int Round
     {
         get => _round;
-        private set => SetProperty(ref _round, value);
+        private set
+        {
+            if (SetProperty(ref _round, value))
+                OnPropertyChanged(nameof(RoundDisplay));
+        }
     }
 
     /// <summary>
@@ -263,6 +267,7 @@ public class MainViewModel : ViewModelBase
         {
             SeatViewModels[i].CurrentPhase = Phase;
             SeatViewModels[i].IsActiveSeat = (i == activeIdx);
+            SeatViewModels[i].IsTurnTransitioning = _engine.IsTurnTransitioning;
             SeatViewModels[i].UpdateFromSeat(_engine.Seats[i]);
         }
 

@@ -15,6 +15,16 @@ public class GameEngineTests
     }
 
     /// <summary>
+    /// Helper: complete a hand and tick past the turn transition delay.
+    /// </summary>
+    private static void PickAllCardsAndWait(GameEngine engine, int seatId)
+    {
+        PickAllCards(engine, seatId);
+        if (engine.IsTurnTransitioning)
+            engine.Tick(TimeSpan.FromSeconds(engine.Settings.TurnDelaySeconds + 0.1));
+    }
+
+    /// <summary>
     /// Helper: pick all 5 cards from selection slot 0 to fill the hand.
     /// </summary>
     private static void PickAllCards(GameEngine engine, int seatId)
@@ -92,10 +102,10 @@ public class GameEngineTests
         engine.JoinSeat(0);
         engine.PressDeal(0);
 
-        // Pick 5 cards to complete hand
-        PickAllCards(engine, 0);
+        // Pick 5 cards to complete hand (wait for turn transition)
+        PickAllCardsAndWait(engine, 0);
 
-        // Single player: should advance to Racing after all picks
+        // Single player: should advance to Racing after transition
         Assert.Equal(GamePhase.Racing, engine.Phase);
         Assert.True(engine.Seats[0].TotalScore >= 0);
         Assert.NotEmpty(engine.Seats[0].HandName);
@@ -108,10 +118,9 @@ public class GameEngineTests
         var engine = CreateEngine();
         engine.JoinSeat(0);
         engine.PressDeal(0);
-        PickAllCards(engine, 0);
+        PickAllCardsAndWait(engine, 0);
 
-        // Hand is complete, further picks should fail
-        // (also phase has changed to Racing)
+        // Hand is complete and phase has changed to Racing
         var result = engine.PickCard(0, 0);
         Assert.False(result);
     }
@@ -137,13 +146,14 @@ public class GameEngineTests
         Assert.Equal(2, engine.Seats[0].Hand.Length);
         Assert.Equal(GamePhase.Picking, engine.Phase);
 
-        // Tick past the timeout
+        // Tick past the timeout — enters turn transition
         engine.Tick(TimeSpan.FromSeconds(2));
-
-        // Hand should be auto-filled and scored
-        Assert.Equal(GamePhase.Racing, engine.Phase);
         Assert.Equal(5, engine.Seats[0].Hand.Length);
         Assert.NotEmpty(engine.Seats[0].HandName);
+
+        // Tick past turn delay — advances to Racing
+        engine.Tick(TimeSpan.FromSeconds(settings.TurnDelaySeconds + 0.1));
+        Assert.Equal(GamePhase.Racing, engine.Phase);
     }
 
     [Fact]
@@ -153,7 +163,7 @@ public class GameEngineTests
         var engine = CreateEngine(settings);
         engine.JoinSeat(0);
         engine.PressDeal(0);
-        PickAllCards(engine, 0); // complete hand → Racing
+        PickAllCardsAndWait(engine, 0); // complete hand → Racing
 
         Assert.Equal(GamePhase.Racing, engine.Phase);
         engine.Tick(TimeSpan.FromSeconds(1));
@@ -167,7 +177,7 @@ public class GameEngineTests
         var engine = CreateEngine(settings);
         engine.JoinSeat(0);
         engine.PressDeal(0);
-        PickAllCards(engine, 0);
+        PickAllCardsAndWait(engine, 0);
         engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
 
         Assert.Equal(GamePhase.RoundEnd, engine.Phase);
@@ -194,12 +204,12 @@ public class GameEngineTests
 
         // Round 1
         engine.PressDeal(0);
-        PickAllCards(engine, 0);
+        PickAllCardsAndWait(engine, 0);
         engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
         engine.PressContinue(0); // next round
 
         // Round 2
-        PickAllCards(engine, 0);
+        PickAllCardsAndWait(engine, 0);
         engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
 
         // At round end with round == maxRounds, pressing continue triggers game over
@@ -238,15 +248,19 @@ public class GameEngineTests
         Assert.Equal(GamePhase.Picking, engine.Phase);
         Assert.Equal(0, engine.ActiveSeatIndex);
 
-        // Seat 0 picks all 5 — turn passes to seat 1
+        // Seat 0 picks all 5 — enters turn transition
         PickAllCards(engine, 0);
+        Assert.True(engine.IsTurnTransitioning);
+        Assert.True(engine.Seats[0].IsHandComplete);
+
+        // Tick past turn delay — turn passes to seat 1
+        engine.Tick(TimeSpan.FromSeconds(engine.Settings.TurnDelaySeconds + 0.1));
         Assert.Equal(GamePhase.Picking, engine.Phase);
         Assert.Equal(1, engine.ActiveSeatIndex);
-        Assert.True(engine.Seats[0].IsHandComplete);
         Assert.False(engine.Seats[1].IsHandComplete);
 
-        // Seat 1 picks all 5 — both done, advance to Racing
-        PickAllCards(engine, 1);
+        // Seat 1 picks all 5 — transition then Racing
+        PickAllCardsAndWait(engine, 1);
         Assert.Equal(GamePhase.Racing, engine.Phase);
         Assert.True(engine.Seats[1].IsHandComplete);
     }
@@ -263,7 +277,7 @@ public class GameEngineTests
         var engine = CreateEngine(settings);
         engine.JoinSeat(0);
         engine.PressDeal(0);
-        PickAllCards(engine, 0);
+        PickAllCardsAndWait(engine, 0);
         engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
 
         Assert.Equal(GamePhase.RoundEnd, engine.Phase);
@@ -290,7 +304,7 @@ public class GameEngineTests
         var engine = CreateEngine(settings);
         engine.JoinSeat(0);
         engine.PressDeal(0);
-        PickAllCards(engine, 0);
+        PickAllCardsAndWait(engine, 0);
         engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
 
         Assert.Equal(GamePhase.RoundEnd, engine.Phase);
@@ -314,7 +328,7 @@ public class GameEngineTests
         var engine = CreateEngine(settings);
         engine.JoinSeat(0);
         engine.PressDeal(0);
-        PickAllCards(engine, 0);
+        PickAllCardsAndWait(engine, 0);
         engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
 
         Assert.Equal(GamePhase.RoundEnd, engine.Phase);
@@ -340,16 +354,23 @@ public class GameEngineTests
 
         Assert.Equal(0, engine.ActiveSeatIndex);
 
-        // Timeout seat 0 — auto-fills their hand, advances to seat 1
+        // Timeout seat 0 — auto-fills, enters transition
         engine.Tick(TimeSpan.FromSeconds(2));
-        Assert.Equal(GamePhase.Picking, engine.Phase);
-        Assert.Equal(1, engine.ActiveSeatIndex);
+        Assert.True(engine.IsTurnTransitioning);
         Assert.True(engine.Seats[0].IsHandComplete);
 
-        // Timeout seat 1 — auto-fills, all done → Racing
-        engine.Tick(TimeSpan.FromSeconds(2));
-        Assert.Equal(GamePhase.Racing, engine.Phase);
+        // Tick past turn delay — advances to seat 1
+        engine.Tick(TimeSpan.FromSeconds(settings.TurnDelaySeconds + 0.1));
+        Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Equal(1, engine.ActiveSeatIndex);
+
+        // Timeout seat 1 — auto-fills, enters transition
+        engine.Tick(TimeSpan.FromSeconds(settings.PickingTimeoutSeconds + 0.1));
         Assert.True(engine.Seats[1].IsHandComplete);
+
+        // Tick past turn delay — all done → Racing
+        engine.Tick(TimeSpan.FromSeconds(settings.TurnDelaySeconds + 0.1));
+        Assert.Equal(GamePhase.Racing, engine.Phase);
     }
 
     [Fact]
