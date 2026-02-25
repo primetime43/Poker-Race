@@ -12,7 +12,7 @@
          ══════════════════════════════════════════════════════════ -->
     <Grid Background="#080810">
         <Grid.RowDefinitions>
-            <RowDefinition Height="42"/>
+            <RowDefinition Height="52"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -26,37 +26,41 @@
              Right: ? X buttons + player score boxes
              ════════════════════════════════════════════════ -->
         <Border Grid.Row="0" Background="#0c0c1a" BorderBrush="#1a1a33" BorderThickness="0,0,0,1">
-            <Grid Margin="8,4">
+            <Grid Margin="8,6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Timer progress + HI-SCORE -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Timer progress bar -->
-                    <Border Width="110" Height="12" CornerRadius="6" Background="#111122"
-                            BorderBrush="#333355" BorderThickness="1" Margin="0,0,10,0">
-                        <Border CornerRadius="5" HorizontalAlignment="Left" Width="80">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#DD2222" Offset="0"/>
-                                    <GradientStop Color="#DDAA22" Offset="0.5"/>
-                                    <GradientStop Color="#44DD44" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                        </Border>
+                <!-- Left: Timer countdown bar -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <Border Width="220" Height="24" CornerRadius="12" Background="#111122"
+                            BorderBrush="#333355" BorderThickness="1">
+                        <Grid>
+                            <!-- Fill bar (scales from left based on TimerProgress) -->
+                            <Border CornerRadius="11" HorizontalAlignment="Stretch"
+                                    RenderTransformOrigin="0,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform ScaleX="{Binding TimerProgress}"/>
+                                </Border.RenderTransform>
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#44DD44" Offset="0"/>
+                                        <GradientStop Color="#DDAA22" Offset="0.6"/>
+                                        <GradientStop Color="#DD2222" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                        </Grid>
                     </Border>
-                    <TextBlock Text="HI-SCORE" Foreground="#8899AA" FontSize="11"
-                               FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBlock Text="0" Foreground="{StaticResource GoldAccent}" FontSize="13"
-                               FontWeight="Bold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding PhaseDisplay}" Foreground="#7788AA" FontSize="10"
+                               FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                 </StackPanel>
 
-                <!-- Center: Phase display -->
+                <!-- Center: Phase display (larger) -->
                 <TextBlock Grid.Column="1" Text="{Binding PhaseDisplay}"
-                           Foreground="#556677" FontSize="13" FontWeight="SemiBold"
+                           Foreground="#667799" FontSize="16" FontWeight="Bold"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                 <!-- Right: ? X + player score boxes -->

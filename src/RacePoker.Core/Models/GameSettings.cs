@@ -16,5 +16,5 @@ public class GameSettings
     /// <summary>
     /// Race icon style: "Symbol" (unicode chess piece), "Image" (horse-racing.png).
     /// </summary>
-    public string RaceIconStyle { get; set; } = "Symbol";
+    public string RaceIconStyle { get; set; } = "Image";
 }

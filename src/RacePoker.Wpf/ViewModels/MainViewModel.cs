@@ -19,6 +19,7 @@ public class MainViewModel : ViewModelBase
     private GamePhase _phase;
     private int _round;
     private SeatViewModel? _activeSeat;
+    private double _timerProgress;
 
     public GamePhase Phase
     {
@@ -89,6 +90,13 @@ public class MainViewModel : ViewModelBase
 
     public bool UseSymbolIcon => _engine.Settings.RaceIconStyle == "Symbol";
     public bool UseImageIcon => _engine.Settings.RaceIconStyle != "Symbol";
+
+    /// <summary>Timer progress 0.0 to 1.0 for the current phase countdown.</summary>
+    public double TimerProgress
+    {
+        get => _timerProgress;
+        private set => SetProperty(ref _timerProgress, value);
+    }
 
     public ICommand PressStartCommand { get; }
     public ICommand ExitGameCommand { get; }
@@ -252,6 +260,7 @@ public class MainViewModel : ViewModelBase
         var dt = now - _lastTick;
         _lastTick = now;
         _engine.Tick(dt);
+        TimerProgress = _engine.PhaseTimerProgress;
     }
 
     private void OnEngineStateChanged()

@@ -15,6 +15,21 @@ public class GameEngine
     public int Round { get; private set; }
     public int ActiveSeatIndex { get; private set; }
     public bool IsTurnTransitioning => _turnTransitioning;
+
+    /// <summary>
+    /// How far through the current phase timer (0.0 = just started, 1.0 = done).
+    /// </summary>
+    public double PhaseTimerProgress
+    {
+        get
+        {
+            if (Phase != GamePhase.Picking || _turnTransitioning)
+                return 1.0;
+            if (Settings.PickingTimeoutSeconds <= 0)
+                return 1.0;
+            return Math.Clamp(1.0 - (_phaseTimer / Settings.PickingTimeoutSeconds), 0, 1);
+        }
+    }
     public Seat[] Seats { get; }
     public PointTable PointTable { get; set; }
     public GameSettings Settings { get; }
