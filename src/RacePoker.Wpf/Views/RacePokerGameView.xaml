@@ -65,7 +65,10 @@
 
                 <!-- Right: ? X + player score boxes -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource HelpBtn}" Content="?" Margin="0,0,4,0"/>
+                    <Button Style="{StaticResource HelpBtn}"
+                            Command="{Binding OpenSettingsCommand}" Margin="0,0,4,0">
+                        <Image Source="/Assets/gear.png" Width="20" Height="20"/>
+                    </Button>
                     <Button Style="{StaticResource CloseBtn}" Content="X"
                             Command="{Binding ExitGameCommand}" Margin="0,0,10,0"/>
 
