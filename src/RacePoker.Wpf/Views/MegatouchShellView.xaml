@@ -162,11 +162,13 @@
                         </TextBlock.Triggers>
                     </TextBlock>
 
-                    <!-- Settings ? button at right end of pill bar -->
-                    <Button Style="{StaticResource HelpBtn}" Content="?"
+                    <!-- Settings gear button at right end of pill bar -->
+                    <Button Style="{StaticResource HelpBtn}"
                             Command="{Binding OpenSettingsCommand}"
                             HorizontalAlignment="Right" VerticalAlignment="Center"
-                            Margin="0,0,4,0"/>
+                            Margin="0,0,4,0">
+                        <Image Source="/Assets/gear.png" Width="20" Height="20"/>
+                    </Button>
                 </Grid>
             </Border>
 

@@ -19,6 +19,7 @@
     <Resource Include="Assets\kpoker.ico" />
     <Resource Include="Assets\horse-racing.png" />
     <Resource Include="Assets\pokerchip.png" />
+    <Resource Include="Assets\gear.png" />
     <Content Include="Assets\Animated-Border-Marquee.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
