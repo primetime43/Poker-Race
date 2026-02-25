@@ -11,6 +11,7 @@ public class SettingsViewModel : ViewModelBase
     private int _maxRounds;
     private double _pickingTimeoutSeconds;
     private double _racingDurationSeconds;
+    private string _raceIconStyle = "Symbol";
 
     public bool AutoAdvanceEnabled
     {
@@ -42,6 +43,24 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _racingDurationSeconds, value);
     }
 
+    public string RaceIconStyle
+    {
+        get => _raceIconStyle;
+        set => SetProperty(ref _raceIconStyle, value);
+    }
+
+    public bool IsSymbolIcon
+    {
+        get => RaceIconStyle == "Symbol";
+        set { if (value) RaceIconStyle = "Symbol"; }
+    }
+
+    public bool IsImageIcon
+    {
+        get => RaceIconStyle == "Image";
+        set { if (value) RaceIconStyle = "Image"; }
+    }
+
     public SettingsViewModel(GameSettings settings)
     {
         _settings = settings;
@@ -50,6 +69,7 @@ public class SettingsViewModel : ViewModelBase
         _maxRounds = settings.MaxRounds;
         _pickingTimeoutSeconds = settings.PickingTimeoutSeconds;
         _racingDurationSeconds = settings.RacingDurationSeconds;
+        _raceIconStyle = settings.RaceIconStyle;
     }
 
     public void Apply()
@@ -59,5 +79,6 @@ public class SettingsViewModel : ViewModelBase
         _settings.MaxRounds = MaxRounds;
         _settings.PickingTimeoutSeconds = PickingTimeoutSeconds;
         _settings.RacingDurationSeconds = RacingDurationSeconds;
+        _settings.RaceIconStyle = RaceIconStyle;
     }
 }

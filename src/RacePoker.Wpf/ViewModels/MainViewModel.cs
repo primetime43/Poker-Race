@@ -87,6 +87,9 @@ public class MainViewModel : ViewModelBase
     public int MaxRounds => _engine.Settings.MaxRounds;
     public bool ShowContinueButton => Phase == GamePhase.RoundEnd && !_engine.Settings.AutoAdvanceEnabled;
 
+    public bool UseSymbolIcon => _engine.Settings.RaceIconStyle == "Symbol";
+    public bool UseImageIcon => _engine.Settings.RaceIconStyle != "Symbol";
+
     public ICommand PressStartCommand { get; }
     public ICommand ExitGameCommand { get; }
     public ICommand PlayerJoinCommand { get; }
@@ -184,6 +187,9 @@ public class MainViewModel : ViewModelBase
             Owner = Application.Current.MainWindow
         };
         win.ShowDialog();
+
+        OnPropertyChanged(nameof(UseSymbolIcon));
+        OnPropertyChanged(nameof(UseImageIcon));
     }
 
     public void HandleKeyDown(Key key)

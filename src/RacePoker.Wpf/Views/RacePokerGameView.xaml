@@ -219,12 +219,19 @@
                             <Border.Effect>
                                 <DropShadowEffect ShadowDepth="2" BlurRadius="4" Opacity="0.5"/>
                             </Border.Effect>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
-                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
-                                <TextBlock Text="1" Foreground="White" FontWeight="Black"
-                                           FontSize="16" VerticalAlignment="Center"/>
-                            </StackPanel>
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <!-- Symbol mode -->
+                                <StackPanel Orientation="Horizontal"
+                                            Visibility="{Binding UseSymbolIcon, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
+                                               VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                    <TextBlock Text="1" Foreground="White" FontWeight="Black"
+                                               FontSize="16" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <!-- Image mode -->
+                                <Image Source="/Assets/horse-racing.png" Height="32" Stretch="Uniform"
+                                       Visibility="{Binding UseImageIcon, Converter={StaticResource BoolToVisibility}}"/>
+                            </Grid>
                         </Border>
                     </Border>
                 </Grid>
@@ -248,12 +255,17 @@
                             <Border.Effect>
                                 <DropShadowEffect ShadowDepth="2" BlurRadius="4" Opacity="0.5"/>
                             </Border.Effect>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
-                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
-                                <TextBlock Text="2" Foreground="White" FontWeight="Black"
-                                           FontSize="16" VerticalAlignment="Center"/>
-                            </StackPanel>
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal"
+                                            Visibility="{Binding UseSymbolIcon, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
+                                               VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                    <TextBlock Text="2" Foreground="White" FontWeight="Black"
+                                               FontSize="16" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Image Source="/Assets/horse-racing.png" Height="32" Stretch="Uniform"
+                                       Visibility="{Binding UseImageIcon, Converter={StaticResource BoolToVisibility}}"/>
+                            </Grid>
                         </Border>
                     </Border>
                 </Grid>
@@ -277,12 +289,17 @@
                             <Border.Effect>
                                 <DropShadowEffect ShadowDepth="2" BlurRadius="4" Opacity="0.5"/>
                             </Border.Effect>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
-                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
-                                <TextBlock Text="3" Foreground="White" FontWeight="Black"
-                                           FontSize="16" VerticalAlignment="Center"/>
-                            </StackPanel>
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal"
+                                            Visibility="{Binding UseSymbolIcon, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
+                                               VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                    <TextBlock Text="3" Foreground="White" FontWeight="Black"
+                                               FontSize="16" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Image Source="/Assets/horse-racing.png" Height="32" Stretch="Uniform"
+                                       Visibility="{Binding UseImageIcon, Converter={StaticResource BoolToVisibility}}"/>
+                            </Grid>
                         </Border>
                     </Border>
                 </Grid>
@@ -306,12 +323,17 @@
                             <Border.Effect>
                                 <DropShadowEffect ShadowDepth="2" BlurRadius="4" Opacity="0.5"/>
                             </Border.Effect>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
-                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
-                                <TextBlock Text="4" Foreground="White" FontWeight="Black"
-                                           FontSize="16" VerticalAlignment="Center"/>
-                            </StackPanel>
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal"
+                                            Visibility="{Binding UseSymbolIcon, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
+                                               VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                    <TextBlock Text="4" Foreground="White" FontWeight="Black"
+                                               FontSize="16" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Image Source="/Assets/horse-racing.png" Height="32" Stretch="Uniform"
+                                       Visibility="{Binding UseImageIcon, Converter={StaticResource BoolToVisibility}}"/>
+                            </Grid>
                         </Border>
                     </Border>
                 </Grid>
@@ -490,7 +512,11 @@
                             BorderBrush="{Binding ActiveSeat.SeatColorBrush}" BorderThickness="2">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#x265E;" Foreground="White" FontSize="16"
-                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                       VerticalAlignment="Center" Margin="0,0,6,0"
+                                       Visibility="{Binding UseSymbolIcon, Converter={StaticResource BoolToVisibility}}"/>
+                            <Image Source="/Assets/horse-racing.png" Height="20" Stretch="Uniform"
+                                   Margin="0,0,6,0" VerticalAlignment="Center"
+                                   Visibility="{Binding UseImageIcon, Converter={StaticResource BoolToVisibility}}"/>
                             <TextBlock Text="{Binding ActiveSeat.SeatLabel}"
                                        Foreground="White" FontSize="14" FontWeight="Bold"
                                        VerticalAlignment="Center"/>
