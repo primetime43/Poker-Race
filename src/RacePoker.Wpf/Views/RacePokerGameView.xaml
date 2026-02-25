@@ -13,7 +13,6 @@
     <Grid Background="#080810">
         <Grid.RowDefinitions>
             <RowDefinition Height="42"/>
-            <RowDefinition Height="3*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -111,129 +110,252 @@
         </Border>
 
         <!-- ════════════════════════════════════════════════
-             ROW 1 — RACE TRACK (full width)
+             ROW 1 — RACE TRACK (full width, compact)
+             4 lanes always visible, score markers at bottom
              ════════════════════════════════════════════════ -->
-        <Border Grid.Row="1" Style="{StaticResource TrackPanel}" Margin="4,4,4,0" Padding="8,4">
+        <Border Grid.Row="1" CornerRadius="4" BorderBrush="#446644" BorderThickness="2"
+                Margin="4,4,4,0">
             <Grid>
-                <!-- Hash marks along bottom edge -->
-                <ItemsControl VerticalAlignment="Bottom" Margin="30,0,30,0">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Rows="1"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                    <Border Height="10" Width="1" Background="#55FFFFFF" HorizontalAlignment="Center"/>
-                </ItemsControl>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="40"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="52"/>
+                    <RowDefinition Height="52"/>
+                    <RowDefinition Height="52"/>
+                    <RowDefinition Height="52"/>
+                    <RowDefinition Height="24"/>
+                </Grid.RowDefinitions>
 
-                <!-- Finish line (right edge) -->
-                <Border HorizontalAlignment="Right" Width="4" Background="#DDFFFFFF" Margin="0,0,8,0"/>
-                <TextBlock Text="FINISH" Foreground="#CCFFFFFF" FontSize="10" FontWeight="Bold"
-                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,16,0"/>
+                <!-- Lane backgrounds (alternating green stripes) -->
+                <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Background="#2a7a2a"/>
+                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Background="#237023"/>
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Background="#2a7a2a"/>
+                <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Background="#237023"/>
+                <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Background="#1a5a1a"/>
 
-                <!-- Horse lanes -->
-                <StackPanel VerticalAlignment="Center" Margin="16,0,16,0">
-                    <!-- Horse 1 (Red) -->
-                    <Grid Height="48" Margin="0,2"
-                          Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                        <Border Background="#DD3333" CornerRadius="4"
-                                Width="36" Height="32" HorizontalAlignment="Left"
-                                Margin="{Binding SeatViewModels[0].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
-                            <TextBlock Text="1" Foreground="White" FontWeight="Bold"
-                                       FontSize="16" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
-                        </Border>
-                        <Line X1="0" Y1="46" X2="2000" Y2="46" Stroke="#33FFFFFF"
-                              StrokeDashArray="4,4" StrokeThickness="0.5"/>
+                <!-- Lane divider lines -->
+                <Line Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                      X1="50" Y1="51" X2="5000" Y2="51" Stroke="#44FFFFFF" StrokeThickness="1"/>
+                <Line Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                      X1="50" Y1="51" X2="5000" Y2="51" Stroke="#44FFFFFF" StrokeThickness="1"/>
+                <Line Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                      X1="50" Y1="51" X2="5000" Y2="51" Stroke="#44FFFFFF" StrokeThickness="1"/>
+
+                <!-- Lane labels (left side) -->
+                <Border Grid.Row="0" Grid.Column="0" Background="#22000000">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Ellipse Width="10" Height="10" Fill="#FF4444" HorizontalAlignment="Center"/>
+                        <TextBlock Text="P1" Foreground="White" FontSize="11" FontWeight="Bold"
+                                   HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" Background="#22000000">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Ellipse Width="10" Height="10" Fill="#4488FF" HorizontalAlignment="Center"/>
+                        <TextBlock Text="P2" Foreground="White" FontSize="11" FontWeight="Bold"
+                                   HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="0" Background="#22000000">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Ellipse Width="10" Height="10" Fill="#44DD44" HorizontalAlignment="Center"/>
+                        <TextBlock Text="P3" Foreground="White" FontSize="11" FontWeight="Bold"
+                                   HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="3" Grid.Column="0" Background="#22000000">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Ellipse Width="10" Height="10" Fill="#FFDD44" HorizontalAlignment="Center"/>
+                        <TextBlock Text="P4" Foreground="White" FontSize="11" FontWeight="Bold"
+                                   HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Finish column (right side, checkered) -->
+                <Border Grid.Row="0" Grid.RowSpan="4" Grid.Column="2">
+                    <Grid>
+                        <Border Background="#DDFFFFFF" Width="6" HorizontalAlignment="Left"/>
+                        <Border Background="#88000000" Width="6" HorizontalAlignment="Left" Margin="6,0,0,0"/>
+                        <Border Background="#DDFFFFFF" Width="6" HorizontalAlignment="Left" Margin="12,0,0,0"/>
+                        <TextBlock Text="F&#x0A;I&#x0A;N&#x0A;I&#x0A;S&#x0A;H" Foreground="White"
+                                   FontSize="8" FontWeight="Bold" HorizontalAlignment="Right"
+                                   VerticalAlignment="Center" Margin="0,0,2,0"
+                                   TextAlignment="Center" LineHeight="13"/>
                     </Grid>
+                </Border>
 
-                    <!-- Horse 2 (Blue) -->
-                    <Grid Height="48" Margin="0,2"
-                          Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                        <Border Background="#3366DD" CornerRadius="4"
-                                Width="36" Height="32" HorizontalAlignment="Left"
-                                Margin="{Binding SeatViewModels[1].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
-                            <TextBlock Text="2" Foreground="White" FontWeight="Bold"
-                                       FontSize="16" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                <!-- ═══ HORSE 1 (Red) ═══ -->
+                <Grid Grid.Row="0" Grid.Column="1" Margin="0,4">
+                    <!-- Trail line -->
+                    <Border Background="#44FF4444" Height="4" VerticalAlignment="Center"
+                            HorizontalAlignment="Left" CornerRadius="2"
+                            Width="{Binding SeatViewModels[0].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000|width}"
+                            Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}"/>
+                    <!-- Horse jockey -->
+                    <Border HorizontalAlignment="Left" VerticalAlignment="Center"
+                            Margin="{Binding SeatViewModels[0].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                        <Border CornerRadius="8,16,16,8" Width="54" Height="38"
+                                BorderBrush="#FFEEEE" BorderThickness="1.5">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0.5">
+                                    <GradientStop Color="#EE3333" Offset="0"/>
+                                    <GradientStop Color="#BB1111" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="2" BlurRadius="4" Opacity="0.5"/>
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
+                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                <TextBlock Text="1" Foreground="White" FontWeight="Black"
+                                           FontSize="16" VerticalAlignment="Center"/>
+                            </StackPanel>
                         </Border>
-                        <Line X1="0" Y1="46" X2="2000" Y2="46" Stroke="#33FFFFFF"
-                              StrokeDashArray="4,4" StrokeThickness="0.5"/>
-                    </Grid>
+                    </Border>
+                    <!-- Empty lane indicator when not joined -->
+                    <TextBlock Text="- - -" Foreground="#33FFFFFF" FontSize="12"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"/>
+                </Grid>
 
-                    <!-- Horse 3 (Green) -->
-                    <Grid Height="48" Margin="0,2"
-                          Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                        <Border Background="#33AA33" CornerRadius="4"
-                                Width="36" Height="32" HorizontalAlignment="Left"
-                                Margin="{Binding SeatViewModels[2].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
-                            <TextBlock Text="3" Foreground="White" FontWeight="Bold"
-                                       FontSize="16" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                <!-- ═══ HORSE 2 (Blue) ═══ -->
+                <Grid Grid.Row="1" Grid.Column="1" Margin="0,4">
+                    <Border Background="#444488FF" Height="4" VerticalAlignment="Center"
+                            HorizontalAlignment="Left" CornerRadius="2"
+                            Width="{Binding SeatViewModels[1].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000|width}"
+                            Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}"/>
+                    <Border HorizontalAlignment="Left" VerticalAlignment="Center"
+                            Margin="{Binding SeatViewModels[1].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                        <Border CornerRadius="8,16,16,8" Width="54" Height="38"
+                                BorderBrush="#EEEEFF" BorderThickness="1.5">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0.5">
+                                    <GradientStop Color="#3366EE" Offset="0"/>
+                                    <GradientStop Color="#1144BB" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="2" BlurRadius="4" Opacity="0.5"/>
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
+                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                <TextBlock Text="2" Foreground="White" FontWeight="Black"
+                                           FontSize="16" VerticalAlignment="Center"/>
+                            </StackPanel>
                         </Border>
-                        <Line X1="0" Y1="46" X2="2000" Y2="46" Stroke="#33FFFFFF"
-                              StrokeDashArray="4,4" StrokeThickness="0.5"/>
-                    </Grid>
+                    </Border>
+                    <TextBlock Text="- - -" Foreground="#33FFFFFF" FontSize="12"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"/>
+                </Grid>
 
-                    <!-- Horse 4 (Yellow) -->
-                    <Grid Height="48" Margin="0,2"
-                          Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                        <Border Background="#CCAA22" CornerRadius="4"
-                                Width="36" Height="32" HorizontalAlignment="Left"
-                                Margin="{Binding SeatViewModels[3].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
-                            <TextBlock Text="4" Foreground="White" FontWeight="Bold"
-                                       FontSize="16" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                <!-- ═══ HORSE 3 (Green) ═══ -->
+                <Grid Grid.Row="2" Grid.Column="1" Margin="0,4">
+                    <Border Background="#4444DD44" Height="4" VerticalAlignment="Center"
+                            HorizontalAlignment="Left" CornerRadius="2"
+                            Width="{Binding SeatViewModels[2].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000|width}"
+                            Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}"/>
+                    <Border HorizontalAlignment="Left" VerticalAlignment="Center"
+                            Margin="{Binding SeatViewModels[2].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                        <Border CornerRadius="8,16,16,8" Width="54" Height="38"
+                                BorderBrush="#EEFFEE" BorderThickness="1.5">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0.5">
+                                    <GradientStop Color="#33BB33" Offset="0"/>
+                                    <GradientStop Color="#118811" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="2" BlurRadius="4" Opacity="0.5"/>
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
+                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                <TextBlock Text="3" Foreground="White" FontWeight="Black"
+                                           FontSize="16" VerticalAlignment="Center"/>
+                            </StackPanel>
                         </Border>
+                    </Border>
+                    <TextBlock Text="- - -" Foreground="#33FFFFFF" FontSize="12"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"/>
+                </Grid>
+
+                <!-- ═══ HORSE 4 (Yellow) ═══ -->
+                <Grid Grid.Row="3" Grid.Column="1" Margin="0,4">
+                    <Border Background="#44DDAA22" Height="4" VerticalAlignment="Center"
+                            HorizontalAlignment="Left" CornerRadius="2"
+                            Width="{Binding SeatViewModels[3].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000|width}"
+                            Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}"/>
+                    <Border HorizontalAlignment="Left" VerticalAlignment="Center"
+                            Margin="{Binding SeatViewModels[3].TotalScore, Converter={StaticResource ScoreToMargin}, ConverterParameter=150000}">
+                        <Border CornerRadius="8,16,16,8" Width="54" Height="38"
+                                BorderBrush="#FFFFEE" BorderThickness="1.5">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0.5">
+                                    <GradientStop Color="#DDAA22" Offset="0"/>
+                                    <GradientStop Color="#AA7700" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="2" BlurRadius="4" Opacity="0.5"/>
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#x265E;" Foreground="White" FontSize="20"
+                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                <TextBlock Text="4" Foreground="White" FontWeight="Black"
+                                           FontSize="16" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Border>
+                    <TextBlock Text="- - -" Foreground="#33FFFFFF" FontSize="12"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"/>
+                </Grid>
+
+                <!-- Score markers row (bottom of track) -->
+                <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid Margin="50,0,40,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="6K" Foreground="#CCFFFFFF" FontSize="9"
+                                   FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="12K" Foreground="#CCFFFFFF" FontSize="9"
+                                   FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="18K" Foreground="#CCFFFFFF" FontSize="9"
+                                   FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="24K" Foreground="#CCFFFFFF" FontSize="9"
+                                   FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="4" Text="30K" Foreground="#CCFFFFFF" FontSize="9"
+                                   FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="5" Text="36K" Foreground="#CCFFFFFF" FontSize="9"
+                                   FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="6" Text="42K" Foreground="#CCFFFFFF" FontSize="9"
+                                   FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="7" Text="48K" Foreground="#CCFFFFFF" FontSize="9"
+                                   FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
-                </StackPanel>
+                </Border>
             </Grid>
         </Border>
 
         <!-- ════════════════════════════════════════════════
-             ROW 2 — SCORE MARKERS (red ovals, full width)
+             ROW 2 — POINT CHART (horizontal 5-col × 2-row)
              ════════════════════════════════════════════════ -->
-        <Border Grid.Row="2" Background="#0a0a18" Padding="0,3">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
-                    <TextBlock Text="6,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                </Border>
-                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
-                    <TextBlock Text="12,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                </Border>
-                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
-                    <TextBlock Text="18,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                </Border>
-                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
-                    <TextBlock Text="24,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                </Border>
-                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
-                    <TextBlock Text="30,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                </Border>
-                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
-                    <TextBlock Text="36,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                </Border>
-                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
-                    <TextBlock Text="42,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                </Border>
-                <Border Background="#BB2222" CornerRadius="10" Padding="10,2" Margin="6,0">
-                    <TextBlock Text="48,000" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                </Border>
-            </StackPanel>
-        </Border>
-
-        <!-- ════════════════════════════════════════════════
-             ROW 3 — POINT CHART (horizontal 5-col × 2-row)
-             ════════════════════════════════════════════════ -->
-        <Border Grid.Row="3" Background="#0c0c22" BorderBrush="#222244" BorderThickness="1"
+        <Border Grid.Row="2" Background="#0c0c22" BorderBrush="#222244" BorderThickness="1"
                 Margin="4,2,4,0" Padding="2">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -344,9 +466,9 @@
         </Border>
 
         <!-- ════════════════════════════════════════════════
-             ROW 4 — HAND RESULT BAR + ROUND BADGE
+             ROW 3 — HAND RESULT BAR + ROUND BADGE
              ════════════════════════════════════════════════ -->
-        <Border Grid.Row="4" Background="#0a0a14" BorderBrush="{StaticResource GoldAccent}"
+        <Border Grid.Row="3" Background="#0a0a14" BorderBrush="{StaticResource GoldAccent}"
                 BorderThickness="0,2" Margin="4,2,4,0" Padding="12,4">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -370,11 +492,11 @@
         </Border>
 
         <!-- ════════════════════════════════════════════════
-             ROW 5 — CARD AREA: Selection Row + Hand Row (seat 0)
+             ROW 4 — CARD AREA: Selection Row + Hand Row (seat 0)
              Click a selection card to add it to your hand.
              A new random card replaces it in the selection row.
              ════════════════════════════════════════════════ -->
-        <Border Grid.Row="5" Background="#0e0e1c" Margin="4,2,4,0" Padding="4,4"
+        <Border Grid.Row="4" Background="#0e0e1c" Margin="4,2,4,0" Padding="4,4"
                 Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
             <StackPanel HorizontalAlignment="Center">
                 <!-- SELECTION ROW: 5 face-up cards to pick from -->
@@ -466,9 +588,9 @@
         </Border>
 
         <!-- ════════════════════════════════════════════════
-             ROW 6 — OTHER PLAYER CARD BACKS (seats 1-3)
+             ROW 5 — OTHER PLAYER CARD BACKS (seats 1-3)
              ════════════════════════════════════════════════ -->
-        <Border Grid.Row="6" Background="#090914" Margin="4,2,4,4" Padding="4">
+        <Border Grid.Row="5" Background="#090914" Margin="4,2,4,4" Padding="4">
             <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center">
                 <!-- Player 2 card backs -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2"
@@ -509,7 +631,7 @@
         </Border>
 
         <!-- ════ GAME OVER OVERLAY ════ -->
-        <Border Grid.RowSpan="7" Background="#DD000010"
+        <Border Grid.RowSpan="6" Background="#DD000010"
                 Visibility="{Binding Phase, Converter={StaticResource PhaseToVisibility}, ConverterParameter=GameOver}">
             <Border Background="#CC080818" CornerRadius="12" Padding="40,30"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
