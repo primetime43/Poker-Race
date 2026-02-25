@@ -162,8 +162,9 @@
                         </TextBlock.Triggers>
                     </TextBlock>
 
-                    <!-- Help ? button at right end of pill bar -->
+                    <!-- Settings ? button at right end of pill bar -->
                     <Button Style="{StaticResource HelpBtn}" Content="?"
+                            Command="{Binding OpenSettingsCommand}"
                             HorizontalAlignment="Right" VerticalAlignment="Center"
                             Margin="0,0,4,0"/>
                 </Grid>

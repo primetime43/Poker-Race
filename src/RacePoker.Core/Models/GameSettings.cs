@@ -11,4 +11,6 @@ public class GameSettings
     public double RoundEndTimeoutSeconds { get; set; } = 15.0;
     public double RacingDurationSeconds { get; set; } = 2.0;
     public double GameOverTimeoutSeconds { get; set; } = 30.0;
+    public bool AutoAdvanceEnabled { get; set; } = true;
+    public double AutoAdvanceDelaySeconds { get; set; } = 3.0;
 }

@@ -276,6 +276,84 @@ public class GameEngineTests
     }
 
     [Fact]
+    public void AutoAdvance_AdvancesAfterDelaySeconds()
+    {
+        var settings = new GameSettings
+        {
+            RacingDurationSeconds = 0.1,
+            AutoAdvanceEnabled = true,
+            AutoAdvanceDelaySeconds = 2.0
+        };
+        var engine = CreateEngine(settings);
+        engine.JoinSeat(0);
+        engine.PressDeal(0);
+        PickAllCards(engine, 0);
+        engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
+
+        Assert.Equal(GamePhase.RoundEnd, engine.Phase);
+
+        // Tick less than auto-advance delay — should stay in RoundEnd
+        engine.Tick(TimeSpan.FromSeconds(1));
+        Assert.Equal(GamePhase.RoundEnd, engine.Phase);
+
+        // Tick past auto-advance delay — should advance
+        engine.Tick(TimeSpan.FromSeconds(1.5));
+        Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Equal(2, engine.Round);
+    }
+
+    [Fact]
+    public void AutoAdvance_ManualContinueStillWorks()
+    {
+        var settings = new GameSettings
+        {
+            RacingDurationSeconds = 0.1,
+            AutoAdvanceEnabled = true,
+            AutoAdvanceDelaySeconds = 10.0
+        };
+        var engine = CreateEngine(settings);
+        engine.JoinSeat(0);
+        engine.PressDeal(0);
+        PickAllCards(engine, 0);
+        engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
+
+        Assert.Equal(GamePhase.RoundEnd, engine.Phase);
+
+        // Manual continue before auto-advance fires
+        engine.PressContinue(0);
+        Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Equal(2, engine.Round);
+    }
+
+    [Fact]
+    public void AutoAdvance_DisabledFallsBackToRoundEndTimeout()
+    {
+        var settings = new GameSettings
+        {
+            RacingDurationSeconds = 0.1,
+            AutoAdvanceEnabled = false,
+            AutoAdvanceDelaySeconds = 1.0,
+            RoundEndTimeoutSeconds = 5.0
+        };
+        var engine = CreateEngine(settings);
+        engine.JoinSeat(0);
+        engine.PressDeal(0);
+        PickAllCards(engine, 0);
+        engine.Tick(TimeSpan.FromSeconds(1)); // racing -> round end
+
+        Assert.Equal(GamePhase.RoundEnd, engine.Phase);
+
+        // Tick past AutoAdvanceDelaySeconds but not RoundEndTimeoutSeconds
+        engine.Tick(TimeSpan.FromSeconds(2));
+        Assert.Equal(GamePhase.RoundEnd, engine.Phase); // should NOT advance
+
+        // Tick past RoundEndTimeoutSeconds
+        engine.Tick(TimeSpan.FromSeconds(4));
+        Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Equal(2, engine.Round);
+    }
+
+    [Fact]
     public void CannotJoinDuringPicking()
     {
         var engine = CreateEngine();

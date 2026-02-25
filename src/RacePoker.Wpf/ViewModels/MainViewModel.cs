@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using RacePoker.Core.Engine;
 using RacePoker.Core.Enums;
 using RacePoker.Core.Models;
 using RacePoker.Core.Services;
+using RacePoker.Wpf.Views;
 
 namespace RacePoker.Wpf.ViewModels;
 
@@ -72,6 +74,7 @@ public class MainViewModel : ViewModelBase
     public ICommand PressStartCommand { get; }
     public ICommand ExitGameCommand { get; }
     public ICommand PlayerJoinCommand { get; }
+    public ICommand OpenSettingsCommand { get; }
 
     public MainViewModel()
     {
@@ -93,6 +96,8 @@ public class MainViewModel : ViewModelBase
         PlayerJoinCommand = new RelayCommand(
             p => PlayerButtonPressed(int.Parse((string)p!)),
             p => Phase == GamePhase.Attract || Phase == GamePhase.SeatJoin);
+
+        OpenSettingsCommand = new RelayCommand(OpenSettings);
 
         for (int i = 0; i < _engine.Settings.MaxSeats; i++)
         {
@@ -150,6 +155,17 @@ public class MainViewModel : ViewModelBase
 
         if (_engine.Phase == GamePhase.GameOver)
             _engine.PressStartFromGameOver();
+    }
+
+    public void OpenSettings()
+    {
+        var vm = new SettingsViewModel(_engine.Settings);
+        var win = new SettingsWindow
+        {
+            DataContext = vm,
+            Owner = Application.Current.MainWindow
+        };
+        win.ShowDialog();
     }
 
     public void HandleKeyDown(Key key)

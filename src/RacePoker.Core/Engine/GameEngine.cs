@@ -191,7 +191,10 @@ public class GameEngine
                 break;
 
             case GamePhase.RoundEnd:
-                if (_phaseTimer >= Settings.RoundEndTimeoutSeconds)
+                var roundEndTimeout = Settings.AutoAdvanceEnabled
+                    ? Settings.AutoAdvanceDelaySeconds
+                    : Settings.RoundEndTimeoutSeconds;
+                if (_phaseTimer >= roundEndTimeout)
                     AdvanceFromRoundEnd();
                 break;
 
