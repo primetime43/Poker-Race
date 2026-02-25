@@ -494,7 +494,7 @@
              Click a selection card to add it to your hand.
              A new random card replaces it in the selection row.
              ════════════════════════════════════════════════ -->
-        <Border Grid.Row="3" Grid.RowSpan="2" Background="#0e0e1c" Margin="4,2,4,0" Padding="4,4"
+        <Border Grid.Row="3" Grid.RowSpan="3" Background="#0e0e1c" Margin="4,2,4,0" Padding="4,4"
                 Visibility="{Binding IsInGame, Converter={StaticResource BoolToVisibility}}">
             <Grid>
                 <Grid.RowDefinitions>
@@ -541,93 +541,102 @@
                     </Border>
                 </Grid>
 
-            <StackPanel Grid.Row="1" HorizontalAlignment="Center">
-                <!-- HAND ROW: 5 slots that fill up as you pick -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,4">
-                    <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
-                               VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <ItemsControl ItemsSource="{Binding ActiveSeat.Cards}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="2,0">
-                                    <!-- Card face (shown when card exists) -->
-                                    <Border Width="72" Height="100" CornerRadius="5"
-                                            BorderBrush="#556688" BorderThickness="1.5"
-                                            Background="White"
-                                            Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}}">
-                                        <Image Source="{Binding Card, Converter={StaticResource CardToImage}}"
-                                               Stretch="Uniform" Margin="2"/>
-                                    </Border>
-                                    <!-- Empty slot placeholder (shown when no card) -->
-                                    <Border Width="72" Height="100" CornerRadius="5"
-                                            BorderBrush="#222244" BorderThickness="1.5"
-                                            Background="#0a0a1a"
-                                            Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                                        <TextBlock Text="?" Foreground="#222244" FontSize="24"
-                                                   FontWeight="Bold" HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
-                               VerticalAlignment="Center" Margin="10,0,0,0"/>
-                </StackPanel>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <!-- SELECTION ROW: 5 face-up cards to pick from -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2">
-                    <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
-                               VerticalAlignment="Center" Margin="0,0,10,0"
-                               Visibility="{Binding ActiveSeat.ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
-                    <ItemsControl ItemsSource="{Binding ActiveSeat.SelectionCards}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Command="{Binding ToggleHoldCommand}"
-                                        IsEnabled="{Binding CanToggle}"
-                                        Cursor="Hand" Background="Transparent"
-                                        BorderThickness="0" Padding="0" Margin="3,0">
-                                    <Grid>
-                                        <Border Width="86" Height="120" CornerRadius="6"
+                <!-- HAND ROW: 5 slots that fill up as you pick (pinned to top, scales with window) -->
+                <Viewbox Grid.Row="0" Stretch="Uniform" StretchDirection="Both"
+                         MaxHeight="140" HorizontalAlignment="Center" Margin="0,2,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ItemsControl ItemsSource="{Binding ActiveSeat.Cards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="2,0">
+                                        <Border Width="72" Height="100" CornerRadius="5"
                                                 BorderBrush="#556688" BorderThickness="1.5"
-                                                Background="White">
+                                                Background="White"
+                                                Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}}">
                                             <Image Source="{Binding Card, Converter={StaticResource CardToImage}}"
-                                                   Stretch="Uniform" Margin="3"/>
+                                                   Stretch="Uniform" Margin="2"/>
                                         </Border>
-                                        <!-- Highlight glow when clickable -->
-                                        <Border Width="86" Height="120" CornerRadius="6"
-                                                BorderThickness="2" Opacity="0.5"
-                                                Visibility="{Binding CanToggle, Converter={StaticResource BoolToVisibility}}">
-                                            <Border.BorderBrush>
-                                                <SolidColorBrush Color="#00DDDD"/>
-                                            </Border.BorderBrush>
+                                        <Border Width="72" Height="100" CornerRadius="5"
+                                                BorderBrush="#222244" BorderThickness="1.5"
+                                                Background="#0a0a1a"
+                                                Visibility="{Binding Card, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                                            <TextBlock Text="?" Foreground="#222244" FontSize="24"
+                                                       FontWeight="Bold" HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
                                         </Border>
                                     </Grid>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
-                               VerticalAlignment="Center" Margin="10,0,0,0"
-                               Visibility="{Binding ActiveSeat.ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
-                </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Hand" Foreground="#445566" FontSize="12" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    </StackPanel>
+                </Viewbox>
+
+                <!-- SELECTION ROW: 5 face-up cards to pick from (scales to fill remaining space) -->
+                <Viewbox Grid.Row="1" Stretch="Uniform" StretchDirection="Both"
+                         MaxHeight="340" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Margin="0,0,10,0"
+                                   Visibility="{Binding ActiveSeat.ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
+                        <ItemsControl ItemsSource="{Binding ActiveSeat.SelectionCards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding ToggleHoldCommand}"
+                                            IsEnabled="{Binding CanToggle}"
+                                            Cursor="Hand" Background="Transparent"
+                                            BorderThickness="0" Padding="0" Margin="4,0">
+                                        <Grid>
+                                            <Border Width="100" Height="140" CornerRadius="6"
+                                                    BorderBrush="#556688" BorderThickness="1.5"
+                                                    Background="White">
+                                                <Image Source="{Binding Card, Converter={StaticResource CardToImage}}"
+                                                       Stretch="Uniform" Margin="3"/>
+                                            </Border>
+                                            <Border Width="100" Height="140" CornerRadius="6"
+                                                    BorderThickness="2" Opacity="0.5"
+                                                    Visibility="{Binding CanToggle, Converter={StaticResource BoolToVisibility}}">
+                                                <Border.BorderBrush>
+                                                    <SolidColorBrush Color="#00DDDD"/>
+                                                </Border.BorderBrush>
+                                            </Border>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Pick" Foreground="#668899" FontSize="14" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Margin="10,0,0,0"
+                                   Visibility="{Binding ActiveSeat.ShowSelectionCards, Converter={StaticResource BoolToVisibility}}"/>
+                    </StackPanel>
+                </Viewbox>
 
                 <!-- Continue button (only when auto-advance is disabled) -->
-                <Button Style="{StaticResource ActionBtn}" Content="CONTINUE"
+                <Button Grid.Row="2" Style="{StaticResource ActionBtn}" Content="CONTINUE"
                         Command="{Binding ActiveSeat.ContinueCommand}"
                         Visibility="{Binding ShowContinueButton, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Center" Margin="0,4,0,0" FontSize="14" Padding="20,6"/>
-            </StackPanel>
+                        HorizontalAlignment="Center" Margin="0,4,0,4" FontSize="14" Padding="20,6"/>
+            </Grid>
             </Grid>
         </Border>
 
