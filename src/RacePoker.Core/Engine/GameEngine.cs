@@ -192,7 +192,24 @@ public class GameEngine
 
             case GamePhase.Racing:
                 if (_phaseTimer >= Settings.RacingDurationSeconds)
+                {
+                    // Snap all seats to final score
+                    foreach (var seat in AllJoinedSeats())
+                        seat.TotalScore = seat.FinalScore;
                     SetPhase(GamePhase.RoundEnd);
+                }
+                else
+                {
+                    // Interpolate score with ease-out cubic
+                    double t = Math.Clamp(_phaseTimer / Settings.RacingDurationSeconds, 0, 1);
+                    double eased = 1.0 - Math.Pow(1.0 - t, 3);
+                    foreach (var seat in AllJoinedSeats())
+                    {
+                        int delta = seat.FinalScore - seat.PreviousScore;
+                        seat.TotalScore = seat.PreviousScore + (int)(delta * eased);
+                    }
+                    OnStateChanged();
+                }
                 break;
 
             case GamePhase.RoundEnd:
@@ -292,7 +309,9 @@ public class GameEngine
     {
         var result = HandEvaluator.Evaluate(seat.Hand);
         seat.RoundPoints = PointTable.GetPoints(result);
-        seat.TotalScore += seat.RoundPoints;
+        seat.PreviousScore = seat.TotalScore;
+        seat.FinalScore = seat.TotalScore + seat.RoundPoints;
+        // Don't add to TotalScore yet — Racing phase will animate it
         seat.HandName = FormatHandCategory(result.Category);
     }
 

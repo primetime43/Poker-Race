@@ -14,12 +14,15 @@ public class MainViewModel : ViewModelBase
 {
     private readonly GameEngine _engine;
     private readonly DispatcherTimer _timer;
+    private readonly SettingsService _settingsService;
     private DateTime _lastTick;
 
     private GamePhase _phase;
     private int _round;
     private SeatViewModel? _activeSeat;
     private double _timerProgress;
+    private string _winnerDisplay = "";
+    private string _finalStandings = "";
 
     public GamePhase Phase
     {
@@ -105,6 +108,18 @@ public class MainViewModel : ViewModelBase
         private set => SetProperty(ref _timerProgress, value);
     }
 
+    public string WinnerDisplay
+    {
+        get => _winnerDisplay;
+        private set => SetProperty(ref _winnerDisplay, value);
+    }
+
+    public string FinalStandings
+    {
+        get => _finalStandings;
+        private set => SetProperty(ref _finalStandings, value);
+    }
+
     public ICommand PressStartCommand { get; }
     public ICommand ExitGameCommand { get; }
     public ICommand PlayerJoinCommand { get; }
@@ -116,7 +131,10 @@ public class MainViewModel : ViewModelBase
             AppDomain.CurrentDomain.BaseDirectory, "Config", "pointTable.json");
         var pointTable = PointTableService.Load(pointTablePath);
 
-        _engine = new GameEngine(pointTable: pointTable);
+        _settingsService = new SettingsService();
+        var settings = _settingsService.Load();
+
+        _engine = new GameEngine(settings: settings, pointTable: pointTable);
         _engine.StateChanged += OnEngineStateChanged;
 
         PressStartCommand = new RelayCommand(() =>
@@ -202,6 +220,7 @@ public class MainViewModel : ViewModelBase
             Owner = Application.Current.MainWindow
         };
         win.ShowDialog();
+        _settingsService.Save(_engine.Settings);
 
         OnPropertyChanged(nameof(UseSymbolIcon));
         OnPropertyChanged(nameof(UseImageIcon));
@@ -297,6 +316,39 @@ public class MainViewModel : ViewModelBase
 
         if (activeIdx >= 0 && activeIdx < SeatViewModels.Count)
             ActiveSeat = SeatViewModels[activeIdx];
+
+        if (Phase == GamePhase.GameOver)
+            ComputeWinner();
+    }
+
+    private void ComputeWinner()
+    {
+        var joined = _engine.Seats
+            .Where(s => s.Status == SeatStatus.Joined)
+            .OrderByDescending(s => s.TotalScore)
+            .ToList();
+
+        if (joined.Count == 0)
+        {
+            WinnerDisplay = "";
+            FinalStandings = "";
+            return;
+        }
+
+        var topScore = joined[0].TotalScore;
+        var winners = joined.Where(s => s.TotalScore == topScore).ToList();
+
+        WinnerDisplay = winners.Count > 1
+            ? "IT'S A TIE!"
+            : $"PLAYER {winners[0].SeatId + 1} WINS!";
+
+        var lines = new System.Text.StringBuilder();
+        for (int i = 0; i < joined.Count; i++)
+        {
+            var s = joined[i];
+            lines.AppendLine($"#{i + 1}  Player {s.SeatId + 1}  —  {s.TotalScore:N0} pts");
+        }
+        FinalStandings = lines.ToString().TrimEnd();
     }
 
     private void RefreshHighScores()

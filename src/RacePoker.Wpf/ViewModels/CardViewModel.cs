@@ -8,15 +8,34 @@ public class CardViewModel : ViewModelBase
     private Card? _card;
     private bool _isHeld;
     private bool _canToggle;
+    private bool _justAppeared;
 
     public Card? Card
     {
         get => _card;
         set
         {
+            var wasNull = _card is null;
             if (SetProperty(ref _card, value))
+            {
                 OnPropertyChanged(nameof(ImagePath));
+                if (wasNull && _card is not null)
+                {
+                    JustAppeared = false;
+                    JustAppeared = true;
+                }
+                else if (_card is null)
+                {
+                    JustAppeared = false;
+                }
+            }
         }
+    }
+
+    public bool JustAppeared
+    {
+        get => _justAppeared;
+        set => SetProperty(ref _justAppeared, value);
     }
 
     public string ImagePath => Card is not null
