@@ -28,7 +28,7 @@
             <!-- Main attract content: Logo (left) + High Scores (right) -->
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="180"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
@@ -37,8 +37,8 @@
                     <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center"
                                 Margin="0,20,0,0">
                         <!-- Card fan decoration -->
-                        <Grid Width="80" Height="60" Margin="0,0,0,8">
-                            <Border Width="40" Height="56" CornerRadius="4"
+                        <Grid Width="110" Height="80" Margin="0,0,0,8">
+                            <Border Width="52" Height="72" CornerRadius="4"
                                     Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
@@ -47,7 +47,7 @@
                                 <Image Source="/Assets/PokerCards/jack_of_spades.png"
                                        Stretch="Uniform" Margin="2"/>
                             </Border>
-                            <Border Width="40" Height="56" CornerRadius="4"
+                            <Border Width="52" Height="72" CornerRadius="4"
                                     Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
@@ -56,7 +56,7 @@
                                 <Image Source="/Assets/PokerCards/queen_of_hearts.png"
                                        Stretch="Uniform" Margin="2"/>
                             </Border>
-                            <Border Width="40" Height="56" CornerRadius="4"
+                            <Border Width="52" Height="72" CornerRadius="4"
                                     Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
@@ -79,6 +79,53 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Tagline -->
+                        <TextBlock Text="Build hands. Race horses."
+                                   Foreground="#445566" FontSize="10" FontStyle="Italic"
+                                   HorizontalAlignment="Center" Margin="0,6,0,0"/>
+
+                        <!-- Mini decorative race track -->
+                        <Border Margin="8,16,8,0" CornerRadius="3" Height="18"
+                                BorderBrush="#2a5a2a" BorderThickness="1">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#2a7a2a" Offset="0"/>
+                                    <GradientStop Color="#1a5a1a" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Grid>
+                                <!-- Track lanes (subtle lines) -->
+                                <Rectangle Height="1" Fill="#338833" VerticalAlignment="Top"
+                                           Margin="4,4,4,0" Opacity="0.5"/>
+                                <Rectangle Height="1" Fill="#338833" VerticalAlignment="Bottom"
+                                           Margin="4,0,4,4" Opacity="0.5"/>
+                                <!-- Horse dots -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            Margin="6,0,0,0">
+                                    <Ellipse Width="6" Height="6" Fill="#FF4444" Margin="0,0,2,0"/>
+                                    <Ellipse Width="6" Height="6" Fill="#4488FF" Margin="8,0,2,0"/>
+                                    <Ellipse Width="6" Height="6" Fill="#44CC44" Margin="4,0,2,0"/>
+                                    <Ellipse Width="6" Height="6" Fill="#FFDD44" Margin="12,0,0,0"/>
+                                </StackPanel>
+                                <!-- Finish flag (checkerboard) -->
+                                <Grid HorizontalAlignment="Right" VerticalAlignment="Center"
+                                      Margin="0,0,3,0" Width="8" Height="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Rectangle Grid.Row="0" Grid.Column="0" Fill="White"/>
+                                    <Rectangle Grid.Row="0" Grid.Column="1" Fill="Black"/>
+                                    <Rectangle Grid.Row="1" Grid.Column="0" Fill="Black"/>
+                                    <Rectangle Grid.Row="1" Grid.Column="1" Fill="White"/>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
                     </StackPanel>
                 </Border>
 
@@ -86,33 +133,51 @@
                 <Border Grid.Column="1" Style="{StaticResource HSPanel}" Margin="0,6,0,6">
                     <Grid>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
+                        <!-- HIGH SCORES header -->
+                        <TextBlock Grid.Row="0" Text="HIGH SCORES"
+                                   Foreground="#FFD700" FontSize="18" FontWeight="Bold"
+                                   FontFamily="Impact" HorizontalAlignment="Center"
+                                   Margin="0,4,0,8"/>
+
                         <!-- Score list -->
-                        <ItemsControl ItemsSource="{Binding HighScores}">
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding HighScores}"
+                                      AlternationCount="100">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,1">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="28"/>
                                             <ColumnDefinition Width="50"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="100"/>
                                         </Grid.ColumnDefinitions>
+                                        <!-- Rank -->
+                                        <TextBlock Grid.Column="0"
+                                                   Foreground="#667788" FontSize="12"
+                                                   FontFamily="Consolas"
+                                                   VerticalAlignment="Center"
+                                                   Text="{Binding (ItemsControl.AlternationIndex),
+                                                          RelativeSource={RelativeSource AncestorType=ContentPresenter},
+                                                          Converter={StaticResource IndexPlusOne},
+                                                          StringFormat='#{0}'}"/>
                                         <!-- Initials -->
-                                        <TextBlock Grid.Column="0" Text="{Binding Initials}"
+                                        <TextBlock Grid.Column="1" Text="{Binding Initials}"
                                                    Foreground="#AABBCC" FontSize="13"
                                                    FontFamily="Consolas" FontWeight="Bold"
                                                    VerticalAlignment="Center"/>
                                         <!-- Score -->
-                                        <TextBlock Grid.Column="1"
+                                        <TextBlock Grid.Column="2"
                                                    Text="{Binding Score, StringFormat=N0}"
                                                    Foreground="White" FontSize="14"
                                                    FontFamily="Consolas" FontWeight="Bold"
                                                    HorizontalAlignment="Right"
                                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
                                         <!-- Date -->
-                                        <TextBlock Grid.Column="2"
+                                        <TextBlock Grid.Column="3"
                                                    Text="{Binding Date, StringFormat=MM/dd/yy}"
                                                    Foreground="#667788" FontSize="12"
                                                    FontFamily="Consolas"
@@ -125,7 +190,7 @@
                         </ItemsControl>
 
                         <!-- Empty state -->
-                        <TextBlock Text="No scores yet" Foreground="#334455" FontSize="16"
+                        <TextBlock Grid.Row="1" Text="No scores yet" Foreground="#334455" FontSize="16"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    FontStyle="Italic">
                             <TextBlock.Style>
@@ -145,10 +210,10 @@
 
             <!-- "Press Player Button to Start" pill bar -->
             <Border Grid.Row="1" Style="{StaticResource PillBar}" Margin="4,4,4,4">
-                <Grid>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock Text="Press Player Button to Start"
                                Foreground="White" FontSize="16" FontWeight="SemiBold"
-                               HorizontalAlignment="Center" VerticalAlignment="Center">
+                               HorizontalAlignment="Center">
                         <TextBlock.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
                                 <BeginStoryboard>
@@ -161,8 +226,9 @@
                             </EventTrigger>
                         </TextBlock.Triggers>
                     </TextBlock>
-
-                </Grid>
+                    <TextBlock Text="(or press 1-4)" Foreground="#445566" FontSize="11"
+                               HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                </StackPanel>
             </Border>
 
         </Grid>
@@ -179,6 +245,11 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
+                <!-- SELECT PLAYERS header -->
+                <TextBlock Grid.Row="0" Text="SELECT PLAYERS"
+                           Foreground="#FFD700" FontSize="14" FontWeight="Bold"
+                           FontFamily="Impact" HorizontalAlignment="Center"
+                           Margin="0,8,0,4"/>
 
                 <!-- 4 Player Buttons -->
                 <StackPanel Grid.Row="1" VerticalAlignment="Center">
@@ -199,97 +270,111 @@
                                     </Canvas>
                                 </StackPanel>
                             </Grid>
+                            <TextBlock Text="1 PLAYER" Foreground="#99AABB" FontSize="9"
+                                       HorizontalAlignment="Center" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Button>
 
                     <!-- Player 2 Button -->
                     <Button Style="{StaticResource PlayerBtn}"
                             Command="{Binding PlayerJoinCommand}" CommandParameter="1">
-                        <Grid Height="36" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Canvas Width="24" Height="36">
-                                    <Ellipse Canvas.Left="5" Canvas.Top="2"
-                                             Width="13" Height="13" Fill="#CCEEEE"/>
-                                    <Rectangle Canvas.Left="3" Canvas.Top="17"
-                                               Width="17" Height="17"
-                                               RadiusX="4" RadiusY="4" Fill="#CCEEEE"/>
-                                </Canvas>
-                                <Canvas Width="24" Height="36" Margin="-6,0,0,0">
-                                    <Ellipse Canvas.Left="5" Canvas.Top="2"
-                                             Width="13" Height="13" Fill="#AADDDD"/>
-                                    <Rectangle Canvas.Left="3" Canvas.Top="17"
-                                               Width="17" Height="17"
-                                               RadiusX="4" RadiusY="4" Fill="#AADDDD"/>
-                                </Canvas>
-                            </StackPanel>
-                        </Grid>
+                        <StackPanel HorizontalAlignment="Center">
+                            <Grid Height="36" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Canvas Width="24" Height="36">
+                                        <Ellipse Canvas.Left="5" Canvas.Top="2"
+                                                 Width="13" Height="13" Fill="#CCEEEE"/>
+                                        <Rectangle Canvas.Left="3" Canvas.Top="17"
+                                                   Width="17" Height="17"
+                                                   RadiusX="4" RadiusY="4" Fill="#CCEEEE"/>
+                                    </Canvas>
+                                    <Canvas Width="24" Height="36" Margin="-6,0,0,0">
+                                        <Ellipse Canvas.Left="5" Canvas.Top="2"
+                                                 Width="13" Height="13" Fill="#AADDDD"/>
+                                        <Rectangle Canvas.Left="3" Canvas.Top="17"
+                                                   Width="17" Height="17"
+                                                   RadiusX="4" RadiusY="4" Fill="#AADDDD"/>
+                                    </Canvas>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="2 PLAYERS" Foreground="#99AABB" FontSize="9"
+                                       HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        </StackPanel>
                     </Button>
 
                     <!-- Player 3 Button -->
                     <Button Style="{StaticResource PlayerBtn}"
                             Command="{Binding PlayerJoinCommand}" CommandParameter="2">
-                        <Grid Height="36" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Canvas Width="22" Height="36">
-                                    <Ellipse Canvas.Left="4" Canvas.Top="2"
-                                             Width="12" Height="12" Fill="#CCEEEE"/>
-                                    <Rectangle Canvas.Left="2" Canvas.Top="16"
-                                               Width="16" Height="16"
-                                               RadiusX="3" RadiusY="3" Fill="#CCEEEE"/>
-                                </Canvas>
-                                <Canvas Width="22" Height="36" Margin="-4,0,0,0">
-                                    <Ellipse Canvas.Left="4" Canvas.Top="2"
-                                             Width="12" Height="12" Fill="#AADDDD"/>
-                                    <Rectangle Canvas.Left="2" Canvas.Top="16"
-                                               Width="16" Height="16"
-                                               RadiusX="3" RadiusY="3" Fill="#AADDDD"/>
-                                </Canvas>
-                                <Canvas Width="22" Height="36" Margin="-4,0,0,0">
-                                    <Ellipse Canvas.Left="4" Canvas.Top="2"
-                                             Width="12" Height="12" Fill="#88CCCC"/>
-                                    <Rectangle Canvas.Left="2" Canvas.Top="16"
-                                               Width="16" Height="16"
-                                               RadiusX="3" RadiusY="3" Fill="#88CCCC"/>
-                                </Canvas>
-                            </StackPanel>
-                        </Grid>
+                        <StackPanel HorizontalAlignment="Center">
+                            <Grid Height="36" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Canvas Width="22" Height="36">
+                                        <Ellipse Canvas.Left="4" Canvas.Top="2"
+                                                 Width="12" Height="12" Fill="#CCEEEE"/>
+                                        <Rectangle Canvas.Left="2" Canvas.Top="16"
+                                                   Width="16" Height="16"
+                                                   RadiusX="3" RadiusY="3" Fill="#CCEEEE"/>
+                                    </Canvas>
+                                    <Canvas Width="22" Height="36" Margin="-4,0,0,0">
+                                        <Ellipse Canvas.Left="4" Canvas.Top="2"
+                                                 Width="12" Height="12" Fill="#AADDDD"/>
+                                        <Rectangle Canvas.Left="2" Canvas.Top="16"
+                                                   Width="16" Height="16"
+                                                   RadiusX="3" RadiusY="3" Fill="#AADDDD"/>
+                                    </Canvas>
+                                    <Canvas Width="22" Height="36" Margin="-4,0,0,0">
+                                        <Ellipse Canvas.Left="4" Canvas.Top="2"
+                                                 Width="12" Height="12" Fill="#88CCCC"/>
+                                        <Rectangle Canvas.Left="2" Canvas.Top="16"
+                                                   Width="16" Height="16"
+                                                   RadiusX="3" RadiusY="3" Fill="#88CCCC"/>
+                                    </Canvas>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="3 PLAYERS" Foreground="#99AABB" FontSize="9"
+                                       HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        </StackPanel>
                     </Button>
 
                     <!-- Player 4 Button -->
                     <Button Style="{StaticResource PlayerBtn}"
                             Command="{Binding PlayerJoinCommand}" CommandParameter="3">
-                        <Grid Height="36" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Canvas Width="20" Height="34">
-                                    <Ellipse Canvas.Left="4" Canvas.Top="2"
-                                             Width="11" Height="11" Fill="#CCEEEE"/>
-                                    <Rectangle Canvas.Left="2" Canvas.Top="15"
-                                               Width="15" Height="15"
-                                               RadiusX="3" RadiusY="3" Fill="#CCEEEE"/>
-                                </Canvas>
-                                <Canvas Width="20" Height="34" Margin="-3,0,0,0">
-                                    <Ellipse Canvas.Left="4" Canvas.Top="2"
-                                             Width="11" Height="11" Fill="#AADDDD"/>
-                                    <Rectangle Canvas.Left="2" Canvas.Top="15"
-                                               Width="15" Height="15"
-                                               RadiusX="3" RadiusY="3" Fill="#AADDDD"/>
-                                </Canvas>
-                                <Canvas Width="20" Height="34" Margin="-3,0,0,0">
-                                    <Ellipse Canvas.Left="4" Canvas.Top="2"
-                                             Width="11" Height="11" Fill="#88CCCC"/>
-                                    <Rectangle Canvas.Left="2" Canvas.Top="15"
-                                               Width="15" Height="15"
-                                               RadiusX="3" RadiusY="3" Fill="#88CCCC"/>
-                                </Canvas>
-                                <Canvas Width="20" Height="34" Margin="-3,0,0,0">
-                                    <Ellipse Canvas.Left="4" Canvas.Top="2"
-                                             Width="11" Height="11" Fill="#66AABB"/>
-                                    <Rectangle Canvas.Left="2" Canvas.Top="15"
-                                               Width="15" Height="15"
-                                               RadiusX="3" RadiusY="3" Fill="#66AABB"/>
-                                </Canvas>
-                            </StackPanel>
-                        </Grid>
+                        <StackPanel HorizontalAlignment="Center">
+                            <Grid Height="34" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Canvas Width="20" Height="34">
+                                        <Ellipse Canvas.Left="4" Canvas.Top="2"
+                                                 Width="11" Height="11" Fill="#CCEEEE"/>
+                                        <Rectangle Canvas.Left="2" Canvas.Top="15"
+                                                   Width="15" Height="15"
+                                                   RadiusX="3" RadiusY="3" Fill="#CCEEEE"/>
+                                    </Canvas>
+                                    <Canvas Width="20" Height="34" Margin="-3,0,0,0">
+                                        <Ellipse Canvas.Left="4" Canvas.Top="2"
+                                                 Width="11" Height="11" Fill="#AADDDD"/>
+                                        <Rectangle Canvas.Left="2" Canvas.Top="15"
+                                                   Width="15" Height="15"
+                                                   RadiusX="3" RadiusY="3" Fill="#AADDDD"/>
+                                    </Canvas>
+                                    <Canvas Width="20" Height="34" Margin="-3,0,0,0">
+                                        <Ellipse Canvas.Left="4" Canvas.Top="2"
+                                                 Width="11" Height="11" Fill="#88CCCC"/>
+                                        <Rectangle Canvas.Left="2" Canvas.Top="15"
+                                                   Width="15" Height="15"
+                                                   RadiusX="3" RadiusY="3" Fill="#88CCCC"/>
+                                    </Canvas>
+                                    <Canvas Width="20" Height="34" Margin="-3,0,0,0">
+                                        <Ellipse Canvas.Left="4" Canvas.Top="2"
+                                                 Width="11" Height="11" Fill="#66AABB"/>
+                                        <Rectangle Canvas.Left="2" Canvas.Top="15"
+                                                   Width="15" Height="15"
+                                                   RadiusX="3" RadiusY="3" Fill="#66AABB"/>
+                                    </Canvas>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="4 PLAYERS" Foreground="#99AABB" FontSize="9"
+                                       HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        </StackPanel>
                     </Button>
                 </StackPanel>
 

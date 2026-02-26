@@ -35,6 +35,7 @@
     <converters:CardToImageConverter x:Key="CardToImage"/>
     <converters:ScoreToMarginConverter x:Key="ScoreToMargin"/>
     <converters:PhaseToVisibilityConverter x:Key="PhaseToVisibility"/>
+    <converters:IndexPlusOneConverter x:Key="IndexPlusOne"/>
 
     <!-- ══════════ GAME TILE BUTTON ══════════ -->
     <Style x:Key="GameTileBtn" TargetType="Button">
