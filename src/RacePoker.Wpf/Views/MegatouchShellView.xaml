@@ -156,13 +156,6 @@
                         </TextBlock.Triggers>
                     </TextBlock>
 
-                    <!-- Settings gear button at right end of pill bar -->
-                    <Button Style="{StaticResource HelpBtn}"
-                            Command="{Binding OpenSettingsCommand}"
-                            HorizontalAlignment="Right" VerticalAlignment="Center"
-                            Margin="0,0,4,0">
-                        <Image Source="/Assets/gear.png" Width="20" Height="20"/>
-                    </Button>
                 </Grid>
             </Border>
 
@@ -299,9 +292,17 @@
                     </Button>
                 </StackPanel>
 
-                <!-- M brand button at bottom -->
-                <Button Grid.Row="2" Style="{StaticResource BrandBtn}"
-                        Content="M" HorizontalAlignment="Center" Margin="0,8,0,8"/>
+                <!-- Help + Settings buttons -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal"
+                            HorizontalAlignment="Center" Margin="0,8,0,8">
+                    <Button Style="{StaticResource HelpBtn}"
+                            Command="{Binding OpenHowToPlayCommand}" Margin="0,0,4,0"
+                            Content="?" FontSize="16" FontWeight="Bold"/>
+                    <Button Style="{StaticResource HelpBtn}"
+                            Command="{Binding OpenSettingsCommand}">
+                        <Image Source="/Assets/gear.png" Width="20" Height="20"/>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

@@ -326,17 +326,6 @@ public class GameEngine
 
         if (maxRoundsReached || finishCrossed)
         {
-            // Save high scores for all joined seats
-            foreach (var seat in AllJoinedSeats())
-            {
-                HighScores.TryAdd(new HighScoreEntry
-                {
-                    Initials = $"P{seat.SeatId + 1}",
-                    Score = seat.TotalScore,
-                    Date = DateTime.Now
-                });
-            }
-
             SetPhase(GamePhase.GameOver);
         }
         else

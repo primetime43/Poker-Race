@@ -12,6 +12,7 @@ public class GameSettings
     public double GameOverTimeoutSeconds { get; set; } = 30.0;
     public bool AutoAdvanceEnabled { get; set; } = true;
     public double AutoAdvanceDelaySeconds { get; set; } = 3.0;
+    public bool SoundEnabled { get; set; } = true;
 
     /// <summary>
     /// Race icon style: "Symbol" (unicode chess piece), "Image" (horse-racing.png).

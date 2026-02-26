@@ -27,6 +27,18 @@
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,16">
             <StackPanel>
 
+                <!-- Sound Enabled Toggle -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Sound Effects"
+                               Foreground="#EEEEFF" FontSize="14" VerticalAlignment="Center"/>
+                    <CheckBox Grid.Column="1" IsChecked="{Binding SoundEnabled}"
+                              VerticalAlignment="Center"/>
+                </Grid>
+
                 <!-- Auto-Advance Toggle -->
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>

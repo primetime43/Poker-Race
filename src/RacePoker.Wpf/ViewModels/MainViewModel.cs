@@ -6,6 +6,7 @@ using RacePoker.Core.Engine;
 using RacePoker.Core.Enums;
 using RacePoker.Core.Models;
 using RacePoker.Core.Services;
+using RacePoker.Wpf.Services;
 using RacePoker.Wpf.Views;
 
 namespace RacePoker.Wpf.ViewModels;
@@ -17,10 +18,13 @@ public class MainViewModel : ViewModelBase
     private readonly GameEngine _engine;
     private readonly DispatcherTimer _timer;
     private readonly SettingsService _settingsService;
+    private readonly SoundService _soundService;
     private DateTime _lastTick;
 
     private GamePhase _phase;
     private int _round;
+    private GamePhase _previousPhase;
+    private int _previousHandCount;
     private SeatViewModel? _activeSeat;
     private double _timerProgress;
     private string _winnerDisplay = "";
@@ -91,6 +95,7 @@ public class MainViewModel : ViewModelBase
     public ObservableCollection<SeatViewModel> SeatViewModels { get; } = new();
     public ObservableCollection<HighScoreEntry> HighScores { get; } = new();
     public ObservableCollection<PointChartEntry> PointChartEntries { get; } = new();
+    public ObservableCollection<InitialsEntryViewModel> InitialsEntries { get; } = new();
 
     public int FinishDistance => _engine.Settings.FinishDistance;
     public int MaxRounds => _engine.Settings.MaxRounds;
@@ -125,6 +130,7 @@ public class MainViewModel : ViewModelBase
     public ICommand ExitGameCommand { get; }
     public ICommand PlayerJoinCommand { get; }
     public ICommand OpenSettingsCommand { get; }
+    public ICommand OpenHowToPlayCommand { get; }
 
     public MainViewModel()
     {
@@ -137,11 +143,15 @@ public class MainViewModel : ViewModelBase
 
         _engine = new GameEngine(settings: settings, pointTable: pointTable);
         _engine.StateChanged += OnEngineStateChanged;
+        _soundService = new SoundService(settings);
 
         PressStartCommand = new RelayCommand(() =>
         {
             if (Phase == GamePhase.GameOver)
+            {
+                SaveInitials();
                 _engine.PressStartFromGameOver();
+            }
         });
 
         ExitGameCommand = new RelayCommand(ExitGame);
@@ -151,6 +161,7 @@ public class MainViewModel : ViewModelBase
             p => Phase == GamePhase.Attract || Phase == GamePhase.SeatJoin);
 
         OpenSettingsCommand = new RelayCommand(OpenSettings);
+        OpenHowToPlayCommand = new RelayCommand(OpenHowToPlay);
 
         for (int i = 0; i < _engine.Settings.MaxSeats; i++)
         {
@@ -206,11 +217,23 @@ public class MainViewModel : ViewModelBase
     /// </summary>
     public void ExitGame()
     {
+        if (_engine.Phase == GamePhase.GameOver)
+            SaveInitials();
+
         for (int i = 0; i < _engine.Settings.MaxSeats; i++)
             _engine.LeaveSeat(i);
 
         if (_engine.Phase == GamePhase.GameOver)
             _engine.PressStartFromGameOver();
+    }
+
+    public void OpenHowToPlay()
+    {
+        var win = new HowToPlayWindow
+        {
+            Owner = Application.Current.MainWindow
+        };
+        win.ShowDialog();
     }
 
     public void OpenSettings()
@@ -315,6 +338,32 @@ public class MainViewModel : ViewModelBase
 
     private void SyncFromEngine()
     {
+        var newPhase = _engine.Phase;
+
+        // Detect hand card count increase for card_pick sound
+        var activeSeat = _engine.Seats[_engine.ActiveSeatIndex];
+        int currentHandCount = activeSeat.Hand.Length;
+        if (currentHandCount > _previousHandCount && currentHandCount < 5 && newPhase == GamePhase.Picking)
+            _soundService.Play("card_pick");
+        _previousHandCount = currentHandCount;
+
+        // Detect phase transitions for sounds
+        if (newPhase != _previousPhase)
+        {
+            if (_previousPhase == GamePhase.Picking && _engine.IsTurnTransitioning)
+                _soundService.Play("hand_complete");
+            if (newPhase == GamePhase.Racing)
+                _soundService.Play("racing");
+            if (newPhase == GamePhase.RoundEnd)
+                _soundService.Play("round_end");
+            if (newPhase == GamePhase.GameOver)
+            {
+                var winner = _engine.Seats.Any(s => s.Status == RacePoker.Core.Enums.SeatStatus.Joined);
+                _soundService.Play(winner ? "game_win" : "game_over");
+            }
+            _previousPhase = newPhase;
+        }
+
         Phase = _engine.Phase;
         Round = _engine.Round;
 
@@ -376,6 +425,32 @@ public class MainViewModel : ViewModelBase
             lines.AppendLine($"#{i + 1}  Player {s.SeatId + 1}  —  {s.TotalScore:N0} pts");
         }
         FinalStandings = lines.ToString().TrimEnd();
+
+        // Populate initials entries for qualifying players
+        InitialsEntries.Clear();
+        foreach (var s in joined)
+        {
+            if (_engine.HighScores.QualifiesForHighScore(s.TotalScore))
+                InitialsEntries.Add(new InitialsEntryViewModel(s.SeatId, s.TotalScore));
+        }
+    }
+
+    private void SaveInitials()
+    {
+        foreach (var entry in InitialsEntries)
+        {
+            var initials = string.IsNullOrWhiteSpace(entry.Initials)
+                ? $"P{entry.SeatId + 1}"
+                : entry.Initials;
+            _engine.HighScores.TryAdd(new HighScoreEntry
+            {
+                Initials = initials,
+                Score = entry.Score,
+                Date = DateTime.Now
+            });
+        }
+        InitialsEntries.Clear();
+        RefreshHighScores();
     }
 
     private void RefreshHighScores()

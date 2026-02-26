@@ -13,6 +13,13 @@ public class SettingsViewModel : ViewModelBase
     private double _racingDurationSeconds;
     private string _raceIconStyle = "Symbol";
     private string _handResultStyle = "Marquee";
+    private bool _soundEnabled;
+
+    public bool SoundEnabled
+    {
+        get => _soundEnabled;
+        set => SetProperty(ref _soundEnabled, value);
+    }
 
     public bool AutoAdvanceEnabled
     {
@@ -96,6 +103,7 @@ public class SettingsViewModel : ViewModelBase
         _racingDurationSeconds = settings.RacingDurationSeconds;
         _raceIconStyle = settings.RaceIconStyle;
         _handResultStyle = settings.HandResultStyle;
+        _soundEnabled = settings.SoundEnabled;
     }
 
     public void Apply()
@@ -107,5 +115,6 @@ public class SettingsViewModel : ViewModelBase
         _settings.RacingDurationSeconds = RacingDurationSeconds;
         _settings.RaceIconStyle = RaceIconStyle;
         _settings.HandResultStyle = HandResultStyle;
+        _settings.SoundEnabled = SoundEnabled;
     }
 }

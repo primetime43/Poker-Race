@@ -111,8 +111,11 @@
                     </Border>
                 </StackPanel>
 
-                <!-- Right: Settings + X buttons -->
+                <!-- Right: Help + Settings + X buttons -->
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource HelpBtn}"
+                            Command="{Binding OpenHowToPlayCommand}" Margin="0,0,4,0"
+                            Content="?" FontSize="16" FontWeight="Bold"/>
                     <Button Style="{StaticResource HelpBtn}"
                             Command="{Binding OpenSettingsCommand}" Margin="0,0,4,0">
                         <Image Source="/Assets/gear.png" Width="20" Height="20"/>
@@ -641,6 +644,41 @@
                     <TextBlock Text="{Binding FinalStandings}" Foreground="#AABBCC"
                                FontSize="16" FontFamily="Consolas"
                                HorizontalAlignment="Center" Margin="0,12,0,0"/>
+
+                    <!-- Initials Entry -->
+                    <ItemsControl ItemsSource="{Binding InitialsEntries}" Margin="0,12,0,0">
+                        <ItemsControl.Style>
+                            <Style TargetType="ItemsControl">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding InitialsEntries.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ItemsControl.Style>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                            Margin="0,4">
+                                    <TextBlock Text="{Binding PlayerLabel}" Foreground="#AABBCC"
+                                               FontSize="16" FontFamily="Consolas" FontWeight="Bold"
+                                               VerticalAlignment="Center" Width="90"/>
+                                    <TextBox Text="{Binding Initials, UpdateSourceTrigger=PropertyChanged}"
+                                             MaxLength="3" FontSize="18" FontFamily="Consolas"
+                                             FontWeight="Bold" Width="60" TextAlignment="Center"
+                                             Background="#1a1a33" Foreground="#00FF88"
+                                             BorderBrush="#446688" BorderThickness="2"
+                                             CaretBrush="#00FF88" Padding="2,2"
+                                             CharacterCasing="Upper"/>
+                                    <TextBlock Text="{Binding Score, StringFormat=N0}" Foreground="#AABBCC"
+                                               FontSize="16" FontFamily="Consolas"
+                                               VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
                     <TextBlock Foreground="#667788" FontSize="14" HorizontalAlignment="Center"
                                Margin="0,8,0,0">
                         <Run Text="Press ESC or click to return"/>
