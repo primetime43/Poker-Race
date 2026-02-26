@@ -32,6 +32,7 @@
                     <ColumnDefinition Width="130"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Left: Phase display -->
@@ -61,55 +62,63 @@
                     </Grid>
                 </Border>
 
-                <!-- Right: ? X + player score boxes -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Score boxes -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="8,0,16,0">
+                    <Border CornerRadius="4" Margin="2" Background="#0a0a18"
+                            BorderBrush="#FF4444" BorderThickness="2" MinWidth="80"
+                            Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Margin="6,2">
+                            <TextBlock Text="P1 Score" Foreground="#FF4444" FontSize="9"
+                                       FontWeight="Bold" FontFamily="Consolas" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding SeatViewModels[0].TotalScore, StringFormat=N0}"
+                                       Foreground="#00FF88" FontSize="16" FontWeight="Bold"
+                                       FontFamily="Consolas" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="4" Margin="2" Background="#0a0a18"
+                            BorderBrush="#4488FF" BorderThickness="2" MinWidth="80"
+                            Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Margin="6,2">
+                            <TextBlock Text="P2 Score" Foreground="#4488FF" FontSize="9"
+                                       FontWeight="Bold" FontFamily="Consolas" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding SeatViewModels[1].TotalScore, StringFormat=N0}"
+                                       Foreground="#00FF88" FontSize="16" FontWeight="Bold"
+                                       FontFamily="Consolas" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="4" Margin="2" Background="#0a0a18"
+                            BorderBrush="#44DD44" BorderThickness="2" MinWidth="80"
+                            Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Margin="6,2">
+                            <TextBlock Text="P3 Score" Foreground="#44DD44" FontSize="9"
+                                       FontWeight="Bold" FontFamily="Consolas" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding SeatViewModels[2].TotalScore, StringFormat=N0}"
+                                       Foreground="#00FF88" FontSize="16" FontWeight="Bold"
+                                       FontFamily="Consolas" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="4" Margin="2" Background="#0a0a18"
+                            BorderBrush="#FFDD44" BorderThickness="2" MinWidth="80"
+                            Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Margin="6,2">
+                            <TextBlock Text="P4 Score" Foreground="#FFDD44" FontSize="9"
+                                       FontWeight="Bold" FontFamily="Consolas" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding SeatViewModels[3].TotalScore, StringFormat=N0}"
+                                       Foreground="#00FF88" FontSize="16" FontWeight="Bold"
+                                       FontFamily="Consolas" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right: Settings + X buttons -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Style="{StaticResource HelpBtn}"
                             Command="{Binding OpenSettingsCommand}" Margin="0,0,4,0">
                         <Image Source="/Assets/gear.png" Width="20" Height="20"/>
                     </Button>
                     <Button Style="{StaticResource CloseBtn}" Content="X"
-                            Command="{Binding ExitGameCommand}" Margin="0,0,10,0"/>
-
-                    <!-- P1 Score -->
-                    <Border Style="{StaticResource ScoreBox}"
-                            Visibility="{Binding SeatViewModels[0].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="1" Foreground="#FF4444" FontSize="14" FontWeight="Bold"
-                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Style="{StaticResource ScoreLED}"
-                                       Text="{Binding SeatViewModels[0].TotalScore, StringFormat=N0}"/>
-                        </StackPanel>
-                    </Border>
-                    <!-- P2 Score -->
-                    <Border Style="{StaticResource ScoreBox}"
-                            Visibility="{Binding SeatViewModels[1].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="2" Foreground="#FF8844" FontSize="14" FontWeight="Bold"
-                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Style="{StaticResource ScoreLED}"
-                                       Text="{Binding SeatViewModels[1].TotalScore, StringFormat=N0}"/>
-                        </StackPanel>
-                    </Border>
-                    <!-- P3 Score -->
-                    <Border Style="{StaticResource ScoreBox}"
-                            Visibility="{Binding SeatViewModels[2].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="3" Foreground="#44DD44" FontSize="14" FontWeight="Bold"
-                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Style="{StaticResource ScoreLED}"
-                                       Text="{Binding SeatViewModels[2].TotalScore, StringFormat=N0}"/>
-                        </StackPanel>
-                    </Border>
-                    <!-- P4 Score -->
-                    <Border Style="{StaticResource ScoreBox}"
-                            Visibility="{Binding SeatViewModels[3].IsJoined, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="4" Foreground="#FFDD44" FontSize="14" FontWeight="Bold"
-                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Style="{StaticResource ScoreLED}"
-                                       Text="{Binding SeatViewModels[3].TotalScore, StringFormat=N0}"/>
-                        </StackPanel>
-                    </Border>
+                            Command="{Binding ExitGameCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
