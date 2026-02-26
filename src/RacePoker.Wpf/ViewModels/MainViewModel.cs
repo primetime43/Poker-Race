@@ -189,7 +189,7 @@ public class MainViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Called when a player button (1-4) is pressed on the Megatouch shell.
+    /// Called when a player button (1-4) is pressed on the shell.
     /// The button index represents the number of players: 0 = 1 player, 3 = 4 players.
     /// Joins seats 0 through buttonIndex and auto-deals.
     /// </summary>

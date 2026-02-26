@@ -8,7 +8,7 @@
              d:DesignHeight="800" d:DesignWidth="1280">
 
     <!-- ══════════════════════════════════════════════════════════
-         RACE POKER IN-GAME VIEW — Megatouch Cabinet Layout
+         RACE POKER IN-GAME VIEW — Cabinet Layout
          Vertical stack: Track → Markers → Point Chart → Result → Cards
          ══════════════════════════════════════════════════════════ -->
     <Grid Background="#080810">
