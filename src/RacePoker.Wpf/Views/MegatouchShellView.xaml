@@ -39,25 +39,31 @@
                         <!-- Card fan decoration -->
                         <Grid Width="80" Height="60" Margin="0,0,0,8">
                             <Border Width="40" Height="56" CornerRadius="4"
-                                    Background="#1a3565" BorderBrush="#446688" BorderThickness="1"
+                                    Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
                                     <RotateTransform Angle="-15"/>
                                 </Border.RenderTransform>
+                                <Image Source="/Assets/PokerCards/jack_of_spades.png"
+                                       Stretch="Uniform" Margin="2"/>
                             </Border>
                             <Border Width="40" Height="56" CornerRadius="4"
-                                    Background="#1a3565" BorderBrush="#446688" BorderThickness="1"
+                                    Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
                                     <RotateTransform Angle="0"/>
                                 </Border.RenderTransform>
+                                <Image Source="/Assets/PokerCards/queen_of_hearts.png"
+                                       Stretch="Uniform" Margin="2"/>
                             </Border>
                             <Border Width="40" Height="56" CornerRadius="4"
-                                    Background="#1a3565" BorderBrush="#446688" BorderThickness="1"
+                                    Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
                                     <RotateTransform Angle="15"/>
                                 </Border.RenderTransform>
+                                <Image Source="/Assets/PokerCards/king_of_diamonds.png"
+                                       Stretch="Uniform" Margin="2"/>
                             </Border>
                         </Grid>
 
