@@ -15,6 +15,7 @@ public class SeatViewModel : ViewModelBase
 
     private SeatStatus _status;
     private int _totalScore;
+    private int _trackScore;
     private int _roundPoints;
     private string _handName = "";
     private GamePhase _currentPhase;
@@ -82,6 +83,16 @@ public class SeatViewModel : ViewModelBase
     {
         get => _totalScore;
         set => SetProperty(ref _totalScore, value);
+    }
+
+    /// <summary>
+    /// Score used for horse position on track. During Racing this interpolates;
+    /// otherwise it equals TotalScore.
+    /// </summary>
+    public int TrackScore
+    {
+        get => _trackScore;
+        set => SetProperty(ref _trackScore, value);
     }
 
     public int RoundPoints

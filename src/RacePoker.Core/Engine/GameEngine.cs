@@ -30,6 +30,21 @@ public class GameEngine
             return Math.Clamp(1.0 - (_phaseTimer / Settings.PickingTimeoutSeconds), 0, 1);
         }
     }
+    /// <summary>
+    /// Turn transition animation progress: 0.0 at start, 1.0 when complete. Ease-out cubic.
+    /// Only meaningful during Picking when IsTurnTransitioning is true.
+    /// </summary>
+    public double TurnTransitionProgress
+    {
+        get
+        {
+            if (Phase != GamePhase.Picking || !_turnTransitioning || Settings.TurnDelaySeconds <= 0)
+                return 1.0;
+            double t = Math.Clamp(_phaseTimer / Settings.TurnDelaySeconds, 0, 1);
+            return 1.0 - Math.Pow(1.0 - t, 3); // ease-out cubic
+        }
+    }
+
     public Seat[] Seats { get; }
     public PointTable PointTable { get; set; }
     public GameSettings Settings { get; }
@@ -170,11 +185,15 @@ public class GameEngine
             case GamePhase.Picking:
                 if (_turnTransitioning)
                 {
-                    // Pausing to show completed hand before next player
+                    // Animating horse for completed hand before next player
                     if (_phaseTimer >= Settings.TurnDelaySeconds)
                     {
                         _turnTransitioning = false;
                         AdvanceActiveOrRace();
+                    }
+                    else
+                    {
+                        OnStateChanged(); // drive per-frame track animation
                     }
                 }
                 else if (_phaseTimer >= Settings.PickingTimeoutSeconds)
@@ -192,24 +211,7 @@ public class GameEngine
 
             case GamePhase.Racing:
                 if (_phaseTimer >= Settings.RacingDurationSeconds)
-                {
-                    // Snap all seats to final score
-                    foreach (var seat in AllJoinedSeats())
-                        seat.TotalScore = seat.FinalScore;
                     SetPhase(GamePhase.RoundEnd);
-                }
-                else
-                {
-                    // Interpolate score with ease-out cubic
-                    double t = Math.Clamp(_phaseTimer / Settings.RacingDurationSeconds, 0, 1);
-                    double eased = 1.0 - Math.Pow(1.0 - t, 3);
-                    foreach (var seat in AllJoinedSeats())
-                    {
-                        int delta = seat.FinalScore - seat.PreviousScore;
-                        seat.TotalScore = seat.PreviousScore + (int)(delta * eased);
-                    }
-                    OnStateChanged();
-                }
                 break;
 
             case GamePhase.RoundEnd:
@@ -310,8 +312,8 @@ public class GameEngine
         var result = HandEvaluator.Evaluate(seat.Hand);
         seat.RoundPoints = PointTable.GetPoints(result);
         seat.PreviousScore = seat.TotalScore;
-        seat.FinalScore = seat.TotalScore + seat.RoundPoints;
-        // Don't add to TotalScore yet — Racing phase will animate it
+        seat.TotalScore += seat.RoundPoints;
+        seat.FinalScore = seat.TotalScore;
         seat.HandName = FormatHandCategory(result.Category);
     }
 

@@ -10,6 +10,8 @@ using RacePoker.Wpf.Views;
 
 namespace RacePoker.Wpf.ViewModels;
 
+public record PointChartEntry(string Label, string Value);
+
 public class MainViewModel : ViewModelBase
 {
     private readonly GameEngine _engine;
@@ -68,9 +70,7 @@ public class MainViewModel : ViewModelBase
     {
         GamePhase.Attract => "ATTRACT",
         GamePhase.SeatJoin => "JOIN GAME",
-        GamePhase.Dealing => "DEALING",
         GamePhase.Picking => "PICK A CARD",
-        GamePhase.Scoring => "SCORING",
         GamePhase.Racing => "RACING",
         GamePhase.RoundEnd => "ROUND COMPLETE",
         GamePhase.GameOver => "GAME OVER",
@@ -90,6 +90,7 @@ public class MainViewModel : ViewModelBase
 
     public ObservableCollection<SeatViewModel> SeatViewModels { get; } = new();
     public ObservableCollection<HighScoreEntry> HighScores { get; } = new();
+    public ObservableCollection<PointChartEntry> PointChartEntries { get; } = new();
 
     public int FinishDistance => _engine.Settings.FinishDistance;
     public int MaxRounds => _engine.Settings.MaxRounds;
@@ -172,6 +173,7 @@ public class MainViewModel : ViewModelBase
         _timer.Start();
 
         RefreshHighScores();
+        BuildPointChart();
         SyncFromEngine();
     }
 
@@ -305,6 +307,7 @@ public class MainViewModel : ViewModelBase
         Round = _engine.Round;
 
         var activeIdx = _engine.ActiveSeatIndex;
+        var transitionProgress = _engine.TurnTransitionProgress;
 
         for (int i = 0; i < SeatViewModels.Count; i++)
         {
@@ -312,6 +315,18 @@ public class MainViewModel : ViewModelBase
             SeatViewModels[i].IsActiveSeat = (i == activeIdx);
             SeatViewModels[i].IsTurnTransitioning = _engine.IsTurnTransitioning;
             SeatViewModels[i].UpdateFromSeat(_engine.Seats[i]);
+
+            // Animate the active seat's horse during turn transition; others stay put
+            var seat = _engine.Seats[i];
+            if (_engine.IsTurnTransitioning && i == activeIdx)
+            {
+                int delta = seat.FinalScore - seat.PreviousScore;
+                SeatViewModels[i].TrackScore = seat.PreviousScore + (int)(delta * transitionProgress);
+            }
+            else
+            {
+                SeatViewModels[i].TrackScore = seat.TotalScore;
+            }
         }
 
         if (activeIdx >= 0 && activeIdx < SeatViewModels.Count)
@@ -356,5 +371,33 @@ public class MainViewModel : ViewModelBase
         HighScores.Clear();
         foreach (var entry in _engine.HighScores.Entries)
             HighScores.Add(entry);
+    }
+
+    private void BuildPointChart()
+    {
+        var pts = _engine.PointTable.Points;
+
+        string Fmt(HandCategory cat) =>
+            pts.TryGetValue(cat, out var v) && v > 0 ? v.ToString("N0") : "Face Value";
+
+        // Row 1: High Card, 2 Pair, Straight, Full House, Str. Flush
+        // Row 2: Any Pair, 3 of a Kind, Flush, 4 of a Kind, Royal Flush
+        var layout = new (string Label, HandCategory Cat)[]
+        {
+            ("High Card",    HandCategory.HighCard),
+            ("2 Pair",       HandCategory.TwoPair),
+            ("Straight",     HandCategory.Straight),
+            ("Full House",   HandCategory.FullHouse),
+            ("Str. Flush",   HandCategory.StraightFlush),
+            ("Any Pair",     HandCategory.OnePair),
+            ("3 Of A Kind",  HandCategory.ThreeOfAKind),
+            ("Flush",        HandCategory.Flush),
+            ("4 Of A Kind",  HandCategory.FourOfAKind),
+            ("Royal Flush",  HandCategory.RoyalFlush),
+        };
+
+        PointChartEntries.Clear();
+        foreach (var (label, cat) in layout)
+            PointChartEntries.Add(new PointChartEntry(label, Fmt(cat)));
     }
 }
