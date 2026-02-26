@@ -236,22 +236,34 @@ public class MainViewModel : ViewModelBase
 
         switch (key)
         {
-            // Player buttons 1-4 (in shell: join+start, in game: various)
+            // Number keys: shell = join+start, picking = pick card, otherwise = join/deal
             case Key.D1:
+            case Key.NumPad1:
                 if (IsShellMode) PlayerButtonPressed(0);
+                else if (Phase == GamePhase.Picking) _engine.PickCard(active, 0);
                 else ToggleJoinOrDeal(0);
                 break;
             case Key.D2:
+            case Key.NumPad2:
                 if (IsShellMode) PlayerButtonPressed(1);
+                else if (Phase == GamePhase.Picking) _engine.PickCard(active, 1);
                 else ToggleJoinOrDeal(1);
                 break;
             case Key.D3:
+            case Key.NumPad3:
                 if (IsShellMode) PlayerButtonPressed(2);
+                else if (Phase == GamePhase.Picking) _engine.PickCard(active, 2);
                 else ToggleJoinOrDeal(2);
                 break;
             case Key.D4:
+            case Key.NumPad4:
                 if (IsShellMode) PlayerButtonPressed(3);
+                else if (Phase == GamePhase.Picking) _engine.PickCard(active, 3);
                 else ToggleJoinOrDeal(3);
+                break;
+            case Key.D5:
+            case Key.NumPad5:
+                if (Phase == GamePhase.Picking) _engine.PickCard(active, 4);
                 break;
 
             // Deal for seat 1
