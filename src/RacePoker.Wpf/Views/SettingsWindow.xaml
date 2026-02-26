@@ -135,6 +135,30 @@
                         </StackPanel>
                     </RadioButton>
                 </StackPanel>
+
+                <!-- Hand Result Style -->
+                <TextBlock Text="Hand Result Style" Foreground="#668899"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                    <RadioButton IsChecked="{Binding IsHandResultPlain}" Foreground="#EEEEFF"
+                                 GroupName="HandResult" Margin="0,0,16,0"
+                                 VerticalContentAlignment="Center">
+                        <TextBlock Text="Plain" FontSize="13" Foreground="#EEEEFF"
+                                   VerticalAlignment="Center"/>
+                    </RadioButton>
+                    <RadioButton IsChecked="{Binding IsHandResultMarquee}" Foreground="#EEEEFF"
+                                 GroupName="HandResult" Margin="0,0,16,0"
+                                 VerticalContentAlignment="Center">
+                        <TextBlock Text="Marquee" FontSize="13" Foreground="#EEEEFF"
+                                   VerticalAlignment="Center"/>
+                    </RadioButton>
+                    <RadioButton IsChecked="{Binding IsHandResultLights}" Foreground="#EEEEFF"
+                                 GroupName="HandResult"
+                                 VerticalContentAlignment="Center">
+                        <TextBlock Text="Lights" FontSize="13" Foreground="#EEEEFF"
+                                   VerticalAlignment="Center"/>
+                    </RadioButton>
+                </StackPanel>
             </StackPanel>
             </ScrollViewer>
 

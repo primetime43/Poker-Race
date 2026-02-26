@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:gif="http://wpfanimatedgif.codeplex.com"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="1280">
 
@@ -28,40 +29,37 @@
         <Border Grid.Row="0" Background="#0c0c1a" BorderBrush="#1a1a33" BorderThickness="0,0,0,1">
             <Grid Margin="8,6">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="130"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Timer countdown bar -->
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <Border Width="220" Height="24" CornerRadius="12" Background="#111122"
-                            BorderBrush="#333355" BorderThickness="1">
-                        <Grid>
-                            <!-- Fill bar (scales from left based on TimerProgress) -->
-                            <Border CornerRadius="11" HorizontalAlignment="Stretch"
-                                    RenderTransformOrigin="0,0.5">
-                                <Border.RenderTransform>
-                                    <ScaleTransform ScaleX="{Binding TimerProgress}"/>
-                                </Border.RenderTransform>
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#44DD44" Offset="0"/>
-                                        <GradientStop Color="#DDAA22" Offset="0.6"/>
-                                        <GradientStop Color="#DD2222" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                            </Border>
-                        </Grid>
-                    </Border>
-                    <TextBlock Text="{Binding PhaseDisplay}" Foreground="#7788AA" FontSize="10"
-                               FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,0"/>
-                </StackPanel>
+                <!-- Left: Phase display -->
+                <TextBlock Grid.Column="0" Text="{Binding PhaseDisplay}"
+                           Foreground="#667799" FontSize="14" FontWeight="Bold"
+                           VerticalAlignment="Center"/>
 
-                <!-- Center: Phase display (larger) -->
-                <TextBlock Grid.Column="1" Text="{Binding PhaseDisplay}"
-                           Foreground="#667799" FontSize="16" FontWeight="Bold"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <!-- Center: Timer countdown bar -->
+                <Border Grid.Column="1" Height="28" CornerRadius="2" Background="Black"
+                        BorderBrush="#DDC800" BorderThickness="2"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Width="400">
+                    <Grid>
+                        <Border CornerRadius="1" HorizontalAlignment="Stretch"
+                                RenderTransformOrigin="0,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="{Binding TimerProgress}"/>
+                            </Border.RenderTransform>
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#DD2222" Offset="0"/>
+                                    <GradientStop Color="#DDAA00" Offset="0.4"/>
+                                    <GradientStop Color="#44DD44" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                </Border>
 
                 <!-- Right: ? X + player score boxes -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -513,7 +511,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Active player badge (left) — dynamic color per active seat -->
+                    <!-- Active player badge (left) -->
                     <Border Grid.Column="0" CornerRadius="6" Padding="10,4"
                             Background="{Binding ActiveSeat.SeatColorBrush}"
                             BorderBrush="{Binding ActiveSeat.SeatColorBrush}" BorderThickness="2">
@@ -530,17 +528,34 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Hand result name (center) -->
-                    <TextBlock Grid.Column="1" Text="{Binding ActiveSeat.HandName}"
-                               Foreground="{StaticResource GoldAccent}" FontSize="18"
-                               FontWeight="Bold" HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
+                    <!-- Hand result name (center) with optional animated border -->
+                    <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            CornerRadius="6" ClipToBounds="True" Height="34" MaxWidth="400">
+                        <Grid>
+                            <Image gif:ImageBehavior.AnimatedSource="/Assets/Animated-Border-Marquee.gif"
+                                   Stretch="Fill" Opacity="0.85"
+                                   Visibility="{Binding UseHandResultMarquee, Converter={StaticResource BoolToVisibility}}"/>
+                            <Image gif:ImageBehavior.AnimatedSource="/Assets/flashing_lights.gif"
+                                   Stretch="Fill" Opacity="0.85"
+                                   Visibility="{Binding UseHandResultLights, Converter={StaticResource BoolToVisibility}}"/>
+                            <TextBlock Text="{Binding ActiveSeat.HandName}"
+                                       Foreground="{StaticResource GoldAccent}" FontSize="18"
+                                       FontWeight="Bold" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" Margin="20,0"/>
+                        </Grid>
+                    </Border>
 
                     <!-- Round badge (right) -->
-                    <Border Grid.Column="2" Style="{StaticResource RoundBadge}"
+                    <Border Grid.Column="2" Background="#AA22CC" BorderBrush="#DDC800"
+                            BorderThickness="2" CornerRadius="4" Padding="12,4"
                             VerticalAlignment="Center">
-                        <TextBlock Text="{Binding RoundDisplay}" Foreground="White"
-                                   FontSize="13" FontWeight="Bold"/>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Round" Foreground="#FFD700" FontSize="14"
+                                       FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding RoundNumberDisplay}" Foreground="#FFD700"
+                                       FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Margin="0,-2,0,0"/>
+                        </StackPanel>
                     </Border>
                 </Grid>
 

@@ -45,7 +45,10 @@ public class MainViewModel : ViewModelBase
         private set
         {
             if (SetProperty(ref _round, value))
+            {
                 OnPropertyChanged(nameof(RoundDisplay));
+                OnPropertyChanged(nameof(RoundNumberDisplay));
+            }
         }
     }
 
@@ -72,6 +75,7 @@ public class MainViewModel : ViewModelBase
     };
 
     public string RoundDisplay => Round > 0 ? $"Round {Round}/{_engine.Settings.MaxRounds}" : "";
+    public string RoundNumberDisplay => Round > 0 ? Round.ToString() : "";
 
     // Shell vs Game view navigation
     public bool IsInGame => Phase != GamePhase.Attract && Phase != GamePhase.SeatJoin;
@@ -90,6 +94,9 @@ public class MainViewModel : ViewModelBase
 
     public bool UseSymbolIcon => _engine.Settings.RaceIconStyle == "Symbol";
     public bool UseImageIcon => _engine.Settings.RaceIconStyle != "Symbol";
+
+    public bool UseHandResultMarquee => _engine.Settings.HandResultStyle == "Marquee";
+    public bool UseHandResultLights => _engine.Settings.HandResultStyle == "Lights";
 
     /// <summary>Timer progress 0.0 to 1.0 for the current phase countdown.</summary>
     public double TimerProgress
@@ -198,6 +205,8 @@ public class MainViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(UseSymbolIcon));
         OnPropertyChanged(nameof(UseImageIcon));
+        OnPropertyChanged(nameof(UseHandResultMarquee));
+        OnPropertyChanged(nameof(UseHandResultLights));
     }
 
     public void HandleKeyDown(Key key)

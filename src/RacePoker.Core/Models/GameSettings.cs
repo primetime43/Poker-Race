@@ -17,4 +17,9 @@ public class GameSettings
     /// Race icon style: "Symbol" (unicode chess piece), "Image" (horse-racing.png).
     /// </summary>
     public string RaceIconStyle { get; set; } = "Image";
+
+    /// <summary>
+    /// Hand result decoration: "Plain", "Marquee", or "Lights".
+    /// </summary>
+    public string HandResultStyle { get; set; } = "Marquee";
 }

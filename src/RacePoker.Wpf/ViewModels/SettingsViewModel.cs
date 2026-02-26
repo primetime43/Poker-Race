@@ -12,6 +12,7 @@ public class SettingsViewModel : ViewModelBase
     private double _pickingTimeoutSeconds;
     private double _racingDurationSeconds;
     private string _raceIconStyle = "Symbol";
+    private string _handResultStyle = "Marquee";
 
     public bool AutoAdvanceEnabled
     {
@@ -61,6 +62,30 @@ public class SettingsViewModel : ViewModelBase
         set { if (value) RaceIconStyle = "Image"; }
     }
 
+    public string HandResultStyle
+    {
+        get => _handResultStyle;
+        set => SetProperty(ref _handResultStyle, value);
+    }
+
+    public bool IsHandResultPlain
+    {
+        get => HandResultStyle == "Plain";
+        set { if (value) HandResultStyle = "Plain"; }
+    }
+
+    public bool IsHandResultMarquee
+    {
+        get => HandResultStyle == "Marquee";
+        set { if (value) HandResultStyle = "Marquee"; }
+    }
+
+    public bool IsHandResultLights
+    {
+        get => HandResultStyle == "Lights";
+        set { if (value) HandResultStyle = "Lights"; }
+    }
+
     public SettingsViewModel(GameSettings settings)
     {
         _settings = settings;
@@ -70,6 +95,7 @@ public class SettingsViewModel : ViewModelBase
         _pickingTimeoutSeconds = settings.PickingTimeoutSeconds;
         _racingDurationSeconds = settings.RacingDurationSeconds;
         _raceIconStyle = settings.RaceIconStyle;
+        _handResultStyle = settings.HandResultStyle;
     }
 
     public void Apply()
@@ -80,5 +106,6 @@ public class SettingsViewModel : ViewModelBase
         _settings.PickingTimeoutSeconds = PickingTimeoutSeconds;
         _settings.RacingDurationSeconds = RacingDurationSeconds;
         _settings.RaceIconStyle = RaceIconStyle;
+        _settings.HandResultStyle = HandResultStyle;
     }
 }
