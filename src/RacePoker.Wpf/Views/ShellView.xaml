@@ -20,13 +20,8 @@
              CENTER: Race Poker Attract Screen
              ════════════════════════════════════════════════ -->
         <Grid Grid.Column="0" Margin="6">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
             <!-- Main attract content: Logo (left) + High Scores (right) -->
-            <Grid Grid.Row="0">
+            <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="180"/>
                     <ColumnDefinition Width="*"/>
@@ -207,29 +202,6 @@
                     </Grid>
                 </Border>
             </Grid>
-
-            <!-- "Press Player Button to Start" pill bar -->
-            <Border Grid.Row="1" Style="{StaticResource PillBar}" Margin="4,4,4,4">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="Press Player Button to Start"
-                               Foreground="White" FontSize="16" FontWeight="SemiBold"
-                               HorizontalAlignment="Center">
-                        <TextBlock.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever">
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="1" To="0.3" Duration="0:0:1.2"
-                                                         AutoReverse="True"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </TextBlock.Triggers>
-                    </TextBlock>
-                    <TextBlock Text="(or press 1-4)" Foreground="#445566" FontSize="11"
-                               HorizontalAlignment="Center" Margin="0,2,0,0"/>
-                </StackPanel>
-            </Border>
 
         </Grid>
 
