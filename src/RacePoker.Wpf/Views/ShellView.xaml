@@ -6,6 +6,62 @@
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="1280">
 
+    <!-- Idle attract-screen animations -->
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <!-- Horse dots racing across the mini track -->
+                    <DoubleAnimation Storyboard.TargetName="HorseDot1Move"
+                                     Storyboard.TargetProperty="X"
+                                     From="0" To="90" Duration="0:0:3.0"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+                    <DoubleAnimation Storyboard.TargetName="HorseDot2Move"
+                                     Storyboard.TargetProperty="X"
+                                     From="0" To="90" Duration="0:0:2.4"
+                                     BeginTime="0:0:0.3"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+                    <DoubleAnimation Storyboard.TargetName="HorseDot3Move"
+                                     Storyboard.TargetProperty="X"
+                                     From="0" To="90" Duration="0:0:2.7"
+                                     BeginTime="0:0:0.1"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+                    <DoubleAnimation Storyboard.TargetName="HorseDot4Move"
+                                     Storyboard.TargetProperty="X"
+                                     From="0" To="90" Duration="0:0:2.1"
+                                     BeginTime="0:0:0.5"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+
+                    <!-- Card fan gentle sway -->
+                    <DoubleAnimation Storyboard.TargetName="CardRotate1"
+                                     Storyboard.TargetProperty="Angle"
+                                     From="-18" To="-12" Duration="0:0:3.0"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+                    <DoubleAnimation Storyboard.TargetName="CardRotate2"
+                                     Storyboard.TargetProperty="Angle"
+                                     From="-3" To="3" Duration="0:0:3.5"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+                    <DoubleAnimation Storyboard.TargetName="CardRotate3"
+                                     Storyboard.TargetProperty="Angle"
+                                     From="12" To="18" Duration="0:0:4.0"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+
+                    <!-- Logo badge glow pulse -->
+                    <DoubleAnimation Storyboard.TargetName="LogoGlow"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0.3" To="0.9" Duration="0:0:2.0"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+
+                    <!-- HIGH SCORES header shimmer -->
+                    <DoubleAnimation Storyboard.TargetName="HighScoresHeader"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0.5" To="1.0" Duration="0:0:2.5"
+                                     AutoReverse="True" RepeatBehavior="Forever"/>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </UserControl.Triggers>
+
     <!-- ══════════════════════════════════════════════════════════
          CABINET SHELL
          Center: Attract screen  |  Right: Player buttons
@@ -23,7 +79,7 @@
             <!-- Main attract content: Logo (left) + High Scores (right) -->
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="260"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
@@ -32,30 +88,30 @@
                     <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center"
                                 Margin="0,20,0,0">
                         <!-- Card fan decoration -->
-                        <Grid Width="110" Height="80" Margin="0,0,0,8">
-                            <Border Width="52" Height="72" CornerRadius="4"
+                        <Grid Width="200" Height="130" Margin="0,0,0,8">
+                            <Border Width="74" Height="102" CornerRadius="4"
                                     Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
-                                    <RotateTransform Angle="-15"/>
+                                    <RotateTransform x:Name="CardRotate1" Angle="-15"/>
                                 </Border.RenderTransform>
                                 <Image Source="/Assets/PokerCards/jack_of_spades.png"
                                        Stretch="Uniform" Margin="2"/>
                             </Border>
-                            <Border Width="52" Height="72" CornerRadius="4"
+                            <Border Width="74" Height="102" CornerRadius="4"
                                     Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
-                                    <RotateTransform Angle="0"/>
+                                    <RotateTransform x:Name="CardRotate2" Angle="0"/>
                                 </Border.RenderTransform>
                                 <Image Source="/Assets/PokerCards/queen_of_hearts.png"
                                        Stretch="Uniform" Margin="2"/>
                             </Border>
-                            <Border Width="52" Height="72" CornerRadius="4"
+                            <Border Width="74" Height="102" CornerRadius="4"
                                     Background="White" BorderBrush="#446688" BorderThickness="1"
                                     RenderTransformOrigin="0.5,1">
                                 <Border.RenderTransform>
-                                    <RotateTransform Angle="15"/>
+                                    <RotateTransform x:Name="CardRotate3" Angle="15"/>
                                 </Border.RenderTransform>
                                 <Image Source="/Assets/PokerCards/king_of_diamonds.png"
                                        Stretch="Uniform" Margin="2"/>
@@ -63,12 +119,17 @@
                         </Grid>
 
                         <!-- RACE POKER text -->
-                        <Border Background="#CC2222" CornerRadius="4" Padding="8,4" Margin="0,4">
+                        <Border Background="#CC2222" CornerRadius="6" Padding="14,6" Margin="0,4"
+                                HorizontalAlignment="Center">
+                            <Border.Effect>
+                                <DropShadowEffect x:Name="LogoGlow" Color="#FFD700"
+                                                  BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                            </Border.Effect>
                             <StackPanel>
-                                <TextBlock Text="RACE" FontSize="22" FontWeight="Black"
+                                <TextBlock Text="RACE" FontSize="30" FontWeight="Black"
                                            Foreground="#FFD700" HorizontalAlignment="Center"
                                            FontFamily="Impact"/>
-                                <TextBlock Text="POKER" FontSize="18" FontWeight="Black"
+                                <TextBlock Text="POKER" FontSize="24" FontWeight="Black"
                                            Foreground="White" HorizontalAlignment="Center"
                                            FontFamily="Impact" Margin="0,-4,0,0"/>
                             </StackPanel>
@@ -76,11 +137,11 @@
 
                         <!-- Tagline -->
                         <TextBlock Text="Build hands. Race horses."
-                                   Foreground="#445566" FontSize="10" FontStyle="Italic"
+                                   Foreground="#445566" FontSize="12" FontStyle="Italic"
                                    HorizontalAlignment="Center" Margin="0,6,0,0"/>
 
                         <!-- Mini decorative race track -->
-                        <Border Margin="8,16,8,0" CornerRadius="3" Height="18"
+                        <Border Margin="8,16,8,0" CornerRadius="3" Height="26"
                                 BorderBrush="#2a5a2a" BorderThickness="1">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -97,10 +158,26 @@
                                 <!-- Horse dots -->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
                                             Margin="6,0,0,0">
-                                    <Ellipse Width="6" Height="6" Fill="#FF4444" Margin="0,0,2,0"/>
-                                    <Ellipse Width="6" Height="6" Fill="#4488FF" Margin="8,0,2,0"/>
-                                    <Ellipse Width="6" Height="6" Fill="#44CC44" Margin="4,0,2,0"/>
-                                    <Ellipse Width="6" Height="6" Fill="#FFDD44" Margin="12,0,0,0"/>
+                                    <Ellipse Width="8" Height="8" Fill="#FF4444" Margin="0,0,2,0">
+                                        <Ellipse.RenderTransform>
+                                            <TranslateTransform x:Name="HorseDot1Move"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                    <Ellipse Width="8" Height="8" Fill="#4488FF" Margin="8,0,2,0">
+                                        <Ellipse.RenderTransform>
+                                            <TranslateTransform x:Name="HorseDot2Move"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                    <Ellipse Width="8" Height="8" Fill="#44CC44" Margin="4,0,2,0">
+                                        <Ellipse.RenderTransform>
+                                            <TranslateTransform x:Name="HorseDot3Move"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                    <Ellipse Width="8" Height="8" Fill="#FFDD44" Margin="12,0,0,0">
+                                        <Ellipse.RenderTransform>
+                                            <TranslateTransform x:Name="HorseDot4Move"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
                                 </StackPanel>
                                 <!-- Finish flag (checkerboard) -->
                                 <Grid HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -133,7 +210,7 @@
                         </Grid.RowDefinitions>
 
                         <!-- HIGH SCORES header -->
-                        <TextBlock Grid.Row="0" Text="HIGH SCORES"
+                        <TextBlock x:Name="HighScoresHeader" Grid.Row="0" Text="HIGH SCORES"
                                    Foreground="#FFD700" FontSize="18" FontWeight="Bold"
                                    FontFamily="Impact" HorizontalAlignment="Center"
                                    Margin="0,4,0,8"/>
