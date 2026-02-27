@@ -9,6 +9,61 @@
         Background="Transparent"
         ResizeMode="NoResize">
 
+    <Window.Resources>
+        <!-- Thin rounded scrollbar thumb -->
+        <Style x:Key="DarkThumb" TargetType="Thumb">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="#334466" CornerRadius="3"
+                                Margin="0,1"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Invisible track repeat button -->
+        <Style x:Key="DarkTrackBtn" TargetType="RepeatButton">
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Dark vertical scrollbar (thin, no arrows) -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="6"/>
+            <Setter Property="MinWidth" Value="6"/>
+            <Setter Property="Background" Value="#14142a"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Border Background="#14142a" CornerRadius="3">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource DarkTrackBtn}"
+                                                  Command="ScrollBar.PageUpCommand"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource DarkThumb}" MinHeight="20"/>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource DarkTrackBtn}"
+                                                  Command="ScrollBar.PageDownCommand"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Border CornerRadius="10" BorderBrush="#2a2a55" BorderThickness="2"
             Background="#0c0c22">
         <Grid Margin="20">
@@ -24,8 +79,13 @@
                        Margin="0,0,0,16" FontFamily="Consolas"/>
 
             <!-- Settings controls -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,16">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                          Margin="0,0,0,16" Padding="0,0,8,0">
             <StackPanel>
+
+                <!-- ── Gameplay ── -->
+                <TextBlock Text="GAMEPLAY" FontSize="14" FontWeight="Bold"
+                           Foreground="#00d4d4" Margin="0,0,0,8" FontFamily="Consolas"/>
 
                 <!-- Sound Enabled Toggle -->
                 <Grid Margin="0,0,0,12">
@@ -171,6 +231,46 @@
                                    VerticalAlignment="Center"/>
                     </RadioButton>
                 </StackPanel>
+                <!-- ── Attract Screen ── -->
+                <Rectangle Height="1" Fill="#2a2a55" Margin="0,4,0,12"/>
+                <TextBlock Text="ATTRACT SCREEN" FontSize="14" FontWeight="Bold"
+                           Foreground="#00d4d4" Margin="0,0,0,8" FontFamily="Consolas"/>
+
+                <!-- Card Fan Sway -->
+                <TextBlock Text="Card Fan Sway (degrees)" Foreground="#668899"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="50"/>
+                    </Grid.ColumnDefinitions>
+                    <Slider Minimum="0" Maximum="25" TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding CardSwayDegrees}"
+                            VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Foreground="#00FF88" FontFamily="Consolas"
+                               FontSize="14" FontWeight="Bold" HorizontalAlignment="Right"
+                               VerticalAlignment="Center"
+                               Text="{Binding CardSwayDegrees, StringFormat={}{0:F0}°}"/>
+                </Grid>
+
+                <!-- Logo Glow -->
+                <TextBlock Text="Logo Glow Size" Foreground="#668899"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="50"/>
+                    </Grid.ColumnDefinitions>
+                    <Slider Minimum="0" Maximum="50" TickFrequency="5"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding LogoGlowBlur}"
+                            VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Foreground="#00FF88" FontFamily="Consolas"
+                               FontSize="14" FontWeight="Bold" HorizontalAlignment="Right"
+                               VerticalAlignment="Center"
+                               Text="{Binding LogoGlowBlur, StringFormat={}{0:F0}}"/>
+                </Grid>
             </StackPanel>
             </ScrollViewer>
 

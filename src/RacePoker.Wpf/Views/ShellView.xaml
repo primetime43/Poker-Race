@@ -32,25 +32,7 @@
                                      BeginTime="0:0:0.5"
                                      AutoReverse="True" RepeatBehavior="Forever"/>
 
-                    <!-- Card fan gentle sway -->
-                    <DoubleAnimation Storyboard.TargetName="CardRotate1"
-                                     Storyboard.TargetProperty="Angle"
-                                     From="-18" To="-12" Duration="0:0:3.0"
-                                     AutoReverse="True" RepeatBehavior="Forever"/>
-                    <DoubleAnimation Storyboard.TargetName="CardRotate2"
-                                     Storyboard.TargetProperty="Angle"
-                                     From="-3" To="3" Duration="0:0:3.5"
-                                     AutoReverse="True" RepeatBehavior="Forever"/>
-                    <DoubleAnimation Storyboard.TargetName="CardRotate3"
-                                     Storyboard.TargetProperty="Angle"
-                                     From="12" To="18" Duration="0:0:4.0"
-                                     AutoReverse="True" RepeatBehavior="Forever"/>
-
-                    <!-- Logo badge glow pulse -->
-                    <DoubleAnimation Storyboard.TargetName="LogoGlow"
-                                     Storyboard.TargetProperty="Opacity"
-                                     From="0.3" To="0.9" Duration="0:0:2.0"
-                                     AutoReverse="True" RepeatBehavior="Forever"/>
+                    <!-- Card fan sway + logo glow: driven from code-behind (configurable via Settings) -->
 
                     <!-- HIGH SCORES header shimmer -->
                     <DoubleAnimation Storyboard.TargetName="HighScoresHeader"

@@ -14,6 +14,8 @@ public class SettingsViewModel : ViewModelBase
     private string _raceIconStyle = "Symbol";
     private string _handResultStyle = "Marquee";
     private bool _soundEnabled;
+    private double _cardSwayDegrees;
+    private double _logoGlowBlur;
 
     public bool SoundEnabled
     {
@@ -93,6 +95,18 @@ public class SettingsViewModel : ViewModelBase
         set { if (value) HandResultStyle = "Lights"; }
     }
 
+    public double CardSwayDegrees
+    {
+        get => _cardSwayDegrees;
+        set => SetProperty(ref _cardSwayDegrees, value);
+    }
+
+    public double LogoGlowBlur
+    {
+        get => _logoGlowBlur;
+        set => SetProperty(ref _logoGlowBlur, value);
+    }
+
     public SettingsViewModel(GameSettings settings)
     {
         _settings = settings;
@@ -104,6 +118,8 @@ public class SettingsViewModel : ViewModelBase
         _raceIconStyle = settings.RaceIconStyle;
         _handResultStyle = settings.HandResultStyle;
         _soundEnabled = settings.SoundEnabled;
+        _cardSwayDegrees = settings.CardSwayDegrees;
+        _logoGlowBlur = settings.LogoGlowBlur;
     }
 
     public void Apply()
@@ -116,5 +132,7 @@ public class SettingsViewModel : ViewModelBase
         _settings.RaceIconStyle = RaceIconStyle;
         _settings.HandResultStyle = HandResultStyle;
         _settings.SoundEnabled = SoundEnabled;
+        _settings.CardSwayDegrees = CardSwayDegrees;
+        _settings.LogoGlowBlur = LogoGlowBlur;
     }
 }

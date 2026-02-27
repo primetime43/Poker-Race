@@ -107,6 +107,9 @@ public class MainViewModel : ViewModelBase
     public bool UseHandResultMarquee => _engine.Settings.HandResultStyle == "Marquee";
     public bool UseHandResultLights => _engine.Settings.HandResultStyle == "Lights";
 
+    public double CardSwayDegrees => _engine.Settings.CardSwayDegrees;
+    public double LogoGlowBlur => _engine.Settings.LogoGlowBlur;
+
     /// <summary>Timer progress 0.0 to 1.0 for the current phase countdown.</summary>
     public double TimerProgress
     {

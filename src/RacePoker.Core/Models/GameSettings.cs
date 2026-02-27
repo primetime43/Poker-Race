@@ -23,4 +23,10 @@ public class GameSettings
     /// Hand result decoration: "Plain", "Marquee", or "Lights".
     /// </summary>
     public string HandResultStyle { get; set; } = "Marquee";
+
+    /// <summary>Card fan sway range in degrees (±). 0 = no sway.</summary>
+    public double CardSwayDegrees { get; set; } = 10;
+
+    /// <summary>Logo glow max blur radius. 0 = no glow.</summary>
+    public double LogoGlowBlur { get; set; } = 30;
 }
