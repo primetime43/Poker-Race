@@ -57,6 +57,7 @@ public class MainViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(RoundDisplay));
                 OnPropertyChanged(nameof(RoundNumberDisplay));
+                OnPropertyChanged(nameof(RoundMultiplierDisplay));
             }
         }
     }
@@ -83,6 +84,7 @@ public class MainViewModel : ViewModelBase
 
     public string RoundDisplay => Round > 0 ? $"Round {Round}/{_engine.Settings.MaxRounds}" : "";
     public string RoundNumberDisplay => Round > 0 ? Round.ToString() : "";
+    public string RoundMultiplierDisplay => Round > 0 ? $"x{1.0 + (Round - 1) * 0.15:F2}" : "";
 
     // Shell vs Game view navigation
     public bool IsInGame => Phase != GamePhase.Attract && Phase != GamePhase.SeatJoin;

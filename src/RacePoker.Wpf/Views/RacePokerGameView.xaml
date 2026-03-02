@@ -494,6 +494,9 @@
                             <TextBlock Text="{Binding RoundNumberDisplay}" Foreground="#FFD700"
                                        FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"
                                        Margin="0,-2,0,0"/>
+                            <TextBlock Text="{Binding RoundMultiplierDisplay}" Foreground="#00FF88"
+                                       FontSize="11" FontWeight="Bold" FontFamily="Consolas"
+                                       HorizontalAlignment="Center" Margin="0,-1,0,0"/>
                         </StackPanel>
                     </Border>
                 </Grid>

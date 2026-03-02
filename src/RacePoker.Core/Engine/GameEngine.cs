@@ -310,7 +310,12 @@ public class GameEngine
     private void EvaluateSeat(Seat seat)
     {
         var result = HandEvaluator.Evaluate(seat.Hand);
-        seat.RoundPoints = PointTable.GetPoints(result);
+        int basePoints = PointTable.GetPoints(result);
+
+        // Round multiplier: points scale up each round so later rounds feel more dramatic
+        double multiplier = 1.0 + (Round - 1) * 0.15;
+        seat.RoundPoints = (int)(basePoints * multiplier);
+
         seat.PreviousScore = seat.TotalScore;
         seat.TotalScore += seat.RoundPoints;
         seat.FinalScore = seat.TotalScore;
