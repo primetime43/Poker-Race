@@ -5,10 +5,10 @@
         xmlns:vm="clr-namespace:RacePoker.Wpf.ViewModels"
         Title="Race Poker"
         Width="1280" Height="800"
-        MinWidth="1024" MinHeight="700"
+        MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen"
-        Icon="/Assets/kpoker.ico"
-        Background="#080818"
+        Icon="/RacePoker.Wpf;component/Assets/kpoker.ico"
+        Background="#08151F"
         KeyDown="Window_KeyDown">
     <Window.DataContext>
         <vm:MainViewModel/>

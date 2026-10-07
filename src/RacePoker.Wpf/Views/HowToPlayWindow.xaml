@@ -31,9 +31,10 @@
                     <TextBlock Text="GOAL" Foreground="#FFD700" FontSize="14" FontWeight="Bold"
                                Margin="0,0,0,4"/>
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,14">
-                        Be the first player to reach 150,000 points by building the best
-                        poker hands each round. Your horse advances on the track based on
-                        your hand score.
+                        Build strong poker hands to move your horse along the track.
+                        The race ends after a round when a horse crosses the finish line or the round limit is reached.
+                        The player with the most points wins; equal scores share the win.
+                        <LineBreak/><Run Text="{Binding RaceRulesDisplay}"/>
                     </TextBlock>
 
                     <!-- How It Works -->
@@ -55,8 +56,8 @@
                         more points!
                     </TextBlock>
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,14">
-                        5. After all players finish, horses race forward based on points earned.
-                        The game continues for up to 10 rounds or until someone crosses the finish line.
+                        5. Each completed hand moves your horse forward. Later rounds add a 15% boost per round to the point chart.
+                        After all players finish, compare scores and start the next round.
                     </TextBlock>
 
                     <!-- Controls -->
@@ -90,7 +91,7 @@
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="Space"
                                    Foreground="#00FF88" FontFamily="Consolas" FontSize="13" FontWeight="Bold"
                                    Margin="0,2"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Start dealing"
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Start a one-player race"
                                    Foreground="#CCDDEE" FontSize="13" Margin="0,2"/>
 
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="ESC"
@@ -99,10 +100,10 @@
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="Exit game / return to menu"
                                    Foreground="#CCDDEE" FontSize="13" Margin="0,2"/>
 
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Mouse"
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Mouse / F11"
                                    Foreground="#00FF88" FontFamily="Consolas" FontSize="13" FontWeight="Bold"
                                    Margin="0,2"/>
-                        <TextBlock Grid.Row="4" Grid.Column="1" Text="Click cards and buttons"
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="Click controls / fullscreen"
                                    Foreground="#CCDDEE" FontSize="13" Margin="0,2"/>
                     </Grid>
 

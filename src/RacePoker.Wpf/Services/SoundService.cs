@@ -10,12 +10,12 @@ public class SoundService
     private readonly string _soundDir;
     private readonly Dictionary<string, SoundPlayer> _players = new();
 
-    public SoundService(GameSettings settings)
+    public SoundService(GameSettings settings, string? soundDirectory = null)
     {
         _settings = settings;
 
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        _soundDir = Path.Combine(appData, "RacePoker", "Sounds");
+        _soundDir = soundDirectory ?? Path.Combine(appData, "RacePoker", "Sounds");
         Directory.CreateDirectory(_soundDir);
 
         GeneratePlaceholders();

@@ -417,4 +417,35 @@ public class GameEngineTests
         // Hand should contain those cards
         Assert.Equal(5, engine.Seats[0].Hand.Length);
     }
+    [Fact]
+    public void DisabledPickingTimeout_DoesNotAutoFill()
+    {
+        var engine = CreateEngine(new GameSettings { PickingTimeoutSeconds = 0 });
+        engine.JoinSeat(0);
+        engine.PressDeal(0);
+        engine.Tick(TimeSpan.FromMinutes(5));
+        Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Empty(engine.Seats[0].Hand);
+        Assert.False(engine.IsTurnTransitioning);
+    }
+
+    [Fact]
+    public void LeavingLastSeatDuringTransition_ResetsRaceForReplay()
+    {
+        var engine = CreateEngine();
+        engine.JoinSeat(3);
+        engine.PressDeal(3);
+        PickAllCards(engine, 3);
+        Assert.True(engine.IsTurnTransitioning);
+        engine.LeaveSeat(3);
+        Assert.Equal(GamePhase.Attract, engine.Phase);
+        Assert.Equal(0, engine.Round);
+        Assert.Equal(0, engine.ActiveSeatIndex);
+        Assert.False(engine.IsTurnTransitioning);
+        engine.JoinSeat(0);
+        engine.PressDeal(0);
+        Assert.Equal(1, engine.Round);
+        Assert.Empty(engine.Seats[0].Hand);
+        Assert.True(engine.PickCard(0, 0));
+    }
 }

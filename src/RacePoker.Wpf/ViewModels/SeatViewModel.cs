@@ -47,10 +47,10 @@ public class SeatViewModel : ViewModelBase
 
     public Brush SeatColorBrush => SeatId switch
     {
-        0 => new SolidColorBrush(Color.FromRgb(0xFF, 0x44, 0x44)),
-        1 => new SolidColorBrush(Color.FromRgb(0x44, 0x88, 0xFF)),
-        2 => new SolidColorBrush(Color.FromRgb(0x44, 0xDD, 0x44)),
-        3 => new SolidColorBrush(Color.FromRgb(0xFF, 0xDD, 0x44)),
+        0 => new SolidColorBrush(Color.FromRgb(0xF7, 0x85, 0x75)),
+        1 => new SolidColorBrush(Color.FromRgb(0x75, 0xBB, 0xF7)),
+        2 => new SolidColorBrush(Color.FromRgb(0x72, 0xE6, 0xC2)),
+        3 => new SolidColorBrush(Color.FromRgb(0xF4, 0xCF, 0x75)),
         _ => Brushes.White
     };
 

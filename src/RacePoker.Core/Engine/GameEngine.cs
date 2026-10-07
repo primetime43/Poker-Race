@@ -17,7 +17,7 @@ public class GameEngine
     public bool IsTurnTransitioning => _turnTransitioning;
 
     /// <summary>
-    /// How far through the current phase timer (0.0 = just started, 1.0 = done).
+    /// Fraction of picking time remaining (1.0 = just started, 0.0 = timeout).
     /// </summary>
     public double PhaseTimerProgress
     {
@@ -96,8 +96,8 @@ public class GameEngine
         // If no seats left, return to attract
         if (!Seats.Any(s => s.Status != SeatStatus.Empty))
         {
+            ResetGame();
             SetPhase(GamePhase.Attract);
-            Round = 0;
         }
 
         OnStateChanged();
@@ -196,7 +196,7 @@ public class GameEngine
                         OnStateChanged(); // drive per-frame track animation
                     }
                 }
-                else if (_phaseTimer >= Settings.PickingTimeoutSeconds)
+                else if (Settings.PickingTimeoutSeconds > 0 && _phaseTimer >= Settings.PickingTimeoutSeconds)
                 {
                     // Timeout: auto-fill the active seat
                     var activeSeat = GetSeat(ActiveSeatIndex);
@@ -342,6 +342,9 @@ public class GameEngine
     private void ResetGame()
     {
         Round = 0;
+        ActiveSeatIndex = 0;
+        _turnTransitioning = false;
+        _phaseTimer = 0;
         foreach (var seat in Seats)
             seat.ResetFull();
         _decks.Clear();

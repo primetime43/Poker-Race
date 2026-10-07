@@ -19,6 +19,7 @@ public class CardViewModel : ViewModelBase
             if (SetProperty(ref _card, value))
             {
                 OnPropertyChanged(nameof(ImagePath));
+                OnPropertyChanged(nameof(PickLabel));
                 if (wasNull && _card is not null)
                 {
                     JustAppeared = false;
@@ -39,7 +40,7 @@ public class CardViewModel : ViewModelBase
     }
 
     public string ImagePath => Card is not null
-        ? $"pack://application:,,,/Assets/PokerCards/{Card.ImageFileName}"
+        ? $"pack://application:,,,/RacePoker.Wpf;component/Assets/PokerCards/{Card.ImageFileName}"
         : "";
 
     public bool IsHeld
@@ -55,6 +56,8 @@ public class CardViewModel : ViewModelBase
     }
 
     public int CardIndex { get; }
+    public string KeyLabel => $"{CardIndex + 1} / F{CardIndex + 1}";
+    public string PickLabel => Card is null ? $"Pick card {CardIndex + 1}" : $"Pick {Card.Rank} of {Card.Suit}";
 
     public ICommand ToggleHoldCommand { get; }
 

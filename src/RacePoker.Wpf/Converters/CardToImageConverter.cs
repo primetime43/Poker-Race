@@ -12,7 +12,7 @@ public class CardToImageConverter : IValueConverter
         if (value is not Card card)
             return null;
 
-        var uri = new Uri($"pack://application:,,,/Assets/PokerCards/{card.ImageFileName}", UriKind.Absolute);
+        var uri = new Uri($"pack://application:,,,/RacePoker.Wpf;component/Assets/PokerCards/{card.ImageFileName}", UriKind.Absolute);
         return new BitmapImage(uri);
     }
 

@@ -25,6 +25,7 @@ public class MainViewModel : ViewModelBase
     private int _round;
     private GamePhase _previousPhase;
     private int _previousHandCount;
+    private bool _previousTransitioning;
     private SeatViewModel? _activeSeat;
     private double _timerProgress;
     private string _winnerDisplay = "";
@@ -109,14 +110,65 @@ public class MainViewModel : ViewModelBase
     public bool UseHandResultMarquee => _engine.Settings.HandResultStyle == "Marquee";
     public bool UseHandResultLights => _engine.Settings.HandResultStyle == "Lights";
 
+    public string RaceRulesDisplay => $"{FinishDistance:N0} points to finish · {MaxRounds} {(MaxRounds == 1 ? "round" : "rounds")}";
+    public string HandProgressDisplay => $"{ActiveSeat?.Cards.Count(c => c.Card is not null) ?? 0} / 5 cards picked";
+    public bool ShowSelectionRow => Phase == GamePhase.Picking && !_engine.IsTurnTransitioning;
+    public bool HasInitialsEntries => InitialsEntries.Count > 0;
+    public double TimerRemainingFraction => Phase == GamePhase.Picking && !_engine.IsTurnTransitioning
+        ? TimerProgress : 0;
+    public string CountdownDisplay => Phase == GamePhase.Picking && !_engine.IsTurnTransitioning
+        ? (_engine.Settings.PickingTimeoutSeconds <= 0 ? "Take your time" : $"{Math.Ceiling(TimerRemainingFraction * _engine.Settings.PickingTimeoutSeconds):0}s to pick")
+        : Phase == GamePhase.RoundEnd ? (_engine.Settings.AutoAdvanceEnabled ? "Next round shortly" : "Press Enter to continue") : "Hand complete";
+    public string TurnInstruction => Phase switch
+    {
+        GamePhase.Picking when _engine.IsTurnTransitioning => "A good hand. A little more ground.",
+        GamePhase.Picking => "Choose a card to build your hand",
+        GamePhase.Racing => "All hands are in. Here come the standings.",
+        GamePhase.RoundEnd => "Round complete",
+        GamePhase.GameOver => "The race is decided",
+        _ => "Ready to race"
+    };
+    public string HandResultDisplay => string.IsNullOrEmpty(ActiveSeat?.HandName)
+        ? "Each pick is replaced with a fresh card." : $"{ActiveSeat.HandName} · +{ActiveSeat.RoundPoints:N0} points";
+    public string SelectionHint => ShowSelectionRow
+        ? "Click a card or press its number. A fresh card takes its place."
+        : "Your hand is scored. Better hands move your horse farther.";
+    public string LeaderDisplay
+    {
+        get
+        {
+            var joined = SeatViewModels.Where(s => s.IsJoined).ToArray();
+            if (joined.Length == 0) return "Ready to race";
+            int best = joined.Max(s => s.TotalScore);
+            var leaders = joined.Where(s => s.TotalScore == best).ToArray();
+            return best == 0 ? "The field is level. Make your first hand."
+                : leaders.Length > 1 ? $"Tied for the lead · {best:N0} points"
+                : $"{leaders[0].SeatLabel} leads · {best:N0} points";
+        }
+    }
+
+    private void RefreshPlayFeedback()
+    {
+        foreach (var name in new[] { nameof(HandProgressDisplay), nameof(ShowSelectionRow), nameof(CountdownDisplay),
+            nameof(TimerRemainingFraction), nameof(TurnInstruction), nameof(HandResultDisplay), nameof(SelectionHint), nameof(LeaderDisplay), nameof(HasInitialsEntries) })
+            OnPropertyChanged(name);
+    }
+
     public double CardSwayDegrees => _engine.Settings.CardSwayDegrees;
     public double LogoGlowBlur => _engine.Settings.LogoGlowBlur;
 
-    /// <summary>Timer progress 0.0 to 1.0 for the current phase countdown.</summary>
+    /// <summary>Fraction of picking time remaining: 1.0 at the start, 0.0 at timeout.</summary>
     public double TimerProgress
     {
         get => _timerProgress;
-        private set => SetProperty(ref _timerProgress, value);
+        private set
+        {
+            if (SetProperty(ref _timerProgress, value))
+            {
+                OnPropertyChanged(nameof(TimerRemainingFraction));
+                OnPropertyChanged(nameof(CountdownDisplay));
+            }
+        }
     }
 
     public string WinnerDisplay
@@ -137,18 +189,20 @@ public class MainViewModel : ViewModelBase
     public ICommand OpenSettingsCommand { get; }
     public ICommand OpenHowToPlayCommand { get; }
 
-    public MainViewModel()
+    public MainViewModel() : this(null, null) { }
+
+    public MainViewModel(GameSettings? settings, string? dataDirectory)
     {
         var pointTablePath = System.IO.Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "Config", "pointTable.json");
         var pointTable = PointTableService.Load(pointTablePath);
 
-        _settingsService = new SettingsService();
-        var settings = _settingsService.Load();
-
-        _engine = new GameEngine(settings: settings, pointTable: pointTable);
+        _settingsService = new SettingsService(dataDirectory is null ? null : System.IO.Path.Combine(dataDirectory, "settings.json"));
+        settings ??= _settingsService.Load();
+        var highScores = new HighScoreService(dataDirectory is null ? null : System.IO.Path.Combine(dataDirectory, "highscores.json"));
+        _engine = new GameEngine(settings: settings, pointTable: pointTable, highScores: highScores);
         _engine.StateChanged += OnEngineStateChanged;
-        _soundService = new SoundService(settings);
+        _soundService = new SoundService(settings, dataDirectory is null ? null : System.IO.Path.Combine(dataDirectory, "Sounds"));
 
         PressStartCommand = new RelayCommand(() =>
         {
@@ -200,7 +254,7 @@ public class MainViewModel : ViewModelBase
     /// </summary>
     public void PlayerButtonPressed(int buttonIndex)
     {
-        if (buttonIndex < 0 || buttonIndex >= _engine.Settings.MaxSeats)
+        if (!IsShellMode || buttonIndex < 0 || buttonIndex >= _engine.Settings.MaxSeats)
             return;
 
         // Join seats 0 through buttonIndex
@@ -236,9 +290,10 @@ public class MainViewModel : ViewModelBase
     {
         var win = new HowToPlayWindow
         {
+            DataContext = this,
             Owner = Application.Current.MainWindow
         };
-        win.ShowDialog();
+        ShowPausedDialog(win);
     }
 
     public void OpenSettings()
@@ -249,13 +304,28 @@ public class MainViewModel : ViewModelBase
             DataContext = vm,
             Owner = Application.Current.MainWindow
         };
-        win.ShowDialog();
+        ShowPausedDialog(win);
         _settingsService.Save(_engine.Settings);
 
         OnPropertyChanged(nameof(UseSymbolIcon));
         OnPropertyChanged(nameof(UseImageIcon));
         OnPropertyChanged(nameof(UseHandResultMarquee));
         OnPropertyChanged(nameof(UseHandResultLights));
+        OnPropertyChanged(nameof(CardSwayDegrees));
+        OnPropertyChanged(nameof(LogoGlowBlur));
+        OnPropertyChanged(nameof(FinishDistance));
+        OnPropertyChanged(nameof(MaxRounds));
+        OnPropertyChanged(nameof(RaceRulesDisplay));
+        OnPropertyChanged(nameof(RoundDisplay));
+        OnPropertyChanged(nameof(ShowContinueButton));
+        RefreshPlayFeedback();
+    }
+
+    private void ShowPausedDialog(Window window)
+    {
+        _timer.Stop();
+        try { window.ShowDialog(); }
+        finally { _lastTick = DateTime.UtcNow; _timer.Start(); }
     }
 
     public void HandleKeyDown(Key key)
@@ -295,7 +365,10 @@ public class MainViewModel : ViewModelBase
                 break;
 
             // Deal for seat 1
-            case Key.Space: _engine.PressDeal(0); break;
+            case Key.Space:
+                if (IsShellMode) PlayerButtonPressed(0);
+                else _engine.PressDeal(0);
+                break;
 
             // Pick selection cards 1-5 for the ACTIVE seat
             case Key.F1: _engine.PickCard(active, 0); break;
@@ -305,7 +378,11 @@ public class MainViewModel : ViewModelBase
             case Key.F5: _engine.PickCard(active, 4); break;
 
             // Continue (advances all seats)
-            case Key.Enter: _engine.PressContinue(active); break;
+            case Key.Enter:
+                if (IsShellMode) PlayerButtonPressed(0);
+                else if (Phase == GamePhase.GameOver) ExitGame();
+                else _engine.PressContinue(active);
+                break;
 
             // Exit game / return to shell
             case Key.Escape:
@@ -335,6 +412,8 @@ public class MainViewModel : ViewModelBase
 
     private void OnEngineStateChanged()
     {
+        if (_previousPhase == GamePhase.GameOver && _engine.Phase == GamePhase.Attract)
+            SaveInitials();
         SyncFromEngine();
 
         if (_engine.Phase == GamePhase.GameOver || _engine.Phase == GamePhase.Attract)
@@ -344,6 +423,10 @@ public class MainViewModel : ViewModelBase
     private void SyncFromEngine()
     {
         var newPhase = _engine.Phase;
+        bool enteredGameOver = newPhase == GamePhase.GameOver && _previousPhase != GamePhase.GameOver;
+        if (_engine.IsTurnTransitioning && !_previousTransitioning)
+            _soundService.Play("hand_complete");
+        _previousTransitioning = _engine.IsTurnTransitioning;
 
         // Detect hand card count increase for card_pick sound
         var activeSeat = _engine.Seats[_engine.ActiveSeatIndex];
@@ -355,8 +438,6 @@ public class MainViewModel : ViewModelBase
         // Detect phase transitions for sounds
         if (newPhase != _previousPhase)
         {
-            if (_previousPhase == GamePhase.Picking && _engine.IsTurnTransitioning)
-                _soundService.Play("hand_complete");
             if (newPhase == GamePhase.Racing)
                 _soundService.Play("racing");
             if (newPhase == GamePhase.RoundEnd)
@@ -398,8 +479,10 @@ public class MainViewModel : ViewModelBase
         if (activeIdx >= 0 && activeIdx < SeatViewModels.Count)
             ActiveSeat = SeatViewModels[activeIdx];
 
-        if (Phase == GamePhase.GameOver)
+        if (enteredGameOver)
             ComputeWinner();
+        TimerProgress = _engine.PhaseTimerProgress;
+        RefreshPlayFeedback();
     }
 
     private void ComputeWinner()
@@ -427,7 +510,8 @@ public class MainViewModel : ViewModelBase
         for (int i = 0; i < joined.Count; i++)
         {
             var s = joined[i];
-            lines.AppendLine($"#{i + 1}  Player {s.SeatId + 1}  —  {s.TotalScore:N0} pts");
+            int rank = joined.FindIndex(other => other.TotalScore == s.TotalScore) + 1;
+            lines.AppendLine($"#{rank}  Player {s.SeatId + 1}  —  {s.TotalScore:N0} pts");
         }
         FinalStandings = lines.ToString().TrimEnd();
 
@@ -456,6 +540,15 @@ public class MainViewModel : ViewModelBase
         }
         InitialsEntries.Clear();
         RefreshHighScores();
+        OnPropertyChanged(nameof(HasInitialsEntries));
+    }
+
+    public void Stop()
+    {
+        _timer.Stop();
+        _timer.Tick -= OnTimerTick;
+        _engine.StateChanged -= OnEngineStateChanged;
+        if (Phase == GamePhase.GameOver) SaveInitials();
     }
 
     private void RefreshHighScores()
