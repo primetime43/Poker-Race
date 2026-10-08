@@ -1,4 +1,3 @@
-using System.Text.Json;
 using RacePoker.Core.Models;
 
 namespace RacePoker.Core.Services;
@@ -7,64 +6,57 @@ public class HighScoreService
 {
     private readonly string _filePath;
     private const int MaxEntries = 10;
-
     public List<HighScoreEntry> Entries { get; private set; } = new();
+    public string? LastNotice { get; private set; }
 
     public HighScoreService(string? filePath = null)
-    {
-        _filePath = filePath ?? GetDefaultPath();
-    }
-
-    private static string GetDefaultPath()
-    {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var dir = Path.Combine(appData, "RacePoker");
-        Directory.CreateDirectory(dir);
-        return Path.Combine(dir, "highscores.json");
-    }
+        => _filePath = filePath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RacePoker", "highscores.json");
 
     public void Load()
     {
-        if (!File.Exists(_filePath))
-        {
-            Entries = new List<HighScoreEntry>();
-            return;
-        }
-
-        var json = File.ReadAllText(_filePath);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            Entries = new List<HighScoreEntry>();
-            return;
-        }
-
-        Entries = JsonSerializer.Deserialize<List<HighScoreEntry>>(json) ?? new List<HighScoreEntry>();
-        Entries = Entries.OrderByDescending(e => e.Score).Take(MaxEntries).ToList();
+        var entries = JsonFileStore.Load(_filePath, () => new List<HighScoreEntry>(), out var notice);
+        LastNotice = notice;
+        Entries = Clean(entries);
     }
 
-    public void Save()
+    public bool Save()
     {
-        var dir = Path.GetDirectoryName(_filePath);
-        if (dir is not null)
-            Directory.CreateDirectory(dir);
+        Entries = Clean(Entries);
+        var saved = JsonFileStore.Save(_filePath, Entries, out var notice);
+        LastNotice = notice;
+        return saved;
+    }
 
-        var json = JsonSerializer.Serialize(Entries, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_filePath, json);
+    public IReadOnlyList<HighScoreEntry> GetEntries(string rulesKey = "legacy")
+        => Entries.Where(e => e.RulesKey == rulesKey).OrderByDescending(e => e.Score).Take(MaxEntries).ToArray();
+
+    public bool QualifiesForHighScore(int score, string rulesKey = "legacy")
+    {
+        var board = GetEntries(rulesKey);
+        return score >= 0 && (board.Count < MaxEntries || score > board[^1].Score);
     }
 
     public bool TryAdd(HighScoreEntry entry)
     {
-        if (Entries.Count >= MaxEntries && entry.Score <= Entries[^1].Score)
-            return false;
-
+        Normalize(entry);
+        if (!QualifiesForHighScore(entry.Score, entry.RulesKey)) return false;
         Entries.Add(entry);
-        Entries = Entries.OrderByDescending(e => e.Score).Take(MaxEntries).ToList();
         Save();
         return true;
     }
 
-    public bool QualifiesForHighScore(int score)
+    private static List<HighScoreEntry> Clean(IEnumerable<HighScoreEntry> entries)
     {
-        return Entries.Count < MaxEntries || score > Entries[^1].Score;
+        var valid = entries.Where(e => e is not null && e.Score >= 0).ToList();
+        foreach (var entry in valid) Normalize(entry);
+        return valid.GroupBy(e => e.RulesKey).SelectMany(g => g.OrderByDescending(e => e.Score).Take(MaxEntries)).ToList();
+    }
+
+    private static void Normalize(HighScoreEntry entry)
+    {
+        entry.Initials = new string((entry.Initials ?? "").Where(char.IsLetterOrDigit).Take(3).ToArray()).ToUpperInvariant();
+        if (entry.Initials.Length == 0) entry.Initials = "AAA";
+        if (string.IsNullOrWhiteSpace(entry.RulesKey)) entry.RulesKey = "legacy";
+        if (string.IsNullOrWhiteSpace(entry.RulesDescription)) entry.RulesDescription = "Legacy records (rules unknown)";
     }
 }

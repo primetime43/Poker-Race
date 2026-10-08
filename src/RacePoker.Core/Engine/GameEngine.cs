@@ -15,6 +15,8 @@ public class GameEngine
     public int Round { get; private set; }
     public int ActiveSeatIndex { get; private set; }
     public bool IsTurnTransitioning => _turnTransitioning;
+    public string ScoreRulesKey { get; private set; } = "legacy";
+    public string ScoreRulesDescription { get; private set; } = "Legacy records (rules unknown)";
 
     /// <summary>
     /// Fraction of picking time remaining (1.0 = just started, 0.0 = timeout).
@@ -56,6 +58,7 @@ public class GameEngine
         IRng? rng = null, HighScoreService? highScores = null)
     {
         Settings = settings ?? new GameSettings();
+        Settings.Normalize();
         PointTable = pointTable ?? new PointTable();
         _rng = rng ?? new SystemRng();
         HighScores = highScores ?? new HighScoreService();
@@ -189,7 +192,10 @@ public class GameEngine
                     if (_phaseTimer >= Settings.TurnDelaySeconds)
                     {
                         _turnTransitioning = false;
-                        AdvanceActiveOrRace();
+                        if (Settings.FinishRule == FinishRule.FirstToFinish && Seats[ActiveSeatIndex].TotalScore >= Settings.FinishDistance)
+                            SetPhase(GamePhase.GameOver);
+                        else
+                            AdvanceActiveOrRace();
                     }
                     else
                     {
@@ -215,10 +221,7 @@ public class GameEngine
                 break;
 
             case GamePhase.RoundEnd:
-                var roundEndTimeout = Settings.AutoAdvanceEnabled
-                    ? Settings.AutoAdvanceDelaySeconds
-                    : Settings.RoundEndTimeoutSeconds;
-                if (_phaseTimer >= roundEndTimeout)
+                if (Settings.AutoAdvanceEnabled && _phaseTimer >= Settings.AutoAdvanceDelaySeconds)
                     AdvanceFromRoundEnd();
                 break;
 
@@ -251,6 +254,12 @@ public class GameEngine
     private void StartDealing()
     {
         _turnTransitioning = false;
+        if (Round == 0)
+        {
+            int players = AllJoinedSeats().Count();
+            ScoreRulesKey = ScoreRules.Key(Settings, PointTable, players);
+            ScoreRulesDescription = ScoreRules.Describe(Settings, players);
+        }
         Round++;
         _phaseTimer = 0;
 
@@ -312,7 +321,9 @@ public class GameEngine
         var result = HandEvaluator.Evaluate(seat.Hand);
         // The cabinet point chart pays a fixed amount for each completed hand.
         // Round number and time remaining do not change the configured payout.
-        seat.RoundPoints = PointTable.GetPoints(result);
+        seat.RoundPoints = result.Category == HandCategory.HighCard && Settings.HighCardRule == HighCardRule.SumOfRanks
+            ? seat.Hand.Sum(c => (int)c.Rank)
+            : PointTable.GetPoints(result);
 
         seat.PreviousScore = seat.TotalScore;
         seat.TotalScore += seat.RoundPoints;

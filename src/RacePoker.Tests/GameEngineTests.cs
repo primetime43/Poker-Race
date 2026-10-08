@@ -316,7 +316,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void AutoAdvance_DisabledFallsBackToRoundEndTimeout()
+    public void AutoAdvance_DisabledWaitsForContinueIndefinitely()
     {
         var settings = new GameSettings
         {
@@ -337,8 +337,11 @@ public class GameEngineTests
         engine.Tick(TimeSpan.FromSeconds(2));
         Assert.Equal(GamePhase.RoundEnd, engine.Phase); // should NOT advance
 
-        // Tick past RoundEndTimeoutSeconds
-        engine.Tick(TimeSpan.FromSeconds(4));
+        // Even the old fallback timeout must not advance a manual round.
+        engine.Tick(TimeSpan.FromHours(1));
+        Assert.Equal(GamePhase.RoundEnd, engine.Phase);
+        Assert.Equal(1, engine.Round);
+        Assert.True(engine.PressContinue(0));
         Assert.Equal(GamePhase.Picking, engine.Phase);
         Assert.Equal(2, engine.Round);
     }
@@ -508,5 +511,51 @@ public class GameEngineTests
             engine.PressContinue(0);
         }
         Assert.Equal(GamePhase.GameOver, engine.Phase);
+    }
+
+    [Theory]
+    [InlineData(FinishRule.EndOfRound)]
+    [InlineData(FinishRule.FirstToFinish)]
+    public void FinishRule_DeterminesWhetherRemainingPlayersGetTheirTurns(FinishRule rule)
+    {
+        var engine = CreateEngine(new GameSettings { FinishDistance = 1000, FinishRule = rule, AutoAdvanceEnabled = false });
+        engine.JoinSeat(0); engine.JoinSeat(1); engine.PressDeal(0);
+        engine.Seats[0].SelectionCards = (Card[])CabinetScoringHands().First()[0];
+        for (int i = 0; i < 5; i++) engine.PickCard(0, i);
+        Assert.True(engine.IsTurnTransitioning);
+        engine.Tick(TimeSpan.FromSeconds(3));
+        if (rule == FinishRule.FirstToFinish)
+        {
+            Assert.Equal(GamePhase.GameOver, engine.Phase);
+            Assert.False(engine.IsTurnTransitioning);
+            Assert.Empty(engine.Seats[1].Hand);
+            Assert.False(engine.PickCard(1, 0));
+        }
+        else
+        {
+            Assert.Equal(GamePhase.Picking, engine.Phase);
+            Assert.Equal(1, engine.ActiveSeatIndex);
+            PickAllCardsAndWait(engine, 1);
+            engine.Tick(TimeSpan.FromSeconds(3));
+            Assert.Equal(GamePhase.RoundEnd, engine.Phase);
+            engine.PressContinue(0);
+            Assert.Equal(GamePhase.GameOver, engine.Phase);
+        }
+    }
+
+    [Theory]
+    [InlineData(HighCardRule.HighestRank, 14)]
+    [InlineData(HighCardRule.SumOfRanks, 40)]
+    public void HighCardRules_AreExplicitAndDoNotChangeCategoryPayouts(HighCardRule rule, int points)
+    {
+        var engine = CreateEngine(new GameSettings { HighCardRule = rule, AutoAdvanceEnabled = false });
+        engine.JoinSeat(0); engine.PressDeal(0);
+        engine.Seats[0].SelectionCards = (Card[])CabinetScoringHands().Last()[0];
+        for (int i = 0; i < 5; i++) engine.PickCard(0, i);
+        Assert.Equal(points, engine.Seats[0].RoundPoints);
+        engine.Tick(TimeSpan.FromSeconds(3)); engine.Tick(TimeSpan.FromSeconds(3)); engine.PressContinue(0);
+        engine.Seats[0].SelectionCards = (Card[])CabinetScoringHands().First()[0];
+        for (int i = 0; i < 5; i++) engine.PickCard(0, i);
+        Assert.Equal(6700, engine.Seats[0].RoundPoints);
     }
 }

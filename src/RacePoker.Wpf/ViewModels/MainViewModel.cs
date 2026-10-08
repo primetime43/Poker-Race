@@ -12,6 +12,7 @@ using RacePoker.Wpf.Views;
 namespace RacePoker.Wpf.ViewModels;
 
 public record PointChartEntry(string Label, string Value);
+public record ScoreBoardChoice(string Key, string Label);
 
 public class MainViewModel : ViewModelBase
 {
@@ -98,9 +99,26 @@ public class MainViewModel : ViewModelBase
     public ObservableCollection<PointChartEntry> PointChartEntries { get; } = new();
     public ObservableCollection<InitialsEntryViewModel> InitialsEntries { get; } = new();
 
+    public ObservableCollection<ScoreBoardChoice> LeaderboardChoices { get; } = new();
+    private ScoreBoardChoice? _selectedLeaderboard;
+    public ScoreBoardChoice? SelectedLeaderboard
+    {
+        get => _selectedLeaderboard;
+        set { if (SetProperty(ref _selectedLeaderboard, value)) RefreshHighScoreRows(); }
+    }
+    private string _storageNotice = "";
+    public string StorageNotice { get => _storageNotice; private set => SetProperty(ref _storageNotice, value); }
+    public IEnumerable<SeatViewModel> JoinedSeats => SeatViewModels.Where(s => s.IsJoined);
+    public bool ShowRoundSummary => Phase is GamePhase.Racing or GamePhase.RoundEnd;
+    public string FinishRuleDisplay => _engine.Settings.FinishRule == FinishRule.FirstToFinish
+        ? "First horse across the finish wins; remaining turns are skipped. The round limit also ends the race."
+        : "Everyone finishes the round when a horse crosses the line, or plays to the round limit. Highest total wins; equal scores share the win.";
+    public string HighCardRuleDisplay => _engine.Settings.HighCardRule == HighCardRule.SumOfRanks
+        ? "High card: sum of all five ranks (J=11, Q=12, K=13, A=14)."
+        : "High card: highest rank only (J=11, Q=12, K=13, A=14).";
     public int FinishDistance => _engine.Settings.FinishDistance;
     public int MaxRounds => _engine.Settings.MaxRounds;
-    public bool ShowContinueButton => Phase == GamePhase.RoundEnd && !_engine.Settings.AutoAdvanceEnabled;
+    public bool ShowContinueButton => Phase == GamePhase.RoundEnd;
 
     public bool UseSymbolIcon => _engine.Settings.RaceIconStyle == "Symbol";
     public bool UseImageIcon => _engine.Settings.RaceIconStyle != "Symbol";
@@ -119,13 +137,23 @@ public class MainViewModel : ViewModelBase
         : Phase == GamePhase.RoundEnd ? (_engine.Settings.AutoAdvanceEnabled ? "Next round shortly" : "Press Enter to continue") : "Hand complete";
     public string TurnInstruction => Phase switch
     {
-        GamePhase.Picking when _engine.IsTurnTransitioning => "A good hand. A little more ground.",
-        GamePhase.Picking => "Choose a card to build your hand",
+        GamePhase.Picking when _engine.IsTurnTransitioning => NextTurnDisplay,
+        GamePhase.Picking => $"{ActiveSeat?.SeatLabel}: choose your next card",
         GamePhase.Racing => "All hands are in. Here come the standings.",
         GamePhase.RoundEnd => "Round complete",
         GamePhase.GameOver => "The race is decided",
         _ => "Ready to race"
     };
+    public string NextTurnDisplay
+    {
+        get
+        {
+            var next = _engine.Seats.FirstOrDefault(s => s.Status == SeatStatus.Joined && !s.IsHandComplete);
+            if (_engine.Settings.FinishRule == FinishRule.FirstToFinish && (_engine.Seats[_engine.ActiveSeatIndex].TotalScore >= FinishDistance))
+                return $"{ActiveSeat?.SeatLabel} crossed the finish!";
+            return next is null ? "All hands are in · compare the round" : $"Up next: Player {next.SeatId + 1} · get ready";
+        }
+    }
     public string HandResultDisplay => string.IsNullOrEmpty(ActiveSeat?.HandName)
         ? "Each pick is replaced with a fresh card." : $"{ActiveSeat.HandName} · +{ActiveSeat.RoundPoints:N0} points";
     public string HandPointsDisplay => string.IsNullOrEmpty(ActiveSeat?.HandName)
@@ -150,7 +178,7 @@ public class MainViewModel : ViewModelBase
     private void RefreshPlayFeedback()
     {
         foreach (var name in new[] { nameof(HandProgressDisplay), nameof(ShowSelectionRow), nameof(CountdownDisplay),
-            nameof(TimerRemainingFraction), nameof(TurnInstruction), nameof(HandResultDisplay), nameof(HandPointsDisplay), nameof(SelectionHint), nameof(LeaderDisplay), nameof(HasInitialsEntries) })
+            nameof(TimerRemainingFraction), nameof(TurnInstruction), nameof(JoinedSeats), nameof(ShowRoundSummary), nameof(HandResultDisplay), nameof(HandPointsDisplay), nameof(SelectionHint), nameof(LeaderDisplay), nameof(HasInitialsEntries) })
             OnPropertyChanged(name);
     }
 
@@ -242,6 +270,7 @@ public class MainViewModel : ViewModelBase
         _lastTick = DateTime.UtcNow;
         _timer.Start();
 
+        StorageNotice = _settingsService.LastNotice ?? _engine.HighScores.LastNotice ?? "";
         RefreshHighScores();
         BuildPointChart();
         SyncFromEngine();
@@ -298,14 +327,24 @@ public class MainViewModel : ViewModelBase
 
     public void OpenSettings()
     {
-        var vm = new SettingsViewModel(_engine.Settings);
+        var vm = new SettingsViewModel(_engine.Settings, rulesEditable: IsShellMode);
         var win = new SettingsWindow
         {
             DataContext = vm,
             Owner = Application.Current.MainWindow
         };
         ShowPausedDialog(win);
+        if (win.DialogResult != true) return;
+        SettingsApplied();
+    }
+
+    private void SettingsApplied()
+    {
         _settingsService.Save(_engine.Settings);
+        StorageNotice = _settingsService.LastNotice ?? "";
+        RefreshHighScores();
+        OnPropertyChanged(nameof(FinishRuleDisplay));
+        OnPropertyChanged(nameof(HighCardRuleDisplay));
 
         OnPropertyChanged(nameof(UseSymbolIcon));
         OnPropertyChanged(nameof(UseImageIcon));
@@ -519,7 +558,7 @@ public class MainViewModel : ViewModelBase
         InitialsEntries.Clear();
         foreach (var s in joined)
         {
-            if (_engine.HighScores.QualifiesForHighScore(s.TotalScore))
+            if (_engine.HighScores.QualifiesForHighScore(s.TotalScore, _engine.ScoreRulesKey))
                 InitialsEntries.Add(new InitialsEntryViewModel(s.SeatId, s.TotalScore));
         }
     }
@@ -535,10 +574,13 @@ public class MainViewModel : ViewModelBase
             {
                 Initials = initials,
                 Score = entry.Score,
-                Date = DateTime.Now
+                Date = DateTime.Now,
+                RulesKey = _engine.ScoreRulesKey,
+                RulesDescription = _engine.ScoreRulesDescription
             });
         }
         InitialsEntries.Clear();
+        StorageNotice = _engine.HighScores.LastNotice ?? StorageNotice;
         RefreshHighScores();
         OnPropertyChanged(nameof(HasInitialsEntries));
     }
@@ -548,14 +590,28 @@ public class MainViewModel : ViewModelBase
         _timer.Stop();
         _timer.Tick -= OnTimerTick;
         _engine.StateChanged -= OnEngineStateChanged;
+        _soundService.Dispose();
         if (Phase == GamePhase.GameOver) SaveInitials();
     }
 
     private void RefreshHighScores()
     {
+        var selectedKey = Phase == GamePhase.GameOver ? _engine.ScoreRulesKey : SelectedLeaderboard?.Key;
+        var choices = Enumerable.Range(1, _engine.Settings.MaxSeats)
+            .Select(players => new ScoreBoardChoice(ScoreRules.Key(_engine.Settings, _engine.PointTable, players), ScoreRules.Describe(_engine.Settings, players)))
+            .Concat(_engine.HighScores.Entries.Select(e => new ScoreBoardChoice(e.RulesKey, e.RulesDescription)))
+            .Append(new ScoreBoardChoice("legacy", "Legacy records (rules unknown)"))
+            .DistinctBy(c => c.Key).ToArray();
+        LeaderboardChoices.Clear();
+        foreach (var choice in choices) LeaderboardChoices.Add(choice);
+        SelectedLeaderboard = choices.FirstOrDefault(c => c.Key == selectedKey) ?? choices[0];
+        RefreshHighScoreRows();
+    }
+
+    private void RefreshHighScoreRows()
+    {
         HighScores.Clear();
-        foreach (var entry in _engine.HighScores.Entries)
-            HighScores.Add(entry);
+        foreach (var entry in _engine.HighScores.GetEntries(SelectedLeaderboard?.Key ?? "legacy")) HighScores.Add(entry);
     }
 
     private void BuildPointChart()

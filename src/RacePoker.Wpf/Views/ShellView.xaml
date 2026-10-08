@@ -79,7 +79,9 @@
                                 <TextBlock x:Name="HighScoresHeader" Text="THE WINNER’S CIRCLE" Foreground="{StaticResource ArcadeGold}" FontSize="17" FontWeight="Bold" />
                                 <TextBlock Text="♜" FontSize="20" Foreground="{StaticResource ArcadeGold}" HorizontalAlignment="Right" />
                             </Grid>
-                            <Grid Grid.Row="1" Margin="0,16,0,10">
+                            <StackPanel Grid.Row="1" Margin="0,8,0,8">
+                                <ComboBox ItemsSource="{Binding LeaderboardChoices}" SelectedItem="{Binding SelectedLeaderboard}" DisplayMemberPath="Label" FontSize="11" Padding="4" Margin="0,0,0,8" ToolTip="{Binding SelectedLeaderboard.Label}" AutomationProperties.Name="Leaderboard rules"/>
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="35" />
                                     <ColumnDefinition Width="*" />
@@ -91,7 +93,9 @@
                                 <TextBlock Grid.Column="2" Text="POINTS" Style="{StaticResource ArcadeCaption}" HorizontalAlignment="Right" />
                                 <TextBlock Grid.Column="3" Text="DATE" Style="{StaticResource ArcadeCaption}" HorizontalAlignment="Right" />
                             </Grid>
-                            <ItemsControl Grid.Row="2" ItemsSource="{Binding HighScores}" AlternationCount="100">
+                            </StackPanel>
+                            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding HighScores}" AlternationCount="100">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="#24404D" BorderThickness="0,0,0,1" Padding="0,5">
@@ -111,6 +115,7 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            </ScrollViewer>
                             <StackPanel Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <StackPanel.Style>
                                     <Style TargetType="StackPanel">
@@ -125,7 +130,7 @@
                                 <TextBlock Text="Your name belongs here." Foreground="{StaticResource ArcadeCream}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" />
                                 <TextBlock Text="Finish a race to set the first record." Foreground="{StaticResource ArcadeMuted}" FontSize="13" Margin="0,8,0,0" />
                             </StackPanel>
-                            <TextBlock Grid.Row="3" Text="Local records · Your next personal best awaits" Foreground="{StaticResource ArcadeMuted}" FontSize="11" Margin="0,12,0,0" />
+                            <TextBlock Grid.Row="3" Text="{Binding StorageNotice}" ToolTip="{Binding StorageNotice}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource ArcadeMuted}" FontSize="11" Margin="0,12,0,0" />
                         </Grid>
                     </Border>
                 </Grid>

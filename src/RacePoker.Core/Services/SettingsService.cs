@@ -1,4 +1,3 @@
-using System.Text.Json;
 using RacePoker.Core.Models;
 
 namespace RacePoker.Core.Services;
@@ -6,39 +5,24 @@ namespace RacePoker.Core.Services;
 public class SettingsService
 {
     private readonly string _filePath;
+    public string? LastNotice { get; private set; }
 
     public SettingsService(string? filePath = null)
-    {
-        _filePath = filePath ?? GetDefaultPath();
-    }
-
-    private static string GetDefaultPath()
-    {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var dir = Path.Combine(appData, "RacePoker");
-        Directory.CreateDirectory(dir);
-        return Path.Combine(dir, "settings.json");
-    }
+        => _filePath = filePath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RacePoker", "settings.json");
 
     public GameSettings Load()
     {
-        if (!File.Exists(_filePath))
-            return new GameSettings();
-
-        var json = File.ReadAllText(_filePath);
-        if (string.IsNullOrWhiteSpace(json))
-            return new GameSettings();
-
-        return JsonSerializer.Deserialize<GameSettings>(json) ?? new GameSettings();
+        var settings = JsonFileStore.Load(_filePath, () => new GameSettings(), out var notice);
+        settings.Normalize();
+        LastNotice = notice;
+        return settings;
     }
 
-    public void Save(GameSettings settings)
+    public bool Save(GameSettings settings)
     {
-        var dir = Path.GetDirectoryName(_filePath);
-        if (dir is not null)
-            Directory.CreateDirectory(dir);
-
-        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_filePath, json);
+        settings.Normalize();
+        var saved = JsonFileStore.Save(_filePath, settings, out var notice);
+        LastNotice = notice;
+        return saved;
     }
 }

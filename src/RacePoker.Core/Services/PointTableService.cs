@@ -1,4 +1,3 @@
-using System.Text.Json;
 using RacePoker.Core.Enums;
 using RacePoker.Core.Models;
 
@@ -8,21 +7,11 @@ public static class PointTableService
 {
     public static PointTable Load(string path)
     {
-        if (!File.Exists(path))
-            return new PointTable();
-
-        var json = File.ReadAllText(path);
-        var dict = JsonSerializer.Deserialize<Dictionary<string, int>>(json);
-        if (dict is null)
-            return new PointTable();
-
+        var values = JsonFileStore.Load(path, () => new Dictionary<string, int>(), out _);
         var table = new PointTable();
-        foreach (var kvp in dict)
-        {
-            if (Enum.TryParse<HandCategory>(kvp.Key, out var category))
-                table.Points[category] = kvp.Value;
-        }
-
+        foreach (var (key, value) in values)
+            if (Enum.TryParse<HandCategory>(key, out var category) && Enum.IsDefined(category) && value >= 0 && value <= 1000000)
+                table.Points[category] = value;
         return table;
     }
 }

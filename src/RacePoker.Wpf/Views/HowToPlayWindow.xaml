@@ -32,8 +32,7 @@
                                Margin="0,0,0,4"/>
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,14">
                         Build strong poker hands to move your horse along the track.
-                        The race ends after a round when a horse crosses the finish line or the round limit is reached.
-                        The player with the most points wins; equal scores share the win.
+                        <Run Text="{Binding FinishRuleDisplay}"/>
                         <LineBreak/><Run Text="{Binding RaceRulesDisplay}"/>
                     </TextBlock>
 
@@ -58,7 +57,7 @@
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,14">
                         5. Each completed hand adds the points shown in the point chart to your score and moves your horse forward.
                         The same hand earns the same points in every round.
-                        After all players finish, compare scores and start the next round.
+                        Compare every player’s hand in the round summary. Continue manually or use auto-advance.
                     </TextBlock>
 
                     <!-- Controls -->
@@ -130,7 +129,7 @@
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,2"
                                FontFamily="Consolas">One Pair</TextBlock>
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,2"
-                               FontFamily="Consolas">High Card  -  Highest card value</TextBlock>
+                               FontFamily="Consolas" Text="{Binding HighCardRuleDisplay}"/>
                 </StackPanel>
             </ScrollViewer>
 

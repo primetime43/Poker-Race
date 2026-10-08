@@ -4,8 +4,9 @@ using RacePoker.Core.Models;
 
 namespace RacePoker.Wpf.Services;
 
-public class SoundService
+public sealed class SoundService : IDisposable
 {
+    private const int SampleRate = 22050;
     private readonly GameSettings _settings;
     private readonly string _soundDir;
     private readonly Dictionary<string, SoundPlayer> _players = new();
@@ -13,129 +14,86 @@ public class SoundService
     public SoundService(GameSettings settings, string? soundDirectory = null)
     {
         _settings = settings;
-
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        _soundDir = soundDirectory ?? Path.Combine(appData, "RacePoker", "Sounds");
-        Directory.CreateDirectory(_soundDir);
-
-        GeneratePlaceholders();
+        _soundDir = soundDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RacePoker", "Sounds");
     }
 
     public void Play(string soundName)
     {
-        if (!_settings.SoundEnabled)
-            return;
-
+        if (!_settings.SoundEnabled) return;
         try
         {
             if (!_players.TryGetValue(soundName, out var player))
             {
-                var path = Path.Combine(_soundDir, soundName + ".wav");
-                if (!File.Exists(path))
-                    return;
-                player = new SoundPlayer(path);
+                // v2 names avoid loading the earlier auto-generated placeholder beeps.
+                var custom = Path.Combine(_soundDir, soundName + ".v2.wav");
+                player = File.Exists(custom) ? new SoundPlayer(custom) : new SoundPlayer(new MemoryStream(CreateSound(soundName)));
                 player.Load();
                 _players[soundName] = player;
             }
             player.Play();
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or TimeoutException)
+        { /* Audio failures must not interrupt a race. */ }
+    }
+
+    internal static byte[] CreateSound(string name)
+    {
+        double duration = name switch { "card_pick" => 0.09, "hand_complete" => 1.0, "racing" => 0.8, "game_win" => 1.8, _ => 0.45 };
+        var mix = new double[(int)(duration * SampleRate)];
+        var rng = new Random(42);
+        void Note(double frequency, double start, double length, double volume)
         {
-            // Silently ignore audio errors
+            for (int i = 0; i < (int)(length * SampleRate); i++)
+            {
+                int at = (int)(start * SampleRate) + i;
+                if (at >= mix.Length) break;
+                double t = (double)i / SampleRate;
+                double envelope = Math.Min(1, t / 0.008) * Math.Pow(Math.Max(0, 1 - t / length), 1.7);
+                double wave = Math.Sin(2 * Math.PI * frequency * t) + 0.25 * Math.Sin(4 * Math.PI * frequency * t);
+                mix[at] += wave * envelope * volume;
+            }
         }
-    }
-
-    private void GeneratePlaceholders()
-    {
-        GenerateTone("card_pick", 800, 80);
-        GenerateTone("hand_complete", 1000, 150);
-        GenerateTone("racing", 600, 400);
-        GenerateTone("round_end", 700, 200);
-        GenerateTripleTone("game_win");
-        GenerateTone("game_over", 300, 300);
-    }
-
-    private void GenerateTone(string name, int freq, int durationMs)
-    {
-        var path = Path.Combine(_soundDir, name + ".wav");
-        if (File.Exists(path))
-            return;
-
-        var samples = GenerateSineSamples(freq, durationMs);
-        WriteWav(path, samples);
-    }
-
-    private void GenerateTripleTone(string name)
-    {
-        var path = Path.Combine(_soundDir, name + ".wav");
-        if (File.Exists(path))
-            return;
-
-        // Ascending triple tone: C5, E5, G5
-        var s1 = GenerateSineSamples(523, 120);
-        var s2 = GenerateSineSamples(659, 120);
-        var s3 = GenerateSineSamples(784, 200);
-
-        var combined = new short[s1.Length + s2.Length + s3.Length];
-        s1.CopyTo(combined, 0);
-        s2.CopyTo(combined, s1.Length);
-        s3.CopyTo(combined, s1.Length + s2.Length);
-
-        WriteWav(path, combined);
-    }
-
-    private static short[] GenerateSineSamples(int freq, int durationMs)
-    {
-        const int sampleRate = 22050;
-        int sampleCount = sampleRate * durationMs / 1000;
-        var samples = new short[sampleCount];
-
-        for (int i = 0; i < sampleCount; i++)
+        void Hoof(double start, double volume)
         {
-            double t = (double)i / sampleRate;
-            // Apply fade-in/fade-out envelope to avoid clicks
-            double envelope = 1.0;
-            int fadeLen = Math.Min(sampleCount / 10, 200);
-            if (i < fadeLen)
-                envelope = (double)i / fadeLen;
-            else if (i > sampleCount - fadeLen)
-                envelope = (double)(sampleCount - i) / fadeLen;
-
-            double sample = Math.Sin(2 * Math.PI * freq * t) * envelope;
-            samples[i] = (short)(sample * 12000);
+            for (int i = 0; i < 1300; i++)
+            {
+                int at = (int)(start * SampleRate) + i;
+                if (at >= mix.Length) break;
+                double t = (double)i / SampleRate;
+                mix[at] += (0.65 * Math.Sin(2 * Math.PI * 140 * t) + 0.35 * (rng.NextDouble() * 2 - 1)) * Math.Exp(-t * 70) * volume;
+            }
         }
-        return samples;
+        switch (name)
+        {
+            case "card_pick":
+                Hoof(0, 0.24); Note(1400, 0.01, 0.06, 0.1); break;
+            case "hand_complete":
+                for (int i = 0; i < 8; i++) Hoof(i * 0.11 + (i % 2) * 0.025, 0.2);
+                Note(523.25, 0, 0.3, 0.12); Note(659.25, 0.1, 0.3, 0.12); Note(783.99, 0.2, 0.45, 0.12); break;
+            case "racing":
+                for (int i = 0; i < 7; i++) Hoof(i * 0.1 + (i % 2) * 0.025, 0.28); break;
+            case "game_win":
+                double[] melody = { 523.25, 659.25, 783.99, 1046.5 };
+                for (int i = 0; i < melody.Length; i++) Note(melody[i], i * 0.18, 0.3, 0.18);
+                foreach (double f in new[] { 523.25, 659.25, 783.99, 1046.5 }) Note(f, 0.8, 0.9, 0.11);
+                break;
+            case "game_over": Note(392, 0, 0.2, 0.15); Note(261.63, 0.15, 0.3, 0.15); break;
+            default: Note(659.25, 0, 0.3, 0.15); Note(783.99, 0.1, 0.3, 0.15); break;
+        }
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+        writer.Write("RIFF"u8); writer.Write(36 + mix.Length * 2); writer.Write("WAVEfmt "u8);
+        writer.Write(16); writer.Write((short)1); writer.Write((short)1); writer.Write(SampleRate);
+        writer.Write(SampleRate * 2); writer.Write((short)2); writer.Write((short)16);
+        writer.Write("data"u8); writer.Write(mix.Length * 2);
+        foreach (var sample in mix) writer.Write((short)(Math.Clamp(sample, -1, 1) * 28000));
+        writer.Flush();
+        return stream.ToArray();
     }
 
-    private static void WriteWav(string path, short[] samples)
+    public void Dispose()
     {
-        const int sampleRate = 22050;
-        const short bitsPerSample = 16;
-        const short channels = 1;
-        int dataSize = samples.Length * 2;
-
-        using var fs = new FileStream(path, FileMode.Create);
-        using var bw = new BinaryWriter(fs);
-
-        // RIFF header
-        bw.Write("RIFF"u8);
-        bw.Write(36 + dataSize);
-        bw.Write("WAVE"u8);
-
-        // fmt chunk
-        bw.Write("fmt "u8);
-        bw.Write(16); // chunk size
-        bw.Write((short)1); // PCM
-        bw.Write(channels);
-        bw.Write(sampleRate);
-        bw.Write(sampleRate * channels * bitsPerSample / 8); // byte rate
-        bw.Write((short)(channels * bitsPerSample / 8)); // block align
-        bw.Write(bitsPerSample);
-
-        // data chunk
-        bw.Write("data"u8);
-        bw.Write(dataSize);
-        foreach (var s in samples)
-            bw.Write(s);
+        foreach (var player in _players.Values) { player.Stop(); player.Stream?.Dispose(); player.Dispose(); }
+        _players.Clear();
     }
 }

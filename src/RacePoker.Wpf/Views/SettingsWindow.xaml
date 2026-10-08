@@ -99,6 +99,8 @@
                               VerticalAlignment="Center"/>
                 </Grid>
 
+                <TextBlock Text="Race rules can be edited from the menu between games." Foreground="#A9C7D8" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                <StackPanel IsEnabled="{Binding RulesEditable}">
                 <!-- Auto-Advance Toggle -->
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
@@ -147,10 +149,22 @@
                                Text="{Binding MaxRounds}"/>
                 </Grid>
 
+                <TextBlock Text="Finish Distance (points)" Foreground="#668899" FontSize="12" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="85"/></Grid.ColumnDefinitions>
+                    <Slider Minimum="1000" Maximum="1000000" TickFrequency="1000" IsSnapToTickEnabled="True" Value="{Binding FinishDistance}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding FinishDistance, StringFormat=N0}" Foreground="#00FF88" FontSize="14" HorizontalAlignment="Right"/>
+                </Grid>
+                <CheckBox Content="First horse to finish ends the race" IsChecked="{Binding FirstToFinish}" Foreground="#EEEEFF" Margin="0,0,0,6"/>
+                <TextBlock Text="Off: everyone completes the round; highest total wins. On: remaining turns are skipped after a horse finishes." Foreground="#A9C7D8" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                <CheckBox Content="High card: sum all five ranks" IsChecked="{Binding SumHighCards}" Foreground="#EEEEFF" Margin="0,0,0,6"/>
+                <TextBlock Text="Off: highest rank only. J=11, Q=12, K=13, A=14. The original cabinet's Face Value formula and finish timing are unverified." Foreground="#A9C7D8" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                <CheckBox Content="Untimed card picking" IsChecked="{Binding UntimedPicking}" Foreground="#EEEEFF" Margin="0,0,0,12"/>
                 <!-- Picking Timeout -->
                 <TextBlock Text="Picking Timeout (seconds)" Foreground="#668899"
                            FontSize="12" Margin="0,0,0,4"/>
                 <Grid Margin="0,0,0,12">
+                    <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding UntimedPicking}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers></Style></Grid.Style>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="50"/>
@@ -182,6 +196,7 @@
                                VerticalAlignment="Center"
                                Text="{Binding RacingDurationSeconds, StringFormat={}{0:F1}}"/>
                 </Grid>
+                </StackPanel>
                 <!-- Race Icon Style -->
                 <TextBlock Text="Race Icon" Foreground="#668899"
                            FontSize="12" Margin="0,0,0,4"/>
@@ -202,7 +217,7 @@
                         <StackPanel Orientation="Horizontal">
                             <Image Source="/Assets/horse-racing.png" Width="24" Height="18"
                                    Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Image" FontSize="13" Foreground="#EEEEFF"
+                            <TextBlock Text="Animated horse" FontSize="13" Foreground="#EEEEFF"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>

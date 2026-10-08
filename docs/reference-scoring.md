@@ -29,11 +29,17 @@ This is a conservative reconstruction of the visible chart. The old 15% per-roun
 
 ## Limits of what the images establish
 
-- **High-card formula:** The label "Face Value" does not distinguish highest card, sum of cards, face-card treatment, or scaling. The implementation retains highest-card rank: 2–10 at their numeric ranks, J=11, Q=12, K=13, A=14. This is an explicit assumption, not a verified cabinet formula.
+- **High-card formula:** The label "Face Value" does not distinguish highest card, sum of cards, face-card treatment, or scaling. The default remains highest-card rank: 2–10 at their numeric ranks, J=11, Q=12, K=13, A=14. Settings also offer the sum of those five ranks. Both are reconstruction options; neither is a verified cabinet formula.
 - **Cumulative totals:** The pictured totals are 38,500 and 37,999. No prior total or complete hand history is supplied, and a still image cannot exclude score animation. Those totals do not establish a hidden bonus, penalty, or high-card formula. We do not invent such adjustments to fit one snapshot.
 - **Round and race modifiers:** No round multiplier or speed bonus is displayed. Fixed payouts are the implemented interpretation; the images cannot prove the absence of every hidden modifier.
-- **Finish and round limit:** The track has markers through 48,000 and the current round is 9. The images do not establish whether that is the complete distance scale or how the maximum round count is configured. Existing race settings (default 150,000 points / 10 rounds) are preserved; this change concerns scoring.
+- **Finish and round limit:** The track has markers through 48,000 and the current round is 9. The images do not establish whether that is the complete distance scale or how the maximum round count is configured. The default remains 150,000 points / 10 rounds. Finish distance and round limit are adjustable in settings. A value such as 48,000 is a selectable experiment, not a verified reference preset.
 - **Deck terminology:** Merit's [general game description](https://www.meritgames.com/Support_Center/GAMEDESCRIPTIONS.PDF) mentions choosing cards from three decks. That wording does not establish that the photographed version should have three on-screen card positions. The earlier recommendation to replace the five-slot layout with three slots was incorrect.
-- **Win condition:** The same description says the first horse to cross the finish wins, but does not establish exactly when to check for a finish during multiplayer turns. The recreation currently checks at the end of the round.
+- **Win condition:** The same description says the first horse to cross the finish wins, but does not establish exactly when to check for a finish during multiplayer turns. The default checks at the end of the round. The optional first-to-finish rule ends the race after the crossing horse’s movement and skips remaining players’ turns. The public manufacturer description was rechecked on 2026-10-07 and does not resolve the high-card calculation, exact finish distance, or multiplayer check timing.
 
 A high-card hand with its score before and after completion, or a photograph of the cabinet's detailed help, would resolve the remaining scoring uncertainty.
+
+## Leaderboard compatibility and settings
+
+New records include a rules profile covering the fixed-payout scoring version, custom payout values, player count, round limit, finish distance, picking timeout, high-card calculation, and finish-check rule. Scores compete only within matching profiles. Older records without metadata remain available in a separate legacy board; their original scoring cannot be inferred reliably. Each board retains its ten highest scores.
+
+Race rules can be changed from the lobby and stay fixed during a race. Manual advancement waits for Continue with no fallback timeout. Presentation settings can be changed during play, and lobby sway/glow changes take effect on saving settings, including stopping animations when set to zero.

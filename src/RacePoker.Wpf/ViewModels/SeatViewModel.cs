@@ -23,6 +23,7 @@ public class SeatViewModel : ViewModelBase
     private bool _isTurnTransitioning;
 
     public int SeatId { get; }
+    public string RoundResultDisplay => string.IsNullOrEmpty(HandName) ? "Waiting for hand" : $"{HandName} · +{RoundPoints:N0}";
     public string SeatLabel => $"Player {SeatId + 1}";
 
     public bool IsActiveSeat
@@ -98,13 +99,13 @@ public class SeatViewModel : ViewModelBase
     public int RoundPoints
     {
         get => _roundPoints;
-        set => SetProperty(ref _roundPoints, value);
+        set { if (SetProperty(ref _roundPoints, value)) OnPropertyChanged(nameof(RoundResultDisplay)); }
     }
 
     public string HandName
     {
         get => _handName;
-        set => SetProperty(ref _handName, value);
+        set { if (SetProperty(ref _handName, value)) OnPropertyChanged(nameof(RoundResultDisplay)); }
     }
 
     public GamePhase CurrentPhase
