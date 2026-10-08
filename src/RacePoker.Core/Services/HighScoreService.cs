@@ -8,6 +8,7 @@ public class HighScoreService
     private const int MaxEntries = 10;
     public List<HighScoreEntry> Entries { get; private set; } = new();
     public string? LastNotice { get; private set; }
+    public bool HasPendingSave { get; private set; }
 
     public HighScoreService(string? filePath = null)
         => _filePath = filePath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RacePoker", "highscores.json");
@@ -24,8 +25,11 @@ public class HighScoreService
         Entries = Clean(Entries);
         var saved = JsonFileStore.Save(_filePath, Entries, out var notice);
         LastNotice = notice;
+        HasPendingSave = !saved;
         return saved;
     }
+
+    public bool RetrySave() => !HasPendingSave || Save();
 
     public IReadOnlyList<HighScoreEntry> GetEntries(string rulesKey = "legacy")
         => Entries.Where(e => e.RulesKey == rulesKey).OrderByDescending(e => e.Score).Take(MaxEntries).ToArray();

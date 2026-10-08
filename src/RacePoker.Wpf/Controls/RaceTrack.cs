@@ -84,7 +84,7 @@ public sealed class RaceTrack : FrameworkElement
         const double labelWidth = 116, top = 25, bottom = 29;
         double laneHeight = (h - top - bottom) / count;
         double start = labelWidth + 8, finish = w - 26;
-        double horseHeight = Math.Min(48, laneHeight - 8), horseWidth = horseHeight * 1.54;
+        double horseHeight = Math.Min(72, laneHeight - 4), horseWidth = horseHeight * 1.54;
         double travel = Math.Max(0, finish - start - horseWidth - 4);
         dc.DrawRoundedRectangle(Brush("#102C29"), null, new Rect(0, 0, w, h), 10, 10);
         dc.DrawRectangle(new LinearGradientBrush(Color.FromRgb(32, 91, 66), Color.FromRgb(21, 63, 49), 90), null, new Rect(labelWidth, top, w - labelWidth, h - top - bottom));

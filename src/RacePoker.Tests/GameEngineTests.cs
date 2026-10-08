@@ -558,4 +558,39 @@ public class GameEngineTests
         for (int i = 0; i < 5; i++) engine.PickCard(0, i);
         Assert.Equal(6700, engine.Seats[0].RoundPoints);
     }
+
+    [Fact]
+    public void ResultsEntry_PausesTimeoutAndRestartsItWhenFinished()
+    {
+        var engine = CreateEngine(new GameSettings { MaxRounds = 1, AutoAdvanceEnabled = false });
+        engine.SetResultsEntryActive(true);
+        Assert.False(engine.IsResultsEntryActive);
+        engine.JoinSeat(0); engine.PressDeal(0);
+        PickAllCardsAndWait(engine, 0);
+        engine.Tick(TimeSpan.FromSeconds(3)); engine.PressContinue(0);
+        engine.Tick(TimeSpan.FromSeconds(25));
+        Assert.Equal(5, engine.ResultsSecondsRemaining);
+        engine.SetResultsEntryActive(true);
+        engine.Tick(TimeSpan.FromHours(1));
+        Assert.Equal(GamePhase.GameOver, engine.Phase);
+        Assert.Equal(30, engine.ResultsSecondsRemaining);
+        engine.SetResultsEntryActive(false);
+        engine.Tick(TimeSpan.FromSeconds(29));
+        Assert.Equal(GamePhase.GameOver, engine.Phase);
+        Assert.Equal(1, engine.ResultsSecondsRemaining);
+        engine.Tick(TimeSpan.FromSeconds(2));
+        Assert.Equal(GamePhase.Attract, engine.Phase);
+        Assert.False(engine.IsResultsEntryActive);
+    }
+
+    [Fact]
+    public void NegativeElapsedTime_DoesNotIncreaseRemainingPickingTime()
+    {
+        var engine = CreateEngine();
+        engine.JoinSeat(0); engine.PressDeal(0);
+        engine.Tick(TimeSpan.FromSeconds(10));
+        var remaining = engine.PhaseTimerProgress;
+        engine.Tick(TimeSpan.FromSeconds(-100));
+        Assert.Equal(remaining, engine.PhaseTimerProgress);
+    }
 }

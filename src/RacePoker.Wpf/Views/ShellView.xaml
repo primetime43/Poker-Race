@@ -80,7 +80,8 @@
                                 <TextBlock Text="♜" FontSize="20" Foreground="{StaticResource ArcadeGold}" HorizontalAlignment="Right" />
                             </Grid>
                             <StackPanel Grid.Row="1" Margin="0,8,0,8">
-                                <ComboBox ItemsSource="{Binding LeaderboardChoices}" SelectedItem="{Binding SelectedLeaderboard}" DisplayMemberPath="Label" FontSize="11" Padding="4" Margin="0,0,0,8" ToolTip="{Binding SelectedLeaderboard.Label}" AutomationProperties.Name="Leaderboard rules"/>
+                                <ComboBox ItemsSource="{Binding LeaderboardChoices}" SelectedItem="{Binding SelectedLeaderboard}" DisplayMemberPath="Label" FontSize="14" MinHeight="40" Padding="7" Margin="0,0,0,6" ToolTip="{Binding SelectedLeaderboard.Description}" AutomationProperties.Name="Leaderboard rules"/>
+                                <TextBlock Text="{Binding SelectedLeaderboard.Description}" Foreground="{StaticResource ArcadeMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="35" />
@@ -98,7 +99,7 @@
                             <ItemsControl ItemsSource="{Binding HighScores}" AlternationCount="100">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="#24404D" BorderThickness="0,0,0,1" Padding="0,5">
+                                        <Border BorderBrush="#24404D" BorderThickness="0,0,0,1" Padding="0,3">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="35" />
@@ -130,7 +131,11 @@
                                 <TextBlock Text="Your name belongs here." Foreground="{StaticResource ArcadeCream}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" />
                                 <TextBlock Text="Finish a race to set the first record." Foreground="{StaticResource ArcadeMuted}" FontSize="13" Margin="0,8,0,0" />
                             </StackPanel>
-                            <TextBlock Grid.Row="3" Text="{Binding StorageNotice}" ToolTip="{Binding StorageNotice}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource ArcadeMuted}" FontSize="11" Margin="0,12,0,0" />
+                            <Grid Grid.Row="3" Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding StorageNotice}" ToolTip="{Binding StorageNotice}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource ArcadeGold}" FontSize="12" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Retry save" Command="{Binding RetrySaveCommand}" Style="{StaticResource ArcadeButton}" Padding="12,8" MinHeight="44" Margin="8,0,0,0" Visibility="{Binding HasPendingSaves, Converter={StaticResource BoolToVisibility}}"/>
+                            </Grid>
                         </Grid>
                     </Border>
                 </Grid>

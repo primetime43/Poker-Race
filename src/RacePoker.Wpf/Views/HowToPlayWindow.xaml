@@ -60,6 +60,11 @@
                         Compare every player’s hand in the round summary. Continue manually or use auto-advance.
                     </TextBlock>
 
+                    <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,14">
+                        Press P or tap Pause to take a break. Switching away from the game also pauses it; tap Resume when ready.
+                        At the finish, tap a player’s initials to pause the countdown. Type or use the on-screen keypad, then tap Done.
+                    </TextBlock>
+
                     <!-- Controls -->
                     <TextBlock Text="CONTROLS" Foreground="#FFD700" FontSize="14" FontWeight="Bold"
                                Margin="0,0,0,4"/>

@@ -43,3 +43,11 @@ A high-card hand with its score before and after completion, or a photograph of 
 New records include a rules profile covering the fixed-payout scoring version, custom payout values, player count, round limit, finish distance, picking timeout, high-card calculation, and finish-check rule. Scores compete only within matching profiles. Older records without metadata remain available in a separate legacy board; their original scoring cannot be inferred reliably. Each board retains its ten highest scores.
 
 Race rules can be changed from the lobby and stay fixed during a race. Manual advancement waits for Continue with no fallback timeout. Presentation settings can be changed during play, and lobby sway/glow changes take effect on saving settings, including stopping animations when set to zero.
+
+## Input and interruption handling
+
+The five selection slots remain the intended layout. Keyboard repeats are ignored for game actions. Pausing, minimizing, switching applications, or a dispatcher interruption longer than two seconds preserves remaining picking time; returning to the window requires an explicit Resume. Timing uses a monotonic clock instead of wall-clock time.
+
+The results screen shows its idle timeout. Selecting initials pauses that timeout; Done or Enter in the field restarts a full idle period. The on-screen keypad supports letters, digits, backspace, and clear. These are recreation usability improvements and do not establish undocumented cabinet behavior.
+
+Failed settings and score writes remain pending, can be retried manually, retry every five seconds, and retry before closing. A persistent failure keeps the window open until saving succeeds or the player explicitly exits without saving.

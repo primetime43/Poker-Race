@@ -1,9 +1,12 @@
+using System.ComponentModel;
+using System.Globalization;
+using System.Windows.Input;
 using RacePoker.Core.Models;
 using RacePoker.Core.Enums;
 
 namespace RacePoker.Wpf.ViewModels;
 
-public class SettingsViewModel : ViewModelBase
+public class SettingsViewModel : ViewModelBase, IDataErrorInfo
 {
     private readonly GameSettings _settings;
     public bool RulesEditable { get; }
@@ -11,7 +14,34 @@ public class SettingsViewModel : ViewModelBase
     private bool _untimedPicking;
     private bool _firstToFinish;
     private bool _sumHighCards;
-    public int FinishDistance { get => _finishDistance; set => SetProperty(ref _finishDistance, value); }
+    private string _finishDistanceText = "150,000";
+    public int FinishDistance
+    {
+        get => _finishDistance;
+        set
+        {
+            SetProperty(ref _finishDistance, Math.Clamp(value, 1000, 1000000));
+            FinishDistanceText = _finishDistance.ToString("N0", CultureInfo.CurrentCulture);
+        }
+    }
+    public string FinishDistanceText
+    {
+        get => _finishDistanceText;
+        set
+        {
+            if (!SetProperty(ref _finishDistanceText, value)) return;
+            if (TryDistance(out int distance)) { _finishDistance = distance; OnPropertyChanged(nameof(FinishDistance)); }
+            OnPropertyChanged(nameof(FinishDistanceError));
+        }
+    }
+    public string FinishDistanceError => TryDistance(out _) ? "" : "Enter a whole number from 1,000 to 1,000,000.";
+    public string Error => FinishDistanceError;
+    public string this[string columnName] => columnName == nameof(FinishDistanceText) ? FinishDistanceError : "";
+    private bool TryDistance(out int distance)
+        => int.TryParse(FinishDistanceText, NumberStyles.Integer | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out distance)
+           && distance >= 1000 && distance <= 1000000;
+    public ICommand IncreaseDistanceCommand { get; }
+    public ICommand DecreaseDistanceCommand { get; }
     public bool UntimedPicking { get => _untimedPicking; set => SetProperty(ref _untimedPicking, value); }
     public bool FirstToFinish { get => _firstToFinish; set => SetProperty(ref _firstToFinish, value); }
     public bool SumHighCards { get => _sumHighCards; set => SetProperty(ref _sumHighCards, value); }
@@ -122,6 +152,9 @@ public class SettingsViewModel : ViewModelBase
         _settings = settings;
         RulesEditable = rulesEditable;
         _finishDistance = settings.FinishDistance;
+        _finishDistanceText = settings.FinishDistance.ToString("N0", CultureInfo.CurrentCulture);
+        IncreaseDistanceCommand = new RelayCommand(() => FinishDistance += 1000);
+        DecreaseDistanceCommand = new RelayCommand(() => FinishDistance -= 1000);
         _untimedPicking = settings.PickingTimeoutSeconds <= 0;
         _firstToFinish = settings.FinishRule == FinishRule.FirstToFinish;
         _sumHighCards = settings.HighCardRule == HighCardRule.SumOfRanks;
@@ -137,8 +170,9 @@ public class SettingsViewModel : ViewModelBase
         _logoGlowBlur = settings.LogoGlowBlur;
     }
 
-    public void Apply()
+    public bool Apply()
     {
+        if (RulesEditable && !TryDistance(out _)) return false;
         if (RulesEditable)
         {
             _settings.AutoAdvanceEnabled = AutoAdvanceEnabled;
@@ -156,5 +190,6 @@ public class SettingsViewModel : ViewModelBase
         _settings.CardSwayDegrees = CardSwayDegrees;
         _settings.LogoGlowBlur = LogoGlowBlur;
         _settings.Normalize();
+        return true;
     }
 }

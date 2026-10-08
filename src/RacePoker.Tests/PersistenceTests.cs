@@ -134,4 +134,42 @@ public sealed class PersistenceTests : IDisposable
         Assert.Equal(4500, PointTableService.Load(path).Points[HandCategory.OnePair]);
         Assert.Single(Directory.GetFiles(_directory, "pointTable.json.corrupt-*"));
     }
+
+    [Fact]
+    public void Settings_RetryPersistsPendingChangesAfterFileIsUnlocked()
+    {
+        var path = FilePath("settings.json");
+        var service = new SettingsService(path);
+        service.Save(new GameSettings { FinishDistance = 150000 });
+        using (var locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            Assert.False(service.Save(new GameSettings { FinishDistance = 48000 }));
+            Assert.True(service.HasPendingSave);
+            Assert.False(service.RetrySave());
+        }
+        Assert.True(service.RetrySave());
+        Assert.False(service.HasPendingSave);
+        Assert.Null(service.LastNotice);
+        Assert.Equal(48000, new SettingsService(path).Load().FinishDistance);
+    }
+
+    [Fact]
+    public void HighScores_RetryRetainsAcceptedScoreWithoutAddingDuplicates()
+    {
+        var path = FilePath("scores.json");
+        var service = new HighScoreService(path);
+        service.Save();
+        using (var locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            Assert.True(service.TryAdd(new HighScoreEntry { Initials = "ACE", Score = 6700, RulesKey = "test" }));
+            Assert.True(service.HasPendingSave);
+            Assert.Single(service.GetEntries("test"));
+            Assert.False(service.RetrySave());
+        }
+        Assert.True(service.RetrySave());
+        Assert.True(service.RetrySave());
+        Assert.False(service.HasPendingSave);
+        var reloaded = new HighScoreService(path); reloaded.Load();
+        Assert.Equal(6700, Assert.Single(reloaded.GetEntries("test")).Score);
+    }
 }

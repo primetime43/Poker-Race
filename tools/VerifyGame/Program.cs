@@ -55,7 +55,7 @@ class Program
         var game = new RacePokerGameView { DataContext = vm };
         Render(game, "four-player-picking.png");
         engine.Tick(TimeSpan.FromSeconds(12));
-        typeof(MainViewModel).GetField("_lastTick", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(vm, DateTime.UtcNow);
+        typeof(MainViewModel).GetField("_lastTick", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(vm, TimeProvider.System.GetTimestamp());
         typeof(MainViewModel).GetMethod("OnTimerTick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(vm, new object?[] { null, EventArgs.Empty });
         Assert(vm.TimerRemainingFraction < 0.61 && vm.TimerRemainingFraction > 0.5, "countdown shrinks as time passes (remaining fraction: " + vm.TimerRemainingFraction + ")");
         Assert(vm.CountdownDisplay == "18s to pick", "countdown displays remaining seconds");
@@ -87,6 +87,7 @@ class Program
         Assert(engine.Phase == GamePhase.GameOver && vm.InitialsEntries.Count == 4, "game-over standings and four initials entries");
         foreach (var entry in vm.InitialsEntries) entry.Initials = "ACE";
         Render(game, "finish.png");
+        Render(game, "finish-compact.png", 960, 640);
         vm.ExitGame();
         Assert(engine.Phase == GamePhase.Attract && engine.ActiveSeatIndex == 0, "return to menu resets active player");
         Assert(File.Exists(Path.Combine(data, "highscores.json")), "scores saved on return to menu");
@@ -157,7 +158,7 @@ class Program
         options.Apply();
         Assert(editable.FinishDistance == 48000 && editable.PickingTimeoutSeconds == 0 && editable.FinishRule == FinishRule.FirstToFinish && editable.HighCardRule == HighCardRule.SumOfRanks, "new race controls apply from the menu");
         var settingsWindow = new SettingsWindow { DataContext = options };
-        Render((FrameworkElement)settingsWindow.Content, "settings.png", 480, 640);
+        Render((FrameworkElement)settingsWindow.Content, "settings.png", 640, 760);
         var soundType = typeof(MainViewModel).Assembly.GetType("RacePoker.Wpf.Services.SoundService")!;
         foreach (var name in new[] { "card_pick", "hand_complete", "racing", "round_end", "game_win", "game_over" })
         {
@@ -188,10 +189,167 @@ class Program
         Render(sprintView, "first-to-finish.png");
         sprint.Stop(); host.Close();
         Assert(!celebrationClock.IsRunning, "closing the finish view stops its animation");
+        VerifySessionSafety(data);
         var bindingErrors = errors.ToString(); File.WriteAllText(Path.Combine(Output, "binding-errors.txt"), bindingErrors);
         Assert(string.IsNullOrWhiteSpace(bindingErrors), "no WPF binding errors");
         Console.WriteLine("Previews: " + Output);
     }
+
+    sealed class ManualTime : TimeProvider
+    {
+        private long _timestamp;
+        public DateTimeOffset WallTime = DateTimeOffset.UtcNow;
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+        public override long GetTimestamp() => _timestamp;
+        public override DateTimeOffset GetUtcNow() => WallTime;
+        public void Advance(double seconds) => _timestamp += TimeSpan.FromSeconds(seconds).Ticks;
+    }
+
+    static void VerifySessionSafety(string data)
+    {
+        var clock = new ManualTime();
+        var directory = Path.Combine(data, "session-safety");
+        Directory.CreateDirectory(directory);
+        var settings = new GameSettings { MaxSeats = 1, MaxRounds = 1, SoundEnabled = false, AutoAdvanceEnabled = false, TurnDelaySeconds = 0.01, RacingDurationSeconds = 0.01 };
+        var vm = new MainViewModel(settings, directory, clock);
+        ((DispatcherTimer)typeof(MainViewModel).GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!).Stop();
+        var engine = (GameEngine)typeof(MainViewModel).GetField("_engine", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
+        var host = new MainWindow(vm) { Left = -30000, Top = -30000, WindowStartupLocation = WindowStartupLocation.Manual, ShowActivated = false, ShowInTaskbar = false };
+        host.Show();
+        vm.SetWindowActive(true);
+        Assert(!vm.PlayerJoinCommand.CanExecute("3"), "unavailable player-count button is disabled");
+        vm.HandleKeyDown(Key.D1, isRepeat: true);
+        Assert(engine.Phase == GamePhase.Attract, "held-key repeats cannot start a race");
+        var source = PresentationSource.FromVisual(host)!;
+        UIElement menu = host;
+        void SendKey(Key key)
+        {
+            var args = new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, key) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
+            menu.RaiseEvent(args);
+            Assert(args.Handled, $"window routes {key} as a game shortcut");
+        }
+        void Tick(double seconds)
+        {
+            clock.Advance(seconds);
+            typeof(MainViewModel).GetMethod("OnTimerTick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(vm, new object?[] { null, EventArgs.Empty });
+        }
+        SendKey(Key.D1);
+        Assert(engine.Phase == GamePhase.Picking, "window input starts a supported race");
+        host.UpdateLayout();
+        menu = FindAll<Button>(host).First(b => b.Content?.ToString() == "Menu");
+        SendKey(Key.D1);
+        vm.HandleKeyDown(Key.D1, isRepeat: true); vm.HandleKeyDown(Key.F1, isRepeat: true);
+        Assert(engine.Seats[0].Hand.Length == 1, "held selection keys cannot make additional picks");
+        Tick(1);
+        var remaining = vm.TimerRemainingFraction;
+        clock.WallTime = clock.WallTime.AddDays(3);
+        Tick(0);
+        Assert(vm.TimerRemainingFraction == remaining, "wall-clock changes do not change picking time");
+        vm.SetWindowActive(false);
+        Tick(300);
+        vm.HandleKeyDown(Key.D2);
+        vm.ResumeGame();
+        Assert(vm.IsPaused && engine.Seats[0].Hand.Length == 1 && vm.TimerRemainingFraction == remaining, "deactivation freezes time and input until the window is active");
+        vm.SetWindowActive(true);
+        Assert(vm.IsPaused, "returning to the window waits for explicit resume");
+        var game = Find<RacePokerGameView>(host)!;
+        Render(game, "paused.png");
+        SendKey(Key.Enter);
+        Tick(1);
+        Assert(!vm.IsPaused && vm.TimerRemainingFraction < remaining, "resuming restarts the timer without charging away time");
+        remaining = vm.TimerRemainingFraction;
+        Tick(3600);
+        Assert(vm.IsPaused && vm.TimerRemainingFraction == remaining, "sleep-sized dispatcher gaps pause rather than autofill a hand");
+        SendKey(Key.P);
+        Assert(!vm.IsPaused, "P resumes a paused race");
+        SendKey(Key.P);
+        Assert(vm.IsPaused, "P pauses an active race");
+        SendKey(Key.P);
+        for (int i = 0; i < 4; i++) vm.HandleKeyDown(Key.D1);
+        engine.Tick(TimeSpan.FromSeconds(0.1)); engine.Tick(TimeSpan.FromSeconds(0.1));
+        Assert(engine.Phase == GamePhase.RoundEnd, "limited-seat race reaches results");
+        foreach (var key in new[] { Key.D2, Key.D3, Key.D4, Key.NumPad4 }) SendKey(key);
+        Assert(engine.Phase == GamePhase.RoundEnd, "unavailable player numbers cannot crash or change round results");
+        SendKey(Key.Enter);
+        Assert(engine.Phase == GamePhase.GameOver, "Enter advances results through the window preview route");
+        Tick(1);
+        Assert(vm.ResultsCountdownDisplay.Contains("29s"), "results display remaining idle time");
+        host.UpdateLayout();
+        var text = FindAll<TextBox>(game).Single(t => t.DataContext is InitialsEntryViewModel);
+        text.RaiseEvent(new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, Environment.TickCount, null, text) { RoutedEvent = Keyboard.GotKeyboardFocusEvent });
+        Assert(vm.IsEditingInitials && text.SelectionLength == text.Text.Length, "initials focus selects existing text and pauses the results timer");
+        for (int second = 0; second < 40; second++) Tick(1);
+        Assert(engine.Phase == GamePhase.GameOver && vm.ResultsCountdownDisplay.StartsWith("Timer paused"), "typing can outlast the results timeout safely");
+        vm.ClearInitialsCommand.Execute(null);
+        foreach (var c in new[] { "A", "C", "E", "X" })
+        {
+            var button = FindAll<Button>(game).Single(b => ReferenceEquals(b.Command, vm.EnterInitialsCommand) && b.Content?.ToString() == c);
+            typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(button, null);
+        }
+        Assert(vm.ActiveInitialsEntry!.Initials == "ACE", "touch keypad enters initials and enforces three characters");
+        vm.BackspaceInitialsCommand.Execute(null);
+        Assert(vm.ActiveInitialsEntry.Initials == "AC", "touch backspace removes one initial");
+        vm.EnterInitialsCommand.Execute("E");
+        var enterInitials = new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, Key.Enter) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
+        text.RaiseEvent(enterInitials);
+        Assert(enterInitials.Handled && engine.Phase == GamePhase.GameOver && !vm.IsEditingInitials, "Enter in an initials field finishes editing without leaving results");
+        Tick(1);
+        Assert(!vm.IsEditingInitials && vm.ResultsCountdownDisplay.Contains("29s"), "Done restarts the visible results countdown");
+        host.Width = 960; host.Height = 640; host.UpdateLayout();
+        Render((FrameworkElement)host.Content, "touch-initials.png", 960, 640);
+        var lastKey = FindAll<Button>(game).Single(b => ReferenceEquals(b.Command, vm.EnterInitialsCommand) && b.Content?.ToString() == "9");
+        var keyBounds = lastKey.TransformToAncestor((FrameworkElement)host.Content).TransformBounds(new Rect(0, 0, lastKey.ActualWidth, lastKey.ActualHeight));
+        Assert(keyBounds.Height >= 44, "keypad touch targets remain at least 44 pixels tall at minimum window size");
+        Assert(keyBounds.Right <= ((FrameworkElement)host.Content).ActualWidth && keyBounds.Bottom <= ((FrameworkElement)host.Content).ActualHeight, "entire touch keypad fits the minimum window size");
+        host.Width = 1280; host.Height = 800; host.UpdateLayout();
+        var scorePath = Path.Combine(directory, "highscores.json");
+        File.WriteAllText(scorePath, "[]");
+        using (var locked = new FileStream(scorePath, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            host.Close();
+            Assert(host.IsVisible && vm.ShowCloseFailure && vm.HasPendingSaves, "failed score save prevents silent loss on window close");
+            Assert(engine.HighScores.Entries.Single().Initials == "ACE", "failed save retains entered initials in memory");
+            Render((FrameworkElement)host.Content, "save-retry.png");
+        }
+        vm.RetrySaveCommand.Execute(null);
+        Assert(!vm.HasPendingSaves && !vm.ShowCloseFailure, "Retry save clears the pending state after access is restored");
+        var reloaded = new HighScoreService(scorePath); reloaded.Load();
+        Assert(reloaded.Entries.Single().Initials == "ACE", "retry writes the retained score exactly once");
+        var settingsPath = Path.Combine(directory, "settings.json");
+        new SettingsService(settingsPath).Save(settings);
+        using (var locked = new FileStream(settingsPath, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            settings.LogoGlowBlur = 15;
+            typeof(MainViewModel).GetMethod("SettingsApplied", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(vm, null);
+            Assert(vm.HasPendingSaves, "failed settings save is also tracked for retry");
+        }
+        for (int second = 0; second < 5; second++) Tick(1);
+        Assert(!vm.HasPendingSaves && new SettingsService(settingsPath).Load().LogoGlowBlur == 15, "automatic retry persists pending settings after access returns");
+        using (var locked = new FileStream(settingsPath, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            settings.LogoGlowBlur = 20;
+            typeof(MainViewModel).GetMethod("SettingsApplied", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(vm, null);
+        }
+        host.Close();
+        Assert(!host.IsVisible && new SettingsService(settingsPath).Load().LogoGlowBlur == 20, "window close retries pending settings before stopping");
+        var editedSettings = new GameSettings();
+        var options = new SettingsViewModel(editedSettings) { FinishDistanceText = "48000" };
+        Assert(options.Apply() && editedSettings.FinishDistance == 48000, "typed finish distance applies precisely");
+        options.FinishDistanceText = "nonsense";
+        Assert(!options.Apply() && options.FinishDistanceError.Length > 0 && editedSettings.FinishDistance == 48000, "invalid numeric entry cannot overwrite valid settings");
+        options.FinishDistanceText = "1000001";
+        Assert(!options.Apply(), "out-of-range numeric entry is rejected");
+        options.DecreaseDistanceCommand.Execute(null);
+        Assert(options.FinishDistance == 47000 && options.FinishDistanceError.Length == 0, "touch stepper restores valid numeric entry");
+    }
+
+    static IEnumerable<T> FindAll<T>(DependencyObject parent) where T : DependencyObject
+    {
+        if (parent is T result) yield return result;
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            foreach (var child in FindAll<T>(VisualTreeHelper.GetChild(parent, i))) yield return child;
+    }
+
     static T? Find<T>(DependencyObject parent) where T : DependencyObject
     {
         if (parent is T target) return target;

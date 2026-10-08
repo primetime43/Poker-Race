@@ -9,11 +9,10 @@
         WindowStartupLocation="CenterScreen"
         Icon="/RacePoker.Wpf;component/Assets/kpoker.ico"
         Background="#08151F"
-        KeyDown="Window_KeyDown">
-    <Window.DataContext>
-        <vm:MainViewModel/>
-    </Window.DataContext>
+        PreviewKeyDown="Window_KeyDown">
     <Grid>
+        <Grid>
+            <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding ShowCloseFailure}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers></Style></Grid.Style>
         <!-- Shell view: shown in Attract / SeatJoin phases -->
         <views:ShellView
             Visibility="{Binding IsShellMode, Converter={StaticResource BoolToVisibility}}"/>
@@ -21,5 +20,16 @@
         <!-- Game view: shown during active game (Dealing through GameOver) -->
         <views:RacePokerGameView
             Visibility="{Binding IsInGame, Converter={StaticResource BoolToVisibility}}"/>
+        </Grid>
+        <Border Background="#F208151F" Visibility="{Binding ShowCloseFailure, Converter={StaticResource BoolToVisibility}}">
+            <Border Background="{StaticResource ArcadePanel}" CornerRadius="14" Padding="30" MaxWidth="540" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Your changes still need to be saved" Foreground="{StaticResource ArcadeGold}" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding StorageNotice}" Foreground="{StaticResource ArcadeCream}" FontSize="15" TextWrapping="Wrap" Margin="0,14"/>
+                    <Button Content="Retry saving" Command="{Binding RetrySaveCommand}" IsDefault="True" Style="{StaticResource ArcadePrimaryButton}" MinHeight="48"/>
+                    <Button Content="Exit without saving" Command="{Binding CloseWithoutSavingCommand}" Style="{StaticResource ArcadeButton}" Margin="0,12,0,0" MinHeight="48"/>
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 </Window>

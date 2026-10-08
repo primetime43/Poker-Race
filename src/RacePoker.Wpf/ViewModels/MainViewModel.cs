@@ -12,7 +12,7 @@ using RacePoker.Wpf.Views;
 namespace RacePoker.Wpf.ViewModels;
 
 public record PointChartEntry(string Label, string Value);
-public record ScoreBoardChoice(string Key, string Label);
+public record ScoreBoardChoice(string Key, string Label, string Description);
 
 public class MainViewModel : ViewModelBase
 {
@@ -20,7 +20,104 @@ public class MainViewModel : ViewModelBase
     private readonly DispatcherTimer _timer;
     private readonly SettingsService _settingsService;
     private readonly SoundService _soundService;
-    private DateTime _lastTick;
+    private readonly TimeProvider _timeProvider;
+    private long _lastTick;
+    private long _lastSaveAttempt;
+    private int _dialogDepth;
+    private bool _windowSuspended;
+    private bool _stopped;
+    private bool _isPaused;
+    private string _pauseReason = "";
+    private bool _showCloseFailure;
+    private InitialsEntryViewModel? _activeInitialsEntry;
+
+    public bool IsPaused { get => _isPaused; private set => SetProperty(ref _isPaused, value); }
+    public string PauseReason { get => _pauseReason; private set => SetProperty(ref _pauseReason, value); }
+    public bool ShowCloseFailure { get => _showCloseFailure; private set => SetProperty(ref _showCloseFailure, value); }
+    public bool HasPendingSaves => _settingsService.HasPendingSave || _engine.HighScores.HasPendingSave;
+    public bool IsEditingInitials => _engine.IsResultsEntryActive;
+    public string ResultsCountdownDisplay => IsEditingInitials
+        ? "Timer paused while you enter initials · tap Done when finished"
+        : $"Return to menu in {Math.Ceiling(_engine.ResultsSecondsRemaining):0}s · tap initials to pause";
+    public InitialsEntryViewModel? ActiveInitialsEntry
+    {
+        get => _activeInitialsEntry;
+        private set
+        {
+            if (!SetProperty(ref _activeInitialsEntry, value)) return;
+            foreach (var entry in InitialsEntries) entry.IsSelected = entry == value;
+        }
+    }
+    public IReadOnlyList<string> InitialsKeys { get; } = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".Select(c => c.ToString()).ToArray();
+    public event Action? CloseWithoutSavingRequested;
+    public ICommand RetrySaveCommand { get; }
+    public ICommand PauseCommand { get; }
+    public ICommand ResumeCommand { get; }
+    public ICommand EnterInitialsCommand { get; }
+    public ICommand BackspaceInitialsCommand { get; }
+    public ICommand ClearInitialsCommand { get; }
+    public ICommand CloseWithoutSavingCommand { get; }
+
+    public void PauseGame(string reason = "Take a break. Your hand and time are safe.")
+    {
+        if (!IsInGame) return;
+        PauseReason = reason;
+        IsPaused = true;
+    }
+
+    public void ResumeGame()
+    {
+        if (_windowSuspended || _dialogDepth > 0) return;
+        _lastTick = _timeProvider.GetTimestamp();
+        IsPaused = false;
+    }
+
+    public void SetWindowActive(bool active)
+    {
+        _windowSuspended = !active;
+        _lastTick = _timeProvider.GetTimestamp();
+        if (!active && _dialogDepth == 0) PauseGame("The game paused while you were away. Resume when ready.");
+    }
+
+    public void BeginInitialsEntry(InitialsEntryViewModel entry)
+    {
+        if (Phase != GamePhase.GameOver || !InitialsEntries.Contains(entry)) return;
+        ActiveInitialsEntry = entry;
+        _engine.SetResultsEntryActive(true);
+        OnPropertyChanged(nameof(IsEditingInitials));
+        OnPropertyChanged(nameof(ResultsCountdownDisplay));
+    }
+
+    public void CompleteInitialsEntry()
+    {
+        _engine.SetResultsEntryActive(false);
+        OnPropertyChanged(nameof(IsEditingInitials));
+        OnPropertyChanged(nameof(ResultsCountdownDisplay));
+    }
+
+    private void UpdateStorageNotice()
+    {
+        StorageNotice = string.Join(" ", new[] { _settingsService.LastNotice, _engine.HighScores.LastNotice }.Where(n => !string.IsNullOrEmpty(n)).Distinct());
+        OnPropertyChanged(nameof(HasPendingSaves));
+        if (!HasPendingSaves) ShowCloseFailure = false;
+    }
+
+    public bool RetryPendingSaves()
+    {
+        _lastSaveAttempt = _timeProvider.GetTimestamp();
+        _settingsService.RetrySave();
+        _engine.HighScores.RetrySave();
+        UpdateStorageNotice();
+        return !HasPendingSaves;
+    }
+
+    public bool PrepareToClose()
+    {
+        if (Phase == GamePhase.GameOver) SaveInitials();
+        bool saved = RetryPendingSaves();
+        ShowCloseFailure = !saved;
+        return saved;
+    }
 
     private GamePhase _phase;
     private int _round;
@@ -178,7 +275,7 @@ public class MainViewModel : ViewModelBase
     private void RefreshPlayFeedback()
     {
         foreach (var name in new[] { nameof(HandProgressDisplay), nameof(ShowSelectionRow), nameof(CountdownDisplay),
-            nameof(TimerRemainingFraction), nameof(TurnInstruction), nameof(JoinedSeats), nameof(ShowRoundSummary), nameof(HandResultDisplay), nameof(HandPointsDisplay), nameof(SelectionHint), nameof(LeaderDisplay), nameof(HasInitialsEntries) })
+            nameof(TimerRemainingFraction), nameof(TurnInstruction), nameof(JoinedSeats), nameof(ShowRoundSummary), nameof(HandResultDisplay), nameof(HandPointsDisplay), nameof(SelectionHint), nameof(LeaderDisplay), nameof(HasInitialsEntries), nameof(ResultsCountdownDisplay), nameof(IsEditingInitials) })
             OnPropertyChanged(name);
     }
 
@@ -219,8 +316,9 @@ public class MainViewModel : ViewModelBase
 
     public MainViewModel() : this(null, null) { }
 
-    public MainViewModel(GameSettings? settings, string? dataDirectory)
+    public MainViewModel(GameSettings? settings, string? dataDirectory, TimeProvider? timeProvider = null)
     {
+        _timeProvider = timeProvider ?? TimeProvider.System;
         var pointTablePath = System.IO.Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "Config", "pointTable.json");
         var pointTable = PointTableService.Load(pointTablePath);
@@ -242,10 +340,32 @@ public class MainViewModel : ViewModelBase
         });
 
         ExitGameCommand = new RelayCommand(ExitGame);
+        RetrySaveCommand = new RelayCommand(() => RetryPendingSaves());
+        PauseCommand = new RelayCommand(() => PauseGame());
+        ResumeCommand = new RelayCommand(ResumeGame);
+        CloseWithoutSavingCommand = new RelayCommand(() => CloseWithoutSavingRequested?.Invoke());
+        EnterInitialsCommand = new RelayCommand(parameter =>
+        {
+            if (IsPaused || ActiveInitialsEntry is null || parameter is not string character) return;
+            BeginInitialsEntry(ActiveInitialsEntry);
+            ActiveInitialsEntry.Append(character);
+        });
+        BackspaceInitialsCommand = new RelayCommand(() =>
+        {
+            if (ActiveInitialsEntry is null) return;
+            BeginInitialsEntry(ActiveInitialsEntry);
+            ActiveInitialsEntry.Backspace();
+        });
+        ClearInitialsCommand = new RelayCommand(() =>
+        {
+            if (ActiveInitialsEntry is null) return;
+            BeginInitialsEntry(ActiveInitialsEntry);
+            ActiveInitialsEntry.Initials = "";
+        });
 
         PlayerJoinCommand = new RelayCommand(
-            p => PlayerButtonPressed(int.Parse((string)p!)),
-            p => Phase == GamePhase.Attract || Phase == GamePhase.SeatJoin);
+            p => { if (int.TryParse(p?.ToString(), out int count)) PlayerButtonPressed(count); },
+            p => IsShellMode && int.TryParse(p?.ToString(), out int count) && count >= 0 && count < _engine.Seats.Length);
 
         OpenSettingsCommand = new RelayCommand(OpenSettings);
         OpenHowToPlayCommand = new RelayCommand(OpenHowToPlay);
@@ -267,10 +387,11 @@ public class MainViewModel : ViewModelBase
             Interval = TimeSpan.FromMilliseconds(16) // ~60fps
         };
         _timer.Tick += OnTimerTick;
-        _lastTick = DateTime.UtcNow;
+        _lastTick = _timeProvider.GetTimestamp();
+        _lastSaveAttempt = _lastTick;
         _timer.Start();
 
-        StorageNotice = _settingsService.LastNotice ?? _engine.HighScores.LastNotice ?? "";
+        UpdateStorageNotice();
         RefreshHighScores();
         BuildPointChart();
         SyncFromEngine();
@@ -307,6 +428,8 @@ public class MainViewModel : ViewModelBase
     {
         if (_engine.Phase == GamePhase.GameOver)
             SaveInitials();
+        RetryPendingSaves();
+        IsPaused = false;
 
         for (int i = 0; i < _engine.Settings.MaxSeats; i++)
             _engine.LeaveSeat(i);
@@ -341,7 +464,7 @@ public class MainViewModel : ViewModelBase
     private void SettingsApplied()
     {
         _settingsService.Save(_engine.Settings);
-        StorageNotice = _settingsService.LastNotice ?? "";
+        UpdateStorageNotice();
         RefreshHighScores();
         OnPropertyChanged(nameof(FinishRuleDisplay));
         OnPropertyChanged(nameof(HighCardRuleDisplay));
@@ -362,13 +485,21 @@ public class MainViewModel : ViewModelBase
 
     private void ShowPausedDialog(Window window)
     {
-        _timer.Stop();
+        _dialogDepth++;
         try { window.ShowDialog(); }
-        finally { _lastTick = DateTime.UtcNow; _timer.Start(); }
+        finally { _dialogDepth--; _lastTick = _timeProvider.GetTimestamp(); }
     }
 
-    public void HandleKeyDown(Key key)
+    public void HandleKeyDown(Key key, bool isRepeat = false)
     {
+        if (isRepeat) return;
+        if (IsPaused)
+        {
+            if (key is Key.Enter or Key.Space or Key.P) ResumeGame();
+            else if (key == Key.Escape) ExitGame();
+            return;
+        }
+        if (key == Key.P && IsInGame) { PauseGame(); return; }
         var active = _engine.ActiveSeatIndex;
 
         switch (key)
@@ -378,25 +509,21 @@ public class MainViewModel : ViewModelBase
             case Key.NumPad1:
                 if (IsShellMode) PlayerButtonPressed(0);
                 else if (Phase == GamePhase.Picking) _engine.PickCard(active, 0);
-                else ToggleJoinOrDeal(0);
                 break;
             case Key.D2:
             case Key.NumPad2:
                 if (IsShellMode) PlayerButtonPressed(1);
                 else if (Phase == GamePhase.Picking) _engine.PickCard(active, 1);
-                else ToggleJoinOrDeal(1);
                 break;
             case Key.D3:
             case Key.NumPad3:
                 if (IsShellMode) PlayerButtonPressed(2);
                 else if (Phase == GamePhase.Picking) _engine.PickCard(active, 2);
-                else ToggleJoinOrDeal(2);
                 break;
             case Key.D4:
             case Key.NumPad4:
                 if (IsShellMode) PlayerButtonPressed(3);
                 else if (Phase == GamePhase.Picking) _engine.PickCard(active, 3);
-                else ToggleJoinOrDeal(3);
                 break;
             case Key.D5:
             case Key.NumPad5:
@@ -431,22 +558,22 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    private void ToggleJoinOrDeal(int seatId)
-    {
-        var seat = _engine.Seats[seatId];
-        if (seat.Status == SeatStatus.Empty)
-            _engine.JoinSeat(seatId);
-        else if (Phase == GamePhase.SeatJoin)
-            _engine.PressDeal(seatId);
-    }
-
     private void OnTimerTick(object? sender, EventArgs e)
     {
-        var now = DateTime.UtcNow;
-        var dt = now - _lastTick;
+        var now = _timeProvider.GetTimestamp();
+        var elapsed = _timeProvider.GetElapsedTime(_lastTick, now);
         _lastTick = now;
-        _engine.Tick(dt);
+        if (HasPendingSaves && _timeProvider.GetElapsedTime(_lastSaveAttempt, now) >= TimeSpan.FromSeconds(5)) RetryPendingSaves();
+        if (_dialogDepth > 0 || _windowSuspended || IsPaused || _stopped) return;
+        // A long dispatcher gap indicates sleep or a stalled application, not thinking time.
+        if (elapsed > TimeSpan.FromSeconds(2))
+        {
+            PauseGame("The game paused after an interruption. Your remaining time is unchanged.");
+            return;
+        }
+        _engine.Tick(elapsed);
         TimerProgress = _engine.PhaseTimerProgress;
+        OnPropertyChanged(nameof(ResultsCountdownDisplay));
     }
 
     private void OnEngineStateChanged()
@@ -518,6 +645,7 @@ public class MainViewModel : ViewModelBase
         if (activeIdx >= 0 && activeIdx < SeatViewModels.Count)
             ActiveSeat = SeatViewModels[activeIdx];
 
+        if (Phase == GamePhase.Attract) IsPaused = false;
         if (enteredGameOver)
             ComputeWinner();
         TimerProgress = _engine.PhaseTimerProgress;
@@ -561,6 +689,7 @@ public class MainViewModel : ViewModelBase
             if (_engine.HighScores.QualifiesForHighScore(s.TotalScore, _engine.ScoreRulesKey))
                 InitialsEntries.Add(new InitialsEntryViewModel(s.SeatId, s.TotalScore));
         }
+        ActiveInitialsEntry = InitialsEntries.FirstOrDefault();
     }
 
     private void SaveInitials()
@@ -579,29 +708,36 @@ public class MainViewModel : ViewModelBase
                 RulesDescription = _engine.ScoreRulesDescription
             });
         }
+        CompleteInitialsEntry();
         InitialsEntries.Clear();
-        StorageNotice = _engine.HighScores.LastNotice ?? StorageNotice;
+        ActiveInitialsEntry = null;
+        UpdateStorageNotice();
         RefreshHighScores();
         OnPropertyChanged(nameof(HasInitialsEntries));
     }
 
     public void Stop()
     {
+        if (_stopped) return;
+        _stopped = true;
+        if (Phase == GamePhase.GameOver) SaveInitials();
+        RetryPendingSaves();
         _timer.Stop();
         _timer.Tick -= OnTimerTick;
         _engine.StateChanged -= OnEngineStateChanged;
         _soundService.Dispose();
-        if (Phase == GamePhase.GameOver) SaveInitials();
     }
 
     private void RefreshHighScores()
     {
         var selectedKey = Phase == GamePhase.GameOver ? _engine.ScoreRulesKey : SelectedLeaderboard?.Key;
         var choices = Enumerable.Range(1, _engine.Settings.MaxSeats)
-            .Select(players => new ScoreBoardChoice(ScoreRules.Key(_engine.Settings, _engine.PointTable, players), ScoreRules.Describe(_engine.Settings, players)))
-            .Concat(_engine.HighScores.Entries.Select(e => new ScoreBoardChoice(e.RulesKey, e.RulesDescription)))
-            .Append(new ScoreBoardChoice("legacy", "Legacy records (rules unknown)"))
-            .DistinctBy(c => c.Key).ToArray();
+            .Select(players => new ScoreBoardChoice(ScoreRules.Key(_engine.Settings, _engine.PointTable, players),
+                $"{players} {(players == 1 ? "player" : "players")} · Current rules", ScoreRules.Describe(_engine.Settings, players))).ToList();
+        var saved = _engine.HighScores.Entries.Where(e => e.RulesKey != "legacy")
+            .DistinctBy(e => e.RulesKey).Where(e => choices.All(c => c.Key != e.RulesKey)).ToArray();
+        for (int i = 0; i < saved.Length; i++) choices.Add(new ScoreBoardChoice(saved[i].RulesKey, $"Saved rules {i + 1}", saved[i].RulesDescription));
+        choices.Add(new ScoreBoardChoice("legacy", "Legacy records", "Older records · original rules unknown"));
         LeaderboardChoices.Clear();
         foreach (var choice in choices) LeaderboardChoices.Add(choice);
         SelectedLeaderboard = choices.FirstOrDefault(c => c.Key == selectedKey) ?? choices[0];

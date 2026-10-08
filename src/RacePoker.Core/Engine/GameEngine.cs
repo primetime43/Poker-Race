@@ -13,6 +13,19 @@ public class GameEngine
 
     public GamePhase Phase { get; private set; } = GamePhase.Attract;
     public int Round { get; private set; }
+    public bool IsResultsEntryActive { get; private set; }
+    public double ResultsSecondsRemaining => Phase == GamePhase.GameOver
+        ? Math.Max(0, Settings.GameOverTimeoutSeconds - _phaseTimer) : 0;
+
+    public void SetResultsEntryActive(bool active)
+    {
+        active &= Phase == GamePhase.GameOver;
+        if (active == IsResultsEntryActive) return;
+        IsResultsEntryActive = active;
+        // Give the player a full timeout after they finish entering initials.
+        _phaseTimer = 0;
+        OnStateChanged();
+    }
     public int ActiveSeatIndex { get; private set; }
     public bool IsTurnTransitioning => _turnTransitioning;
     public string ScoreRulesKey { get; private set; } = "legacy";
@@ -181,6 +194,7 @@ public class GameEngine
 
     public void Tick(TimeSpan dt)
     {
+        if (dt < TimeSpan.Zero || (Phase == GamePhase.GameOver && IsResultsEntryActive)) return;
         _phaseTimer += dt.TotalSeconds;
 
         switch (Phase)
@@ -362,6 +376,7 @@ public class GameEngine
     private void SetPhase(GamePhase phase)
     {
         Phase = phase;
+        IsResultsEntryActive = false;
         _phaseTimer = 0;
         OnStateChanged();
     }

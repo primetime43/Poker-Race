@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
-        Width="420" Height="520"
+        Width="640" Height="760"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -10,6 +10,36 @@
         ResizeMode="NoResize">
 
     <Window.Resources>
+        <Style TargetType="Slider">
+            <Setter Property="MinHeight" Value="44"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Slider">
+                <Track x:Name="PART_Track" Height="44" Margin="14,0" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                    <Track.DecreaseRepeatButton><RepeatButton Command="Slider.DecreaseLarge"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Grid Background="Transparent"><Border Height="6" Background="#72E6C2" CornerRadius="3"/></Grid></ControlTemplate></RepeatButton.Template></RepeatButton></Track.DecreaseRepeatButton>
+                    <Track.Thumb><Thumb Width="28" Height="36"><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="#72E6C2" BorderBrush="#D8FFF2" BorderThickness="1" CornerRadius="6"/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
+                    <Track.IncreaseRepeatButton><RepeatButton Command="Slider.IncreaseLarge"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Grid Background="Transparent"><Border Height="6" Background="#345261" CornerRadius="3"/></Grid></ControlTemplate></RepeatButton.Template></RepeatButton></Track.IncreaseRepeatButton>
+                </Track>
+                <ControlTemplate.Triggers><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger></ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="MinHeight" Value="44"/><Setter Property="MinWidth" Value="44"/><Setter Property="FontSize" Value="15"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="CheckBox">
+                <Grid Background="Transparent">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Border x:Name="Box" Width="28" Height="28" CornerRadius="5" Background="#14333C" BorderBrush="#72E6C2" BorderThickness="2">
+                        <Path x:Name="Tick" Data="M 5,13 L 11,20 L 23,6" Stroke="#72E6C2" StrokeThickness="3" Visibility="Collapsed"/>
+                    </Border>
+                    <ContentPresenter Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsChecked" Value="True"><Setter TargetName="Tick" Property="Visibility" Value="Visible"/></Trigger>
+                    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Box" Property="BorderBrush" Value="#F4CF75"/></Trigger>
+                    <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style TargetType="RadioButton"><Setter Property="MinHeight" Value="44"/><Setter Property="FontSize" Value="15"/></Style>
+
         <!-- Thin rounded scrollbar thumb -->
         <Style x:Key="DarkThumb" TargetType="Thumb">
             <Setter Property="Template">
@@ -37,8 +67,8 @@
 
         <!-- Dark vertical scrollbar (thin, no arrows) -->
         <Style TargetType="ScrollBar">
-            <Setter Property="Width" Value="6"/>
-            <Setter Property="MinWidth" Value="6"/>
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="MinWidth" Value="16"/>
             <Setter Property="Background" Value="#14142a"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -50,7 +80,7 @@
                                                   Command="ScrollBar.PageUpCommand"/>
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb Style="{StaticResource DarkThumb}" MinHeight="20"/>
+                                    <Thumb Style="{StaticResource DarkThumb}" MinHeight="40"/>
                                 </Track.Thumb>
                                 <Track.IncreaseRepeatButton>
                                     <RepeatButton Style="{StaticResource DarkTrackBtn}"
@@ -80,7 +110,7 @@
 
             <!-- Settings controls -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
-                          Margin="0,0,0,16" Padding="0,0,20,0">
+                          Margin="0,0,0,16" Padding="0,0,20,0" PanningMode="VerticalOnly">
             <StackPanel>
 
                 <!-- ── Gameplay ── -->
@@ -149,12 +179,14 @@
                                Text="{Binding MaxRounds}"/>
                 </Grid>
 
-                <TextBlock Text="Finish Distance (points)" Foreground="#668899" FontSize="12" Margin="0,0,0,4"/>
-                <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="85"/></Grid.ColumnDefinitions>
-                    <Slider Minimum="1000" Maximum="1000000" TickFrequency="1000" IsSnapToTickEnabled="True" Value="{Binding FinishDistance}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding FinishDistance, StringFormat=N0}" Foreground="#00FF88" FontSize="14" HorizontalAlignment="Right"/>
+                <TextBlock Text="Finish Distance (points)" Foreground="#A9C7D8" FontSize="14" Margin="0,0,0,6"/>
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="60"/><ColumnDefinition Width="*"/><ColumnDefinition Width="60"/></Grid.ColumnDefinitions>
+                    <Button Content="−" Command="{Binding DecreaseDistanceCommand}" Style="{StaticResource ActionBtn}" FontSize="24" MinWidth="0" MinHeight="48" Padding="4" AutomationProperties.Name="Decrease finish distance by 1000"/>
+                    <TextBox x:Name="FinishDistanceInput" Grid.Column="1" Text="{Binding FinishDistanceText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" FontSize="22" Padding="10" TextAlignment="Center" Margin="8,0" MinHeight="48" Background="#08151F" Foreground="#72E6C2" AutomationProperties.Name="Finish distance in points"/>
+                    <Button Grid.Column="2" Content="+" Command="{Binding IncreaseDistanceCommand}" Style="{StaticResource ActionBtn}" FontSize="24" MinWidth="0" MinHeight="48" Padding="4" AutomationProperties.Name="Increase finish distance by 1000"/>
                 </Grid>
+                <TextBlock Text="{Binding FinishDistanceError}" Foreground="#F78575" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,8"/>
                 <CheckBox Content="First horse to finish ends the race" IsChecked="{Binding FirstToFinish}" Foreground="#EEEEFF" Margin="0,0,0,6"/>
                 <TextBlock Text="Off: everyone completes the round; highest total wins. On: remaining turns are skipped after a horse finishes." Foreground="#A9C7D8" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
                 <CheckBox Content="High card: sum all five ranks" IsChecked="{Binding SumHighCards}" Foreground="#EEEEFF" Margin="0,0,0,6"/>
@@ -293,10 +325,10 @@
             <StackPanel Grid.Row="2" Orientation="Horizontal"
                         HorizontalAlignment="Center" Margin="0,8,0,0">
                 <Button Style="{StaticResource ActionBtn}" Content="OK"
-                        MinWidth="100" Margin="0,0,12,0"
+                        MinWidth="140" MinHeight="48" Margin="0,0,12,0"
                         Click="OkButton_Click"/>
                 <Button Style="{StaticResource ActionBtn}" Content="Cancel"
-                        MinWidth="100"
+                        MinWidth="140" MinHeight="48"
                         Click="CancelButton_Click"/>
             </StackPanel>
         </Grid>
