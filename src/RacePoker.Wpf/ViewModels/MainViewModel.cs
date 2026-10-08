@@ -58,7 +58,6 @@ public class MainViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(RoundDisplay));
                 OnPropertyChanged(nameof(RoundNumberDisplay));
-                OnPropertyChanged(nameof(RoundMultiplierDisplay));
             }
         }
     }
@@ -85,7 +84,6 @@ public class MainViewModel : ViewModelBase
 
     public string RoundDisplay => Round > 0 ? $"Round {Round}/{_engine.Settings.MaxRounds}" : "";
     public string RoundNumberDisplay => Round > 0 ? Round.ToString() : "";
-    public string RoundMultiplierDisplay => Round > 0 ? $"x{1.0 + (Round - 1) * 0.15:F2}" : "";
 
     // Shell vs Game view navigation
     public bool IsInGame => Phase != GamePhase.Attract && Phase != GamePhase.SeatJoin;
@@ -130,6 +128,8 @@ public class MainViewModel : ViewModelBase
     };
     public string HandResultDisplay => string.IsNullOrEmpty(ActiveSeat?.HandName)
         ? "Each pick is replaced with a fresh card." : $"{ActiveSeat.HandName} · +{ActiveSeat.RoundPoints:N0} points";
+    public string HandPointsDisplay => string.IsNullOrEmpty(ActiveSeat?.HandName)
+        ? "—" : ActiveSeat.RoundPoints.ToString("N0");
     public string SelectionHint => ShowSelectionRow
         ? "Click a card or press its number. A fresh card takes its place."
         : "Your hand is scored. Better hands move your horse farther.";
@@ -150,7 +150,7 @@ public class MainViewModel : ViewModelBase
     private void RefreshPlayFeedback()
     {
         foreach (var name in new[] { nameof(HandProgressDisplay), nameof(ShowSelectionRow), nameof(CountdownDisplay),
-            nameof(TimerRemainingFraction), nameof(TurnInstruction), nameof(HandResultDisplay), nameof(SelectionHint), nameof(LeaderDisplay), nameof(HasInitialsEntries) })
+            nameof(TimerRemainingFraction), nameof(TurnInstruction), nameof(HandResultDisplay), nameof(HandPointsDisplay), nameof(SelectionHint), nameof(LeaderDisplay), nameof(HasInitialsEntries) })
             OnPropertyChanged(name);
     }
 

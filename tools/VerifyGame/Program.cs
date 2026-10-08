@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using RacePoker.Core.Engine;
 using RacePoker.Core.Enums;
 using RacePoker.Core.Models;
+using RacePoker.Core.Services;
 using RacePoker.Wpf;
 using RacePoker.Wpf.Controls;
 using RacePoker.Wpf.ViewModels;
@@ -93,6 +94,37 @@ class Program
         foreach (var seat in vm.SeatViewModels) { seat.TotalScore = 48000; seat.TrackScore = 48000; }
         Render(game, "finish-distance.png");
         Assert(track.FinishDistance == 48000, "track supports configured finish distance");
+        vm.Stop();
+        var referenceSettings = new GameSettings
+        {
+            SoundEnabled = false, MaxRounds = 9, FinishDistance = 150000,
+            PickingTimeoutSeconds = 0, TurnDelaySeconds = 0.01,
+            RacingDurationSeconds = 0.01, AutoAdvanceEnabled = false
+        };
+        vm = new MainViewModel(referenceSettings, Path.Combine(data, "reference-scoring"));
+        timer = (DispatcherTimer)typeof(MainViewModel).GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
+        timer.Stop();
+        engine = (GameEngine)typeof(MainViewModel).GetField("_engine", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
+        game = new RacePokerGameView { DataContext = vm };
+        vm.PlayerButtonPressed(0);
+        var photoHand = new[]
+        {
+            new Card(Rank.Two, Suit.Diamonds), new Card(Rank.Five, Suit.Diamonds),
+            new Card(Rank.Two, Suit.Clubs), new Card(Rank.Five, Suit.Clubs), new Card(Rank.Four, Suit.Spades)
+        };
+        for (int round = 1; round <= 9; round++)
+        {
+            engine.Seats[0].SelectionCards = photoHand.ToArray();
+            for (int card = 0; card < 5; card++) engine.PickCard(0, card);
+            Assert(engine.Seats[0].RoundPoints == 6700, $"photographed two pair pays 6,700 in round {round}");
+            Assert(vm.HandPointsDisplay == "6,700", $"hand-points display matches payout in round {round}");
+            engine.Tick(TimeSpan.FromSeconds(0.1)); engine.Tick(TimeSpan.FromSeconds(0.1));
+            if (round < 9) engine.PressContinue(0);
+        }
+        Assert(engine.Seats[0].TotalScore == 60300, "nine photographed hands total 60,300 without bonuses");
+        var deployedChart = PointTableService.Load(Path.Combine(AppContext.BaseDirectory, "Config", "pointTable.json"));
+        Assert(deployedChart.GetPoints(HandEvaluator.Evaluate(photoHand)) == 6700, "deployed point chart matches photographed hand");
+        Render(game, "reference-scoring-round9.png");
         vm.Stop();
         var bindingErrors = errors.ToString(); File.WriteAllText(Path.Combine(Output, "binding-errors.txt"), bindingErrors);
         Assert(string.IsNullOrWhiteSpace(bindingErrors), "no WPF binding errors");

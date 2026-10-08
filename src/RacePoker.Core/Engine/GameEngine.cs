@@ -310,11 +310,9 @@ public class GameEngine
     private void EvaluateSeat(Seat seat)
     {
         var result = HandEvaluator.Evaluate(seat.Hand);
-        int basePoints = PointTable.GetPoints(result);
-
-        // Round multiplier: points scale up each round so later rounds feel more dramatic
-        double multiplier = 1.0 + (Round - 1) * 0.15;
-        seat.RoundPoints = (int)(basePoints * multiplier);
+        // The cabinet point chart pays a fixed amount for each completed hand.
+        // Round number and time remaining do not change the configured payout.
+        seat.RoundPoints = PointTable.GetPoints(result);
 
         seat.PreviousScore = seat.TotalScore;
         seat.TotalScore += seat.RoundPoints;

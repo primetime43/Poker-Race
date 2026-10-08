@@ -145,9 +145,9 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <TextBlock Text="ROUND BOOST" Style="{StaticResource ArcadeCaption}" FontSize="11" HorizontalAlignment="Right" />
-                        <TextBlock Text="{Binding RoundMultiplierDisplay}" Foreground="{StaticResource ArcadeGold}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Right" />
-                        <TextBlock Text="Applied to the point chart" Style="{StaticResource ArcadeCaption}" FontSize="11" />
+                        <TextBlock Text="HAND POINTS" Style="{StaticResource ArcadeCaption}" FontSize="11" HorizontalAlignment="Right" />
+                        <TextBlock Text="{Binding HandPointsDisplay}" Foreground="{StaticResource ArcadeGold}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Right" />
+                        <TextBlock Text="Awarded from the point chart" Style="{StaticResource ArcadeCaption}" FontSize="11" />
                     </StackPanel>
                 </Grid>
                 <Border Grid.Row="5" Background="{StaticResource ArcadePanel}" BorderBrush="{StaticResource ArcadeLine}" BorderThickness="1" CornerRadius="10" Padding="16,10">

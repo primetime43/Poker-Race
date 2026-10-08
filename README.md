@@ -17,7 +17,9 @@ dotnet run --project src/RacePoker.Wpf
 - **Enter** advances from round results. **F11** toggles fullscreen. **Esc** returns to the menu.
 - Help and settings pause the game timer while open.
 
-Default rules are 10 rounds and a 150,000-point finish. The point chart shows base values; each round after the first adds 15% of the base value. A race ends after all players finish the round in which a horse crosses the finish line, or after the last round. The highest total score wins; equal totals share the place.
+Default rules are 10 rounds and a 150,000-point finish. Each completed hand awards the fixed points shown in the photo’s point chart, with no round multiplier or time bonus. A race ends after all players finish the round in which a horse crosses the finish line, or after the last round. The highest total score wins; equal totals share the place.
+
+The exact payouts, photo evidence, and remaining uncertainties are recorded in [the scoring notes](docs/reference-scoring.md). “Face Value” currently means the highest card’s rank (J=11, Q=12, K=13, A=14); the photos do not establish that calculation.
 
 Settings, high scores, and generated sound tones are stored under `%APPDATA%\RacePoker`. High scores are saved when leaving the results screen, when its timer expires, or when closing the game on that screen.
 

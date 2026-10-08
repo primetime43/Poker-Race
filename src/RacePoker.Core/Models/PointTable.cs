@@ -2,6 +2,7 @@ using RacePoker.Core.Enums;
 
 namespace RacePoker.Core.Models;
 
+/// <summary>Fixed category payouts transcribed from IMG_6727.jpeg.</summary>
 public class PointTable
 {
     public Dictionary<HandCategory, int> Points { get; set; } = new()
@@ -20,6 +21,8 @@ public class PointTable
 
     public int GetPoints(HandResult result)
     {
+        // The photo labels this "Face Value" without demonstrating a high-card payout.
+        // Retain highest-rank value (J=11, Q=12, K=13, A=14) until verified.
         if (result.Category == HandCategory.HighCard)
             return result.HighCard;
 

@@ -448,4 +448,65 @@ public class GameEngineTests
         Assert.Empty(engine.Seats[0].Hand);
         Assert.True(engine.PickCard(0, 0));
     }
+
+    public static IEnumerable<object[]> CabinetScoringHands()
+    {
+        static Card C(Rank rank, Suit suit) => new(rank, suit);
+        yield return new object[] { new[] { C(Rank.Two, Suit.Diamonds), C(Rank.Five, Suit.Diamonds), C(Rank.Two, Suit.Clubs), C(Rank.Five, Suit.Clubs), C(Rank.Four, Suit.Spades) }, "Two Pair", 6700 };
+        yield return new object[] { new[] { C(Rank.Queen, Suit.Clubs), C(Rank.Queen, Suit.Diamonds), C(Rank.Three, Suit.Hearts), C(Rank.Seven, Suit.Spades), C(Rank.Ten, Suit.Clubs) }, "Pair", 4500 };
+        yield return new object[] { new[] { C(Rank.Seven, Suit.Clubs), C(Rank.Seven, Suit.Diamonds), C(Rank.Seven, Suit.Hearts), C(Rank.King, Suit.Spades), C(Rank.Two, Suit.Clubs) }, "Three of a Kind", 9000 };
+        yield return new object[] { new[] { C(Rank.Ace, Suit.Clubs), C(Rank.Two, Suit.Diamonds), C(Rank.Three, Suit.Hearts), C(Rank.Four, Suit.Spades), C(Rank.Five, Suit.Clubs) }, "Straight", 12000 };
+        yield return new object[] { new[] { C(Rank.Two, Suit.Diamonds), C(Rank.Five, Suit.Diamonds), C(Rank.Eight, Suit.Diamonds), C(Rank.Jack, Suit.Diamonds), C(Rank.Ace, Suit.Diamonds) }, "Flush", 15000 };
+        yield return new object[] { new[] { C(Rank.King, Suit.Clubs), C(Rank.King, Suit.Diamonds), C(Rank.King, Suit.Hearts), C(Rank.Nine, Suit.Spades), C(Rank.Nine, Suit.Hearts) }, "Full House", 18700 };
+        yield return new object[] { new[] { C(Rank.Jack, Suit.Clubs), C(Rank.Jack, Suit.Diamonds), C(Rank.Jack, Suit.Hearts), C(Rank.Jack, Suit.Spades), C(Rank.Three, Suit.Hearts) }, "Four of a Kind", 22500 };
+        yield return new object[] { new[] { C(Rank.Five, Suit.Hearts), C(Rank.Six, Suit.Hearts), C(Rank.Seven, Suit.Hearts), C(Rank.Eight, Suit.Hearts), C(Rank.Nine, Suit.Hearts) }, "Straight Flush", 28500 };
+        yield return new object[] { new[] { C(Rank.Ten, Suit.Spades), C(Rank.Jack, Suit.Spades), C(Rank.Queen, Suit.Spades), C(Rank.King, Suit.Spades), C(Rank.Ace, Suit.Spades) }, "Royal Flush", 37500 };
+        // Preserve the explicit highest-rank assumption for the photo's "Face Value" label.
+        yield return new object[] { new[] { C(Rank.Two, Suit.Clubs), C(Rank.Five, Suit.Diamonds), C(Rank.Eight, Suit.Hearts), C(Rank.Jack, Suit.Spades), C(Rank.Ace, Suit.Clubs) }, "High Card", 14 };
+    }
+
+    [Theory]
+    [MemberData(nameof(CabinetScoringHands))]
+    public void CompletedHands_AwardFixedPointsThroughRoundNine(Card[] hand, string handName, int expectedPoints)
+    {
+        var engine = CreateEngine(new GameSettings
+        {
+            MaxRounds = 9,
+            FinishDistance = 1000000,
+            PickingTimeoutSeconds = 0,
+            TurnDelaySeconds = 0.01,
+            RacingDurationSeconds = 0.01,
+            AutoAdvanceEnabled = false
+        });
+        engine.JoinSeat(0);
+        engine.PressDeal(0);
+
+        for (int round = 1; round <= 9; round++)
+        {
+            Assert.Equal(round, engine.Round);
+            var seat = engine.Seats[0];
+            seat.SelectionCards = hand.ToArray();
+            int previousTotal = seat.TotalScore;
+            // Waiting longer on later rounds must not add a speed or round modifier.
+            engine.Tick(TimeSpan.FromSeconds(round));
+            for (int i = 0; i < hand.Length; i++)
+            {
+                Assert.True(engine.PickCard(0, i));
+                if (i < 4) Assert.Equal(previousTotal, seat.TotalScore);
+            }
+            Assert.Equal(handName, seat.HandName);
+            Assert.Equal(expectedPoints, seat.RoundPoints);
+            Assert.Equal(round * expectedPoints, seat.TotalScore);
+            Assert.Equal(previousTotal, seat.PreviousScore);
+            Assert.Equal(seat.TotalScore, seat.FinalScore);
+
+            engine.Tick(TimeSpan.FromSeconds(0.005));
+            Assert.Equal(round * expectedPoints, seat.TotalScore);
+            engine.Tick(TimeSpan.FromSeconds(0.02));
+            engine.Tick(TimeSpan.FromSeconds(0.02));
+            Assert.Equal(GamePhase.RoundEnd, engine.Phase);
+            engine.PressContinue(0);
+        }
+        Assert.Equal(GamePhase.GameOver, engine.Phase);
+    }
 }

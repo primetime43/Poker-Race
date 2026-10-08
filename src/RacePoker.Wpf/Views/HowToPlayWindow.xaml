@@ -56,7 +56,8 @@
                         more points!
                     </TextBlock>
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,14">
-                        5. Each completed hand moves your horse forward. Later rounds add a 15% boost per round to the point chart.
+                        5. Each completed hand adds the points shown in the point chart to your score and moves your horse forward.
+                        The same hand earns the same points in every round.
                         After all players finish, compare scores and start the next round.
                     </TextBlock>
 
@@ -129,7 +130,7 @@
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,2"
                                FontFamily="Consolas">One Pair</TextBlock>
                     <TextBlock Foreground="#CCDDEE" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,2"
-                               FontFamily="Consolas">High Card  -  Face value</TextBlock>
+                               FontFamily="Consolas">High Card  -  Highest card value</TextBlock>
                 </StackPanel>
             </ScrollViewer>
 
