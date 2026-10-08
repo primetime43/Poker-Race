@@ -102,6 +102,7 @@ class Program
         vm.HandleKeyDown(Key.Space);
         Assert(engine.Phase == GamePhase.Picking && engine.Seats.Count(s => s.Status == SeatStatus.Joined) == 1, "Space starts solo replay");
         Render(game, "solo.png");
+        Render(game, "solo-large.png", 1920, 1080);
         Render(game, "compact.png", 960, 600);
         for (int card = 0; card < 5; card++) vm.HandleKeyDown(Key.D1);
         engine.Tick(TimeSpan.FromSeconds(0.1)); engine.Tick(TimeSpan.FromSeconds(0.1)); vm.HandleKeyDown(Key.Enter);

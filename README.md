@@ -62,4 +62,4 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The [Release workflow](.github/workflows/release.yml) tests the game, builds the single executable, and attaches it directly to a GitHub release. The tag sets the version shown in the game header. You can also run it from **Actions → Release → Run workflow** with an existing tag. No ZIP is needed.
+The [Release workflow](.github/workflows/release.yml) tests the game, builds the single executable, and attaches it directly to a GitHub release. The tag sets the version shown in the game header. You can also run it from **Actions → Release → Run workflow** with an existing tag. If its release already exists, the executable is uploaded or replaced while preserving the release’s notes and settings. No ZIP is needed.

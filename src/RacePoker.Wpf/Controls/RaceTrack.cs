@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using RacePoker.Wpf.ViewModels;
 
 namespace RacePoker.Wpf.Controls;
@@ -29,6 +30,7 @@ public sealed class RaceTrack : FrameworkElement
     public bool IsDemo { get => (bool)GetValue(IsDemoProperty); set => SetValue(IsDemoProperty, value); }
     public bool UseSymbol { get => (bool)GetValue(UseSymbolProperty); set => SetValue(UseSymbolProperty, value); }
 
+    private static readonly BitmapSource HorseImage = LoadHorseImage();
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly List<SeatViewModel> _observed = new();
     private double _lastFrame;
@@ -36,6 +38,7 @@ public sealed class RaceTrack : FrameworkElement
 
     public RaceTrack()
     {
+        RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
         Loaded += (_, _) => { ObserveSeats(); CompositionTarget.Rendering += OnFrame; };
         Unloaded += (_, _) => { CompositionTarget.Rendering -= OnFrame; UnobserveSeats(); };
         IsVisibleChanged += (_, _) => InvalidateVisual();
@@ -84,7 +87,8 @@ public sealed class RaceTrack : FrameworkElement
         const double labelWidth = 116, top = 25, bottom = 29;
         double laneHeight = (h - top - bottom) / count;
         double start = labelWidth + 8, finish = w - 26;
-        double horseHeight = Math.Min(72, laneHeight - 4), horseWidth = horseHeight * 1.54;
+        double horseHeight = Math.Min(96, laneHeight - 6);
+        double horseWidth = horseHeight * HorseImage.PixelWidth / HorseImage.PixelHeight;
         double travel = Math.Max(0, finish - start - horseWidth - 4);
         dc.DrawRoundedRectangle(Brush("#102C29"), null, new Rect(0, 0, w, h), 10, 10);
         dc.DrawRectangle(new LinearGradientBrush(Color.FromRgb(32, 91, 66), Color.FromRgb(21, 63, 49), 90), null, new Rect(labelWidth, top, w - labelWidth, h - top - bottom));
@@ -118,9 +122,11 @@ public sealed class RaceTrack : FrameworkElement
             double x = start + travel * fraction;
             bool moving = IsDemo || (seat?.IsTurnTransitioning == true && seat.IsActiveSeat);
             double bob = moving ? Math.Sin(seconds * 18 + i) * 1.5 : 0;
-            dc.DrawLine(new Pen(new SolidColorBrush(Color.FromArgb(75, Colors[id % 4].R, Colors[id % 4].G, Colors[id % 4].B)), 3), new Point(start, y + laneHeight - 8), new Point(x + horseWidth / 2, y + laneHeight - 8));
-            dc.DrawEllipse(Brush("#40000000"), null, new Point(x + horseWidth / 2, y + laneHeight - 7), horseWidth * 0.4, 3);
-            double horseY = y + (laneHeight - horseHeight) / 2 + bob;
+            double baseY = y + (laneHeight - horseHeight) / 2;
+            double groundY = baseY + horseHeight * 0.94;
+            dc.DrawLine(new Pen(new SolidColorBrush(Color.FromArgb(75, Colors[id % 4].R, Colors[id % 4].G, Colors[id % 4].B)), 3), new Point(start, groundY + 2), new Point(x + horseWidth / 2, groundY + 2));
+            dc.DrawEllipse(Brush("#40000000"), null, new Point(x + horseWidth * 0.52, groundY), horseWidth * 0.32, Math.Max(2, horseHeight * 0.035));
+            double horseY = baseY + bob;
             if (UseSymbol)
                 Text(dc, "♞", x + 8, horseY - 8, horseHeight, color, true);
             else
@@ -139,63 +145,33 @@ public sealed class RaceTrack : FrameworkElement
             Text(dc, score == 0 ? "START" : score.ToString("N0"), Math.Clamp(x - 18, start, w - 62), h - 21, 10, Brush("#BDD4C6"));
         }
     }
-    private static void DrawHorse(DrawingContext dc, double x, double y, double width, double height, Brush saddle, int id, double gait, bool moving)
+    private static BitmapSource LoadHorseImage()
     {
-        dc.PushTransform(new TranslateTransform(x, y));
-        dc.PushTransform(new ScaleTransform(width / 100, height / 66));
-        var coats = new[] { "#7B4430", "#343237", "#B4773D", "#786B59" };
-        var coat = Brush(coats[id % coats.Length]);
-        var dark = Brush("#211E25");
-        // Four jointed legs alternate between extension and a tucked recovery stroke.
-        for (int leg = 0; leg < 4; leg++)
-        {
-            double hipX = leg < 2 ? 30 : 67;
-            double phase = gait + (leg % 2) * Math.PI + (leg < 2 ? 1.1 : 0);
-            double stride = moving ? Math.Sin(phase) * 16 : (leg % 2 == 0 ? -5 : 5);
-            var hip = new Point(hipX, 39);
-            var knee = new Point(hipX + stride * 0.5, 50 - (moving ? Math.Max(0, Math.Cos(phase)) * 7 : 0));
-            var hoof = new Point(hipX + stride, 62 - (moving ? Math.Max(0, Math.Cos(phase)) * 13 : 0));
-            var pen = new Pen(leg % 2 == 0 ? dark : coat, 4) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-            dc.DrawLine(pen, hip, knee);
-            dc.DrawLine(pen, knee, hoof);
-            dc.DrawLine(new Pen(dark, 4), hoof, new Point(hoof.X + 4, hoof.Y));
-        }
-        var tail = new StreamGeometry();
-        using (var g = tail.Open())
-        {
-            g.BeginFigure(new Point(24, 28), false, false);
-            g.BezierTo(new Point(10, 24), new Point(13, moving ? 15 + Math.Sin(gait) * 5 : 37), new Point(2, 31), true, false);
-        }
-        dc.DrawGeometry(null, new Pen(dark, 6), tail);
-        dc.DrawEllipse(coat, null, new Point(48, 33), 28, 13);
-        var neck = new StreamGeometry();
-        using (var g = neck.Open())
-        {
-            g.BeginFigure(new Point(62, 31), true, true);
-            g.LineTo(new Point(74, 10), true, false);
-            g.LineTo(new Point(84, 13), true, false);
-            g.LineTo(new Point(76, 39), true, false);
-        }
-        dc.DrawGeometry(coat, null, neck);
-        dc.DrawLine(new Pen(dark, 4), new Point(70, 23), new Point(76, 10));
-        dc.DrawEllipse(coat, null, new Point(85, 15), 12, 6);
-        dc.DrawLine(new Pen(coat, 4), new Point(79, 11), new Point(78, 5));
-        dc.DrawEllipse(Brush("#F4E7CF"), null, new Point(92, 17), 4, 4);
-        dc.DrawEllipse(dark, null, new Point(85, 13), 1.5, 1.5);
-        dc.DrawLine(new Pen(saddle, 2), new Point(88, 9), new Point(88, 21));
-        dc.DrawRoundedRectangle(saddle, null, new Rect(39, 24, 22, 17), 3, 3);
-        dc.DrawLine(new Pen(dark, 2), new Point(85, 19), new Point(66, 20));
-        // The jockey crouches over the saddle, moving with the horse's stride.
-        dc.DrawLine(new Pen(saddle, 7), new Point(48, 23), new Point(62, 13));
-        dc.DrawEllipse(Brush("#EAC5A2"), null, new Point(66, 9), 4, 4);
-        dc.DrawEllipse(saddle, null, new Point(65, 6), 5, 3);
-        dc.DrawLine(new Pen(Brush("#ECE7D8"), 3), new Point(60, 15), new Point(68, 20));
-        dc.DrawLine(new Pen(Brush("#ECE7D8"), 4), new Point(48, 24), new Point(56, 32));
-        dc.DrawLine(new Pen(dark, 3), new Point(56, 32), new Point(51, 38));
-        var number = new FormattedText((id + 1).ToString(), CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-            new Typeface("Segoe UI"), 12, dark, 1);
-        dc.DrawText(number, new Point(45, 24));
-        dc.Pop();
+        var image = new BitmapImage();
+        image.BeginInit();
+        image.UriSource = new Uri("pack://application:,,,/RacePoker.Wpf;component/Assets/horse-racing.png", UriKind.Absolute);
+        image.CacheOption = BitmapCacheOption.OnLoad;
+        image.EndInit();
+        image.Freeze();
+        return image;
+    }
+
+    private void DrawHorse(DrawingContext dc, double x, double y, double width, double height, Brush playerColor, int id, double gait, bool moving)
+    {
+        // Use the supplied transparent photograph, retaining its natural proportions.
+        double pitch = moving ? Math.Sin(gait) * 1.2 : 0;
+        dc.PushTransform(new RotateTransform(pitch, x + width * 0.5, y + height * 0.85));
+        dc.DrawImage(HorseImage, new Rect(x, y, width, height));
+
+        // A small saddle marker connects each horse to its player's lane color.
+        double badgeHeight = Math.Clamp(height * 0.22, 10, 18);
+        double badgeWidth = badgeHeight * 1.1;
+        double badgeX = x + width * 0.44 - badgeWidth / 2;
+        double badgeY = y + height * 0.25;
+        dc.DrawRoundedRectangle(playerColor, new Pen(Brush("#DCFFFFFF"), 0.8),
+            new Rect(badgeX, badgeY, badgeWidth, badgeHeight), 2, 2);
+        Text(dc, (id + 1).ToString(CultureInfo.InvariantCulture),
+            badgeX + badgeWidth * 0.24, badgeY - 1, badgeHeight * 0.85, Brush("#08151F"), true);
         dc.Pop();
     }
 
