@@ -30,10 +30,9 @@
         <GradientStop Color="#030308" Offset="1"/>
     </RadialGradientBrush>
 
-    <!-- Converters (keep existing) -->
+    <!-- Shared view converters -->
     <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
     <converters:CardToImageConverter x:Key="CardToImage"/>
-    <converters:ScoreToMarginConverter x:Key="ScoreToMargin"/>
     <converters:PhaseToVisibilityConverter x:Key="PhaseToVisibility"/>
     <converters:IndexPlusOneConverter x:Key="IndexPlusOne"/>
 

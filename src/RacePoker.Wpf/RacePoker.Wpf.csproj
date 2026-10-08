@@ -18,14 +18,6 @@
     <Resource Include="Assets\PokerCards\*.png" />
     <Resource Include="Assets\kpoker.ico" />
     <Resource Include="Assets\horse-racing.png" />
-    <Resource Include="Assets\pokerchip.png" />
-    <Resource Include="Assets\gear.png" />
-    <Content Include="Assets\Animated-Border-Marquee.gif">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\flashing_lights.gif">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Config\pointTable.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
