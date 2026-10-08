@@ -1,0 +1,61 @@
+name: Release
+run-name: Release ${{ inputs.tag || github.ref_name }}
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag (for example, v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test game rules and persistence
+        run: dotnet test src/RacePoker.Tests -c Release
+      - name: Verify bundled game views and resources
+        run: |
+          dotnet publish tools/VerifyGame -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:DebugType=embedded -o artifacts/VerifyRelease
+          if ($LASTEXITCODE -ne 0) { throw 'Could not build UI verification.' }
+          & ./artifacts/VerifyRelease/VerifyGame.exe
+      - name: Build single executable
+        run: ./scripts/Publish-Release.ps1 -Version ($env:RELEASE_TAG -replace '^v', '')
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $notes = @'
+          Download RacePoker.Wpf.exe and run it on Windows x64.
+          Requires the .NET 10 Desktop Runtime (x64): https://dotnet.microsoft.com/download/dotnet/10.0
+          Game code, scoring, graphics, and other resources are included. The .NET runtime is not bundled.
+          '@
+          $notesPath = Join-Path $env:RUNNER_TEMP 'race-poker-release-notes.md'
+          Set-Content -LiteralPath $notesPath -Value $notes -Encoding utf8
+          $releaseArguments = @('release', 'create', $env:RELEASE_TAG, './artifacts/Release/RacePoker.Wpf.exe', '--verify-tag', '--title', "Race Poker $env:RELEASE_TAG", '--notes-file', $notesPath)
+          if ($env:RELEASE_TAG.Contains('-')) { $releaseArguments += '--prerelease' }
+          & gh @releaseArguments

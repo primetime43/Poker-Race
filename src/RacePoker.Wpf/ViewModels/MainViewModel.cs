@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -30,6 +31,9 @@ public class MainViewModel : ViewModelBase
     private string _pauseReason = "";
     private bool _showCloseFailure;
     private InitialsEntryViewModel? _activeInitialsEntry;
+
+    public string VersionDisplay { get; } = "v" + (typeof(MainViewModel).Assembly
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "1.0.0");
 
     public bool IsPaused { get => _isPaused; private set => SetProperty(ref _isPaused, value); }
     public string PauseReason { get => _pauseReason; private set => SetProperty(ref _pauseReason, value); }
@@ -319,9 +323,7 @@ public class MainViewModel : ViewModelBase
     public MainViewModel(GameSettings? settings, string? dataDirectory, TimeProvider? timeProvider = null)
     {
         _timeProvider = timeProvider ?? TimeProvider.System;
-        var pointTablePath = System.IO.Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory, "Config", "pointTable.json");
-        var pointTable = PointTableService.Load(pointTablePath);
+        var pointTable = GameResources.LoadPointTable();
 
         _settingsService = new SettingsService(dataDirectory is null ? null : System.IO.Path.Combine(dataDirectory, "settings.json"));
         settings ??= _settingsService.Load();

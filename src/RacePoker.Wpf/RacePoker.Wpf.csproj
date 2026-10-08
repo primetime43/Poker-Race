@@ -8,6 +8,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Assets\kpoker.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <SelfContained>false</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,9 +20,7 @@
     <Resource Include="Assets\PokerCards\*.png" />
     <Resource Include="Assets\kpoker.ico" />
     <Resource Include="Assets\horse-racing.png" />
-    <Content Include="Config\pointTable.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="Config\pointTable.json" LogicalName="RacePoker.PointTable.json" />
   </ItemGroup>
 
 </Project>

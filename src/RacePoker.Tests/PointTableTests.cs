@@ -1,10 +1,24 @@
 using RacePoker.Core.Enums;
 using RacePoker.Core.Models;
+using RacePoker.Core.Services;
+using System.Text;
 
 namespace RacePoker.Tests;
 
 public class PointTableTests
 {
+    [Fact]
+    public void LoadFromStream_AppliesValidOverridesAndIgnoresInvalidValues()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(
+            """{"TwoPair": 7100, "OnePair": -1, "RoyalFlush": 1000001, "Unknown": 5, "999": 42}"""));
+        var table = PointTableService.Load(stream);
+        Assert.Equal(7100, table.Points[HandCategory.TwoPair]);
+        Assert.Equal(4500, table.Points[HandCategory.OnePair]);
+        Assert.Equal(37500, table.Points[HandCategory.RoyalFlush]);
+        Assert.Equal(Enum.GetValues<HandCategory>().Length, table.Points.Count);
+    }
+
     [Fact]
     public void DefaultPointValues_MatchExpected()
     {

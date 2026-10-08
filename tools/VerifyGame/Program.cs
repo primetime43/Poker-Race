@@ -19,7 +19,7 @@ using RacePoker.Wpf.Views;
 
 class Program
 {
-    static string Output = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../artifacts/previews"));
+    static string Output = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "artifacts/previews"));
     static void Assert(bool ok, string message) { if (!ok) throw new Exception(message); Console.WriteLine("PASS " + message); }
     [STAThread]
     static void Main()
@@ -48,12 +48,14 @@ class Program
         typeof(MainViewModel).GetMethod("SettingsApplied", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(vm, null);
         Assert(((RotateTransform)shell.FindName("CardRotate1")).HasAnimatedProperties, "lobby animation can be restarted without reloading the view");
         Render(shell, "lobby-empty.png");
+        Assert(((TextBlock)shell.FindName("VersionLabel")).Text == vm.VersionDisplay && Version.TryParse(vm.VersionDisplay[1..].Split('-')[0], out _), "lobby displays the build version");
         for (int i = 0; i < 10; i++) vm.HighScores.Add(new HighScoreEntry { Initials = i == 0 ? "ACE" : "P" + i, Score = 81140 - i * 2200, Date = new DateTime(2026, 10, 7) });
         Render(shell, "lobby.png");
         vm.HandleKeyDown(Key.D4);
         Assert(engine.Seats.Count(s => s.Status == SeatStatus.Joined) == 4, "four-player start");
         var game = new RacePokerGameView { DataContext = vm };
         Render(game, "four-player-picking.png");
+        Assert(((TextBlock)game.FindName("VersionLabel")).Text == vm.VersionDisplay, "game header displays the build version");
         engine.Tick(TimeSpan.FromSeconds(12));
         typeof(MainViewModel).GetField("_lastTick", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(vm, TimeProvider.System.GetTimestamp());
         typeof(MainViewModel).GetMethod("OnTimerTick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(vm, new object?[] { null, EventArgs.Empty });
@@ -142,7 +144,7 @@ class Program
             if (round < 9) engine.PressContinue(0);
         }
         Assert(engine.Seats[0].TotalScore == 60300, "nine photographed hands total 60,300 without bonuses");
-        var deployedChart = PointTableService.Load(Path.Combine(AppContext.BaseDirectory, "Config", "pointTable.json"));
+        var deployedChart = RacePoker.Wpf.Services.GameResources.LoadPointTable();
         Assert(deployedChart.GetPoints(HandEvaluator.Evaluate(photoHand)) == 6700, "deployed point chart matches photographed hand");
         Render(game, "reference-scoring-round9.png");
         vm.Stop();

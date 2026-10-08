@@ -10,7 +10,7 @@ A Windows arcade game for **1–4 players**. Pick from five face-up cards to bui
 dotnet run --project src/RacePoker.Wpf
 ```
 
-**Built game:** open `artifacts/Release/RacePoker.Wpf.exe`. Requires the .NET 10 Desktop Runtime; keep the release folder’s files together.
+**Built game:** download `RacePoker.Wpf.exe` from [Releases](https://github.com/primetime43/Poker-Race/releases), or build it below. Requires Windows x64 and the **.NET 10 Desktop Runtime (x64)**. The game and its resources are bundled into one executable; the runtime is installed separately.
 
 | Action | Control |
 | --- | --- |
@@ -47,8 +47,19 @@ See [scoring notes](docs/reference-scoring.md) for the photo-based payouts and c
 dotnet test RacePoker.sln
 dotnet run --project tools/VerifyGame
 
-# Build the runnable folder
-dotnet publish src/RacePoker.Wpf -c Release -o artifacts/Release
+# Build one executable (no bundled runtime)
+./scripts/Publish-Release.ps1
 ```
 
-UI verification writes screenshots and isolated test data to `artifacts/previews`.
+Output: `artifacts/Release/RacePoker.Wpf.exe`. UI verification writes screenshots and isolated test data to `artifacts/previews`.
+
+## Create a release
+
+After committing and pushing your changes, push a version tag:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The [Release workflow](.github/workflows/release.yml) tests the game, builds the single executable, and attaches it directly to a GitHub release. The tag sets the version shown in the game header. You can also run it from **Actions → Release → Run workflow** with an existing tag. No ZIP is needed.
