@@ -55,11 +55,13 @@ Output: `artifacts/Release/RacePoker.Wpf.exe`. UI verification writes screenshot
 
 ## Create a release
 
-After committing and pushing your changes, push a version tag:
+Commit and push your changes first. On GitHub, choose **Releases → Draft a new release**, create a tag such as `v1.0.1`, and publish. The [Release workflow](.github/workflows/release.yml) tests and builds the game, then attaches `RacePoker.Wpf.exe` to **that same release**, preserving your title, notes, and release settings. Reruns replace the EXE. No ZIP is needed.
+
+Alternatively, push a version tag to build and create a release automatically:
 
 ```powershell
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
-The [Release workflow](.github/workflows/release.yml) tests the game, builds the single executable, and attaches it directly to a GitHub release. The tag sets the version shown in the game header. You can also run it from **Actions → Release → Run workflow** with an existing tag. If its release already exists, the executable is uploaded or replaced while preserving the release’s notes and settings. No ZIP is needed.
+Tags with or without `v` set the game’s displayed version. To rebuild an existing tag, use **Actions → Release → Run workflow**.

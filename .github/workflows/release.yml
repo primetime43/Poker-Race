@@ -1,13 +1,15 @@
 name: Release
-run-name: Release ${{ inputs.tag || github.ref_name }}
+run-name: Release ${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
 
 on:
   push:
-    tags: ['v*']
+    tags: ['v*', '[0-9]*']
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing release tag (for example, v1.0.0)'
+        description: 'Existing release tag (for example, v1.0.1)'
         required: true
         type: string
 
@@ -15,7 +17,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-${{ inputs.tag || github.ref_name }}
+  group: release-${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -26,11 +28,16 @@ jobs:
       run:
         shell: pwsh
     env:
-      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
     steps:
+      - name: Validate version tag
+        run: |
+          if ($env:RELEASE_TAG -cnotmatch '^v?\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$') {
+              throw 'Use a version tag such as v1.0.1 or 1.0.1.'
+          }
       - uses: actions/checkout@v7
         with:
-          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+          ref: refs/tags/${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
           persist-credentials: false
       - uses: actions/setup-dotnet@v6
         with:
@@ -44,7 +51,7 @@ jobs:
           & ./artifacts/VerifyRelease/VerifyGame.exe
       - name: Build single executable
         run: ./scripts/Publish-Release.ps1 -Version ($env:RELEASE_TAG -replace '^v', '')
-      - name: Publish GitHub release
+      - name: Attach executable to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -65,5 +72,11 @@ jobs:
               $releaseArguments = @('release', 'create', $env:RELEASE_TAG, './artifacts/Release/RacePoker.Wpf.exe', '--verify-tag', '--title', "Race Poker $env:RELEASE_TAG", '--notes-file', $notesPath)
               if ($env:RELEASE_TAG.Contains('-')) { $releaseArguments += '--prerelease' }
               & gh @releaseArguments
+              if ($LASTEXITCODE -ne 0) {
+                  # A release may have been created through GitHub while this build ran.
+                  gh release view $env:RELEASE_TAG --json id 2>$null | Out-Null
+                  if ($LASTEXITCODE -ne 0) { throw 'GitHub release creation failed.' }
+                  gh release upload $env:RELEASE_TAG './artifacts/Release/RacePoker.Wpf.exe' --clobber
+              }
           }
           if ($LASTEXITCODE -ne 0) { throw 'GitHub release publishing failed.' }
