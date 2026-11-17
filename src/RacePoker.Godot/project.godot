@@ -1,0 +1,21 @@
+; Open with Godot 4.5.1 .NET (or a compatible newer Godot 4 .NET editor).
+config_version=5
+
+[application]
+config/name="Race Poker • Godot Prototype"
+run/main_scene="res://Main.tscn"
+config/features=PackedStringArray("4.5", "C#", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=900
+window/size/window_width_override=1152
+window/size/window_height_override=810
+window/stretch/mode="canvas_items"
+
+[dotnet]
+project/assembly_name="RacePoker.Godot"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.025, 0.065, 0.075, 1)

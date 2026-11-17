@@ -260,3 +260,6 @@ paket-files/
 __pycache__/
 *.pyc
 *.jpeg
+
+# Godot import cache and C# build output
+.godot/

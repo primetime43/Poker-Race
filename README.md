@@ -42,6 +42,53 @@ See [scoring notes](docs/reference-scoring.md) for the photo-based payouts and c
 
 ## Development
 
+### Godot playable prototype
+
+A separate **player vs. computer** Godot screen reuses `RacePoker.Core.GameEngine` for dealing,
+card picks, payouts, round progression, and the finish rule. Build a five-card
+hand, watch the horse gallop and advance by your score, then continue through a ten-round
+race. Click cards or press **1–5 / F1–F5**; **Enter** continues, **P** pauses,
+**M** toggles sound, and **F11** toggles fullscreen. Losing focus pauses the game.
+
+The horse uses an eight-pose `AnimatedSprite2D` gallop with articulated legs and
+rider movement, a faster scoring burst, dust particles, and scrolling turf.
+Cards lift on hover, deal in sequence, and fly into your hand when selected.
+Scoring adds a floating payout, animated score counter, gold horse shader flash,
+speed streaks, and a faster turf scroll. Native Godot audio cues respond to card
+picks and payouts; a confetti burst and fanfare mark the end of the race.
+Pausing freezes the gallop, particles, scenery, card animations, audio, and score
+movement together. Starting a new race clears any animations in progress.
+
+Race a blue-tinted rival in a second animated lane. Both runners use the same
+core rules, separate decks, and the same payouts. After your hand scores, the
+rival picks five cards at a visible pace; its hand appears in a small **Computer
+Opponent** summary beside your main hand. Track labels, turn messages, and
+results explicitly identify the opponent as the computer. The
+rival favors matching ranks and possible flushes, then picks the highest payout
+available on its last card. Live standings show the point gap, and results show
+the winner or shared first place and the final margin. Finish and round-limit
+rules still come from the core. Pause freezes the rival's decisions and movement.
+
+Install **Godot 4.5.1 .NET** and the **.NET 8 SDK**. Open
+`src/RacePoker.Godot/project.godot`, build, and press **F6** or **F5**. Alternatively:
+
+```powershell
+./scripts/Start-Godot.ps1 -GodotPath 'C:\path\to\Godot_v4.5.1-stable_mono_win64_console.exe'
+# Uses the portable editor in artifacts/godot-tools automatically, when present:
+./scripts/Start-Godot.ps1
+# Run two rounds against the rival, including pause, input, and restart checks:
+./scripts/Start-Godot.ps1 -SmokeTest
+```
+
+The prototype is separate from the WPF solution and release workflow. Its
+assets are copied from the existing game, and it never writes WPF settings or
+leaderboards. The shared core targets .NET 8 so both Godot and the existing
+.NET 10 WPF application can reference it. The Godot folder pins the .NET 8 SDK
+to avoid editor tooling conflicts with newer SDKs. This prototype has no
+multiplayer, settings screen, or leaderboard UI.
+
+### WPF development
+
 ```powershell
 # Tests and UI verification
 dotnet test RacePoker.sln
