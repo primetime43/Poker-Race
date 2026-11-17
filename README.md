@@ -60,10 +60,12 @@ Pausing freezes the gallop, particles, scenery, card animations, audio, and scor
 movement together. Starting a new race clears any animations in progress.
 
 Race a blue-tinted rival in a second animated lane. Both runners use the same
-core rules, separate decks, and the same payouts. After your hand scores, the
-rival picks five cards at a visible pace; its hand appears in a small **Computer
-Opponent** summary beside your main hand. Track labels, turn messages, and
-results explicitly identify the opponent as the computer. The
+core rules, separate decks, and the same payouts. The computer goes first each
+round, revealing five cards one at a time in the full-size main hand area. Its
+completed hand remains visible while its horse advances. The display then switches
+to **Your Hand** and deals your five selectable cards. The header retains the
+computer's hand result and payout, without miniature cards. Track labels, turn
+messages, and results explicitly identify the opponent as the computer. The
 rival favors matching ranks and possible flushes, then picks the highest payout
 available on its last card. Live standings show the point gap, and results show
 the winner or shared first place and the final margin. Finish and round-limit
@@ -82,8 +84,9 @@ Install **Godot 4.5.1 .NET** and the **.NET 8 SDK**. Open
 
 The prototype is separate from the WPF solution and release workflow. Its
 assets are copied from the existing game, and it never writes WPF settings or
-leaderboards. The shared core targets .NET 8 so both Godot and the existing
-.NET 10 WPF application can reference it. The Godot folder pins the .NET 8 SDK
+leaderboards. The shared core targets .NET 8 and .NET 10 when built with a modern
+SDK; the pinned .NET 8 SDK builds only its .NET 8 target for Godot. WPF continues
+to target .NET 10 and uses the core's .NET 10 target. The Godot folder pins the .NET 8 SDK
 to avoid editor tooling conflicts with newer SDKs. This prototype has no
 multiplayer, settings screen, or leaderboard UI.
 

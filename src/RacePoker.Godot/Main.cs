@@ -8,10 +8,11 @@ namespace RacePoker.Godot;
 
 public partial class Main : Control
 {
+    private const int ComputerSeat = 0;
+    private const int HumanSeat = 1;
     private readonly Button[] _choices = new Button[5];
     private readonly TextureRect[] _choiceImages = new TextureRect[5];
     private readonly TextureRect[] _handImages = new TextureRect[5];
-    private readonly TextureRect[] _rivalHandImages = new TextureRect[5];
     private readonly Dictionary<string, Texture2D> _textures = new();
     private GameEngine _engine = null!;
     private RaceTrack _track = null!;
@@ -20,6 +21,9 @@ public partial class Main : Control
     private RivalDriver _rivalDriver = new();
     private Label _standing = null!;
     private Label _computerSummary = null!;
+    private Label _handTitle = null!, _watchComputer = null!;
+    private VBoxContainer _selectionContent = null!;
+    private int _displayedSeat = -1, _displayedHandCount;
     private Label _round = null!, _score = null!, _status = null!, _hint = null!;
     private ProgressBar _timer = null!;
     private Button _continue = null!, _pause = null!, _mute = null!;
@@ -43,7 +47,8 @@ public partial class Main : Control
 
     public override void _Ready()
     {
-        _smoke = OS.GetCmdlineUserArgs().Contains("--smoke-test") || OS.GetCmdlineUserArgs().Contains("--capture-results");
+        _smoke = OS.GetCmdlineUserArgs().Contains("--smoke-test") || OS.GetCmdlineUserArgs().Contains("--capture-results")
+            || OS.GetCmdlineUserArgs().Contains("--capture-player-turn");
         BuildScreen();
         _effects = new ArcadeEffects();
         _effects.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -51,12 +56,12 @@ public partial class Main : Control
         _audio = new ArcadeAudio();
         AddChild(_audio);
         StartRace();
-        if (OS.GetCmdlineUserArgs().Contains("--capture-preview")) CapturePreview();
+        if (OS.GetCmdlineUserArgs().Contains("--capture-preview")) CapturePreview("godot.png", 3.3);
     }
 
-    private async void CapturePreview(string filename = "godot.png")
+    private async void CapturePreview(string filename = "godot.png", double delay = 1)
     {
-        await ToSignal(GetTree().CreateTimer(1), SceneTreeTimer.SignalName.Timeout);
+        await ToSignal(GetTree().CreateTimer(delay), SceneTreeTimer.SignalName.Timeout);
         await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
         string path = ProjectSettings.GlobalizePath("res://../../artifacts/previews/" + filename);
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
@@ -75,7 +80,9 @@ public partial class Main : Control
         _previousRivalScore = 0;
         _rivalDriver = new RivalDriver();
         _busy = _dealPending = false;
-        foreach (var image in _choiceImages.Concat(_handImages).Concat(_rivalHandImages))
+        _displayedSeat = -1;
+        _displayedHandCount = 0;
+        foreach (var image in _choiceImages.Concat(_handImages))
         {
             image.Scale = Vector2.One;
             image.Rotation = 0;
@@ -120,6 +127,12 @@ public partial class Main : Control
             ? $"1ST PLACE   +{Math.Round(lead):N0} PTS" : $"2ND PLACE   {Math.Round(-lead):N0} PTS TO CATCH";
         _timer.Value = _engine.PhaseTimerProgress * 100;
         if (!_smoke) return;
+        if (OS.GetCmdlineUserArgs().Contains("--capture-player-turn") && _engine.ActiveSeatIndex == HumanSeat && !_busy)
+        {
+            _smoke = false;
+            CapturePreview("godot-player-turn.png");
+            return;
+        }
         _smokeTime += delta;
         if (_smokeTime > 40) { FailSmoke("Timed out before completing two rounds against the rival."); return; }
         if (!_smokePauseStarted && _smokeTime >= 0.9)
@@ -161,13 +174,21 @@ public partial class Main : Control
             TogglePause();
             _rivalPauseChecked = true;
         }
-        if (_engine.ActiveSeatIndex == 1 && _engine.Phase == GamePhase.Picking && _choices.Any(c => !c.Disabled))
-        { FailSmoke("Player choices were enabled during the rival's turn."); return; }
-        if (_engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == 0 && !_engine.IsTurnTransitioning && _smokeTime >= _nextPick)
+        if (_engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == ComputerSeat)
+        {
+            if (_choices.Any(c => !c.Disabled) || _selectionContent.Visible || _handTitle.Text != "COMPUTER'S HAND"
+                || _engine.Seats[HumanSeat].Hand.Length != 0
+                || _handImages.Count(c => c.Texture != null) != _engine.Seats[ComputerSeat].Hand.Length)
+            { FailSmoke("Computer's opening hand was not shown alone at full size."); return; }
+        }
+        if (_engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == HumanSeat
+            && (!_engine.Seats[ComputerSeat].IsHandComplete || !_selectionContent.Visible || _handTitle.Text != "YOUR HAND"))
+        { FailSmoke("Player selection did not follow the completed computer hand."); return; }
+        if (_engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == HumanSeat && !_engine.IsTurnTransitioning && _smokeTime >= _nextPick)
         {
             _nextPick = _smokeTime + 0.12;
             // Prefer a matching rank to exercise a meaningful payout and horse movement.
-            var seat = _engine.Seats[0];
+            var seat = _engine.Seats[HumanSeat];
             int index = Array.FindIndex(seat.SelectionCards, c => seat.Hand.Any(h => h.Rank == c.Rank));
             index = Math.Max(0, index);
             // Exercise both the actual button wiring and keyboard input path.
@@ -177,14 +198,14 @@ public partial class Main : Control
         if (_engine.Phase == GamePhase.RoundEnd) Continue();
         if (_engine.Phase == GamePhase.GameOver)
         {
-            if (_smokeHands != 2 || _engine.Seats[0].TotalScore <= 0 || _track.DisplayScore <= 0 || _track.AnimationFrameChanges < 16
+            if (_smokeHands != 2 || _engine.Seats[HumanSeat].TotalScore <= 0 || _track.DisplayScore <= 0 || _track.AnimationFrameChanges < 16
                 || _effects.CardsFlown != 10 || _effects.RewardsShown != 4 || _effects.CelebrationsShown != 1
-                || _rivalDriver.PicksMade != 10 || _engine.Seats[1].TotalScore <= 0 || _track.RivalDisplayScore <= 0 || !_rivalPauseChecked
-                || _rivalHandImages.Any(c => c.Texture == null))
+                || _rivalDriver.PicksMade != 10 || _engine.Seats[ComputerSeat].TotalScore <= 0 || _track.RivalDisplayScore <= 0 || !_rivalPauseChecked
+                || _effects.ComputerCardsRevealed != 10)
                 FailSmoke("Expected two rounds, ten picks per runner, four payouts, two running horses, and a celebration.");
             else
             {
-                GD.Print($"SMOKE PASS: {_smokeHands} rounds, YOU {_engine.Seats[0].TotalScore} vs RIVAL {_engine.Seats[1].TotalScore}, 10 rival picks, {_effects.CardsFlown} card flights, {_effects.RewardsShown} payouts; both horses pause correctly.");
+                GD.Print($"SMOKE PASS: {_smokeHands} rounds, YOU {_engine.Seats[HumanSeat].TotalScore} vs RIVAL {_engine.Seats[ComputerSeat].TotalScore}, 10 rival picks, {_effects.CardsFlown} card flights, {_effects.RewardsShown} payouts; both horses pause correctly.");
                 if (OS.GetCmdlineUserArgs().Contains("--capture-results"))
                 {
                     _smoke = false;
@@ -205,17 +226,17 @@ public partial class Main : Control
     {
         _smoke = false;
         StartRace();
-        await ToSignal(GetTree().CreateTimer(0.65), SceneTreeTimer.SignalName.Timeout);
+        if (!await WaitForHumanTurn()) return;
         Pick(0);
         await ToSignal(GetTree().CreateTimer(0.08), SceneTreeTimer.SignalName.Timeout);
         StartRace(); // Interrupt a card in mid-flight; old callbacks must not affect the new race.
-        await ToSignal(GetTree().CreateTimer(0.65), SceneTreeTimer.SignalName.Timeout);
-        if (_engine.Seats[0].Hand.Length != 0 || _effects.CardsFlown != 0 || _track.DisplayScore != 0
+        if (_engine.Seats[HumanSeat].Hand.Length != 0 || _effects.CardsFlown != 0 || _track.DisplayScore != 0
             || _track.RivalDisplayScore != 0 || _rivalDriver.PicksMade != 0 || _busy)
         { FailSmoke("Restart did not clear an interrupted card flight."); return; }
+        if (!await WaitForHumanTurn()) return;
         Pick(1);
         await ToSignal(GetTree().CreateTimer(0.4), SceneTreeTimer.SignalName.Timeout);
-        if (_engine.Seats[0].Hand.Length != 1 || _effects.CardsFlown != 1 || _busy || _handImages[0].Modulate.A < 0.99f)
+        if (_engine.Seats[HumanSeat].Hand.Length != 1 || _effects.CardsFlown != 1 || _busy || _handImages[0].Modulate.A < 0.99f)
         { FailSmoke("Card selection did not recover after restart."); return; }
         ToggleMute();
         if (!_audio.Muted) { FailSmoke("Mute toggle failed."); return; }
@@ -223,6 +244,17 @@ public partial class Main : Control
         GD.Print("SMOKE PASS: mid-flight restart, subsequent selection, and sound toggle verified.");
         _audio.Stop();
         GetTree().Quit();
+    }
+
+    private async Task<bool> WaitForHumanTurn()
+    {
+        for (int i = 0; i < 100; i++)
+        {
+            if (_engine.ActiveSeatIndex == HumanSeat && !_busy) return true;
+            await ToSignal(GetTree().CreateTimer(0.1), SceneTreeTimer.SignalName.Timeout);
+        }
+        FailSmoke("Computer did not finish its opening turn.");
+        return false;
     }
 
     public override void _UnhandledKeyInput(InputEvent @event)
@@ -253,10 +285,10 @@ public partial class Main : Control
     private void Pick(int index)
     {
         if (_paused || _busy || index < 0 || index >= 5) return;
-        int slot = _engine.Seats[0].Hand.Length;
+        int slot = _engine.Seats[HumanSeat].Hand.Length;
         var texture = _choiceImages[index].Texture;
         var source = _choiceImages[index].GetGlobalRect();
-        if (texture == null || !_engine.PickCard(0, index)) return;
+        if (texture == null || !_engine.PickCard(HumanSeat, index)) return;
         _busy = true;
         _audio.Pick(slot);
         _effects.Hover(_choiceImages[index], false);
@@ -268,7 +300,7 @@ public partial class Main : Control
     {
         if (_paused || _busy) return;
         if (_engine.Phase == GamePhase.GameOver) StartRace();
-        else _engine.PressContinue(0);
+        else _engine.PressContinue(HumanSeat);
     }
 
     private void TogglePause()
@@ -289,16 +321,16 @@ public partial class Main : Control
 
     private void Refresh()
     {
-        var seat = _engine.Seats[0];
-        var rival = _engine.Seats[1];
+        var seat = _engine.Seats[HumanSeat];
+        var rival = _engine.Seats[ComputerSeat];
         _track.SetRacing(_engine.Phase is GamePhase.Picking or GamePhase.Racing);
-        if (_engine.Round > 0 && _engine.Round != _lastRound)
+        bool rivalTurn = _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == ComputerSeat;
+        if (_engine.Round > 0 && _engine.Round != _lastRound && _engine.ActiveSeatIndex == HumanSeat)
         {
             _lastRound = _engine.Round;
             _busy = _dealPending = true;
         }
-        bool rivalTurn = _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == 1;
-        bool picking = _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == 0 && !_engine.IsTurnTransitioning;
+        bool picking = _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == HumanSeat && !_engine.IsTurnTransitioning;
         _round.Text = $"ROUND {Math.Max(1, _engine.Round):00} / {_engine.Settings.MaxRounds:00}";
         _status.Text = _paused ? "Race paused" : _engine.Phase == GamePhase.GameOver ? ResultTitle()
             : rivalTurn ? rival.IsHandComplete ? $"COMPUTER: {rival.HandName.ToUpperInvariant()}   +{rival.RoundPoints:N0} PTS" : $"COMPUTER IS THINKING   {rival.Hand.Length} / 5" : seat.IsHandComplete
@@ -306,7 +338,7 @@ public partial class Main : Control
             : $"BUILD YOUR HAND   {seat.Hand.Length} / 5";
         _hint.Text = _paused ? "Press P or Resume to keep playing."
             : _engine.Phase == GamePhase.GameOver ? $"You: {seat.TotalScore:N0} pts   ·   Computer: {rival.TotalScore:N0} pts   ·   Enter to race again."
-            : rivalTurn ? "Your hand is locked in. The computer is choosing its cards."
+            : rivalTurn ? "The computer goes first. Watch its hand, then build yours."
             : seat.IsHandComplete ? "Your hand is scored. Watch your horse advance."
             : "Pick one of the five cards below. A new card replaces every pick.";
         _continue.Visible = _engine.Phase is GamePhase.RoundEnd or GamePhase.GameOver;
@@ -314,14 +346,30 @@ public partial class Main : Control
         _continue.Text = _engine.Phase == GamePhase.GameOver ? "Race again · Enter" : "Next hand · Enter";
         _timer.Visible = picking;
         _computerSummary.Text = rival.IsHandComplete ? $"{rival.HandName} · +{rival.RoundPoints:N0} pts"
-            : rivalTurn ? $"Choosing cards · {rival.Hand.Length}/5" : "Waiting for your hand";
+            : rivalTurn ? $"Choosing cards · {rival.Hand.Length}/5" : "Computer plays first";
+        _handTitle.Text = rivalTurn ? "COMPUTER'S HAND" : "YOUR HAND";
+        _handTitle.Modulate = rivalTurn ? Color.FromHtml("#8FC5FF") : Colors.White;
+        _selectionContent.Visible = !rivalTurn;
+        _watchComputer.Visible = rivalTurn;
+        _watchComputer.Text = rival.IsHandComplete ? "Your turn is next…" : "Computer is choosing its cards…";
+        int shownSeat = rivalTurn ? ComputerSeat : HumanSeat;
+        var shownHand = _engine.Seats[shownSeat].Hand;
+        if (_displayedSeat != shownSeat)
+        {
+            _displayedSeat = shownSeat;
+            _displayedHandCount = 0;
+            foreach (var image in _handImages) { image.Scale = Vector2.One; image.Modulate = Colors.White; }
+        }
         for (int i = 0; i < 5; i++)
         {
             _choices[i].Disabled = !picking || _paused || _busy;
             _choiceImages[i].Texture = i < seat.SelectionCards.Length ? CardTexture(seat.SelectionCards[i]) : null;
-            _handImages[i].Texture = i < seat.Hand.Length ? CardTexture(seat.Hand[i]) : null;
-            _rivalHandImages[i].Texture = i < rival.Hand.Length ? CardTexture(rival.Hand[i]) : null;
+            _handImages[i].Texture = i < shownHand.Length ? CardTexture(shownHand[i]) : null;
         }
+        if (rivalTurn && shownHand.Length > _displayedHandCount)
+            for (int i = _displayedHandCount; i < shownHand.Length; i++)
+                _effects.RevealComputerCard(_handImages[i]);
+        _displayedHandCount = shownHand.Length;
         if (seat.TotalScore != _previousScore)
         {
             _track.MoveToScore(seat.TotalScore, _engine.Settings.FinishDistance);
@@ -347,7 +395,7 @@ public partial class Main : Control
 
     private string ResultTitle()
     {
-        int difference = _engine.Seats[0].TotalScore - _engine.Seats[1].TotalScore;
+        int difference = _engine.Seats[HumanSeat].TotalScore - _engine.Seats[ComputerSeat].TotalScore;
         return difference == 0 ? "DEAD HEAT — SHARED FIRST PLACE"
             : difference > 0 ? $"YOU WIN   BY {difference:N0} PTS" : $"COMPUTER WINS   BY {-difference:N0} PTS";
     }
@@ -368,11 +416,28 @@ public partial class Main : Control
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", 10);
         margin.AddChild(column);
-        var header = new HBoxContainer();
-        column.AddChild(header);
+        var top = new HBoxContainer();
+        top.AddThemeConstantOverride("separation", 24);
+        column.AddChild(top);
+        var brand = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        brand.AddThemeConstantOverride("separation", 12);
+        top.AddChild(brand);
         var title = Text("RACE POKER", 36, "#F4CF75");
-        title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        header.AddChild(title);
+        brand.AddChild(title);
+        _standing = Text("NECK AND NECK", 18, "#77E4BD");
+        brand.AddChild(_standing);
+        // The header keeps the computer's result; its cards use the main hand area.
+        var computerPanel = new PanelContainer
+        {
+            CustomMinimumSize = new Vector2(210, 0), SizeFlagsVertical = SizeFlags.ShrinkCenter
+        };
+        computerPanel.AddThemeStyleboxOverride("panel", Panel("#0B202B", "#264251"));
+        top.AddChild(computerPanel);
+        var raceInfo = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        raceInfo.AddThemeConstantOverride("separation", 12);
+        top.AddChild(raceInfo);
+        var header = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.End };
+        raceInfo.AddChild(header);
         _round = Text("", 18, "#ADD0C7");
         header.AddChild(_round);
         _pause = ActionButton("Pause · P", TogglePause);
@@ -381,20 +446,17 @@ public partial class Main : Control
         header.AddChild(_mute);
         var restart = ActionButton("New race", StartRace);
         header.AddChild(restart);
-        var info = new HBoxContainer();
-        column.AddChild(info);
-        _standing = Text("NECK AND NECK", 18, "#77E4BD");
-        _standing.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        info.AddChild(_standing);
         _score = Text("", 22, "#F4CF75");
-        info.AddChild(_score);
+        _score.HorizontalAlignment = HorizontalAlignment.Right;
+        raceInfo.AddChild(_score);
         _track = new RaceTrack { CustomMinimumSize = new Vector2(0, 250) };
         column.AddChild(_track);
         _status = Text("", 25, "#F4CF75");
         column.AddChild(_status);
         _hint = Text("", 17, "#ADD0C7");
         column.AddChild(_hint);
-        column.AddChild(Text("YOUR HAND", 14, "#77E4BD"));
+        _handTitle = Text("COMPUTER'S HAND", 14, "#77E4BD");
+        column.AddChild(_handTitle);
         var handArea = new HBoxContainer();
         handArea.AddThemeConstantOverride("separation", 24);
         column.AddChild(handArea);
@@ -412,33 +474,26 @@ public partial class Main : Control
             panel.AddChild(_handImages[i]);
             hand.AddChild(panel);
         }
-        var computerPanel = new PanelContainer
-        {
-            CustomMinimumSize = new Vector2(210, 0), SizeFlagsVertical = SizeFlags.ShrinkCenter
-        };
-        computerPanel.AddThemeStyleboxOverride("panel", Panel("#0B202B", "#264251"));
-        handArea.AddChild(computerPanel);
         var computer = new VBoxContainer();
         computer.AddThemeConstantOverride("separation", 5);
         computerPanel.AddChild(computer);
         computer.AddChild(Text("COMPUTER OPPONENT", 13, "#8FC5FF"));
-        var computerCards = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
-        computerCards.AddThemeConstantOverride("separation", 4);
-        computer.AddChild(computerCards);
-        for (int i = 0; i < 5; i++)
-        {
-            var panel = new PanelContainer { CustomMinimumSize = new Vector2(30, 42) };
-            panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = Color.FromHtml("#132F40") });
-            _rivalHandImages[i] = Image(new Vector2(30, 42));
-            panel.AddChild(_rivalHandImages[i]);
-            computerCards.AddChild(panel);
-        }
         _computerSummary = Text("", 12, "#93ADBE");
         _computerSummary.CustomMinimumSize = new Vector2(180, 0);
         _computerSummary.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         computer.AddChild(_computerSummary);
+        var selectionStage = new Control { CustomMinimumSize = new Vector2(0, 202) };
+        column.AddChild(selectionStage);
+        _selectionContent = new VBoxContainer();
+        _selectionContent.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _selectionContent.AddThemeConstantOverride("separation", 10);
+        selectionStage.AddChild(_selectionContent);
+        _watchComputer = Text("Computer is choosing its cards…", 20, "#8FC5FF");
+        _watchComputer.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _watchComputer.HorizontalAlignment = HorizontalAlignment.Center;
+        selectionStage.AddChild(_watchComputer);
         var choiceHeader = new HBoxContainer();
-        column.AddChild(choiceHeader);
+        _selectionContent.AddChild(choiceHeader);
         var choose = Text("PICK A CARD", 14, "#77E4BD");
         choose.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         choiceHeader.AddChild(choose);
@@ -446,7 +501,7 @@ public partial class Main : Control
         choiceHeader.AddChild(_timer);
         var choices = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
         choices.AddThemeConstantOverride("separation", 18);
-        column.AddChild(choices);
+        _selectionContent.AddChild(choices);
         for (int i = 0; i < 5; i++)
         {
             int index = i;

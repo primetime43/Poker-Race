@@ -12,19 +12,19 @@ public sealed class RivalDriver
 
     public void Tick(GameEngine engine, double delta)
     {
-        if (engine.Phase != GamePhase.Picking || engine.ActiveSeatIndex != 1 || engine.IsTurnTransitioning)
+        if (engine.Phase != GamePhase.Picking || engine.ActiveSeatIndex != 0 || engine.IsTurnTransitioning)
         {
             _wait = 0;
             return;
         }
         _wait += delta;
-        if (_wait < 0.32) return;
+        if (_wait < 0.6) return;
         _wait = 0;
-        var seat = engine.Seats[1];
+        var seat = engine.Seats[0];
         int index = Enumerable.Range(0, seat.SelectionCards.Length)
             .OrderByDescending(i => Value(engine, seat.Hand, seat.SelectionCards[i]))
             .First();
-        if (engine.PickCard(1, index)) PicksMade++;
+        if (engine.PickCard(0, index)) PicksMade++;
     }
 
     private static double Value(GameEngine engine, Card[] hand, Card card)

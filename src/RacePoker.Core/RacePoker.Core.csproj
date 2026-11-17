@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <!-- Godot 4.5's editor uses the .NET 8 SDK; it only builds the compatible target. -->
+    <TargetFrameworks Condition="$([MSBuild]::VersionLessThan('$(NETCoreSdkVersion)', '10.0'))">net8.0</TargetFrameworks>
     <RootNamespace>RacePoker.Core</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

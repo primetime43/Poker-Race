@@ -12,6 +12,7 @@ public partial class ArcadeEffects : Control
     public int CardsFlown { get; private set; }
     public int RewardsShown { get; private set; }
     public int CelebrationsShown { get; private set; }
+    public int ComputerCardsRevealed { get; private set; }
     public float CardFlightProgress { get; private set; }
 
     public override void _Ready()
@@ -46,6 +47,7 @@ public partial class ArcadeEffects : Control
         _confetti = null;
         _paused = false;
         CardsFlown = RewardsShown = CelebrationsShown = 0;
+        ComputerCardsRevealed = 0;
         CardFlightProgress = 0;
     }
 
@@ -73,6 +75,15 @@ public partial class ArcadeEffects : Control
             tween.TweenProperty(card, "modulate:a", 1f, 0.18).SetDelay(i++ * 0.065);
         }
         Animate().TweenCallback(Callable.From(finished)).SetDelay(0.52);
+    }
+
+    public void RevealComputerCard(TextureRect card)
+    {
+        ComputerCardsRevealed++;
+        card.PivotOffset = card.Size / 2;
+        card.Scale = new Vector2(0.05f, 1);
+        Animate().TweenProperty(card, "scale", Vector2.One, 0.22)
+            .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
     }
 
     public void FlyCard(Texture2D texture, Rect2 source, TextureRect target, Action finished)
