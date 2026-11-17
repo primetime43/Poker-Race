@@ -33,7 +33,7 @@ public partial class Main : Control
     private int _displayedSeat = -1, _displayedHandCount;
     private Label _round = null!, _score = null!, _status = null!, _hint = null!;
     private ProgressBar _timer = null!;
-    private Button _continue = null!, _pause = null!, _mute = null!;
+    private Button _continue = null!, _pause = null!;
     private bool _busy, _dealPending;
     private int _lastRound;
     private bool _paused;
@@ -57,19 +57,28 @@ public partial class Main : Control
     {
         _smoke = OS.GetCmdlineUserArgs().Contains("--smoke-test") || OS.GetCmdlineUserArgs().Contains("--capture-results")
             || OS.GetCmdlineUserArgs().Contains("--capture-player-turn");
+        if (_smoke) _preferencesPath = "user://smoke-preferences.cfg";
+        _preferences = PlayerPreferences.Load(_preferencesPath);
         BuildScreen();
         _effects = new ArcadeEffects();
         _effects.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         AddChild(_effects);
         _audio = new ArcadeAudio();
         AddChild(_audio);
+        if (!_preferences.SoundEnabled) _audio.ToggleMute();
         StartRace();
         BuildPayoutGuide();
+        BuildSettings();
         if (OS.GetCmdlineUserArgs().Contains("--capture-preview")) CapturePreview("godot.png", 3.3);
         if (OS.GetCmdlineUserArgs().Contains("--capture-guide"))
         {
             ToggleGuide();
             CapturePreview("godot-payouts.png");
+        }
+        if (OS.GetCmdlineUserArgs().Contains("--capture-settings"))
+        {
+            ToggleSettings();
+            CapturePreview("godot-settings.png");
         }
     }
 
@@ -219,6 +228,25 @@ public partial class Main : Control
             int index = Array.FindIndex(seat.SelectionCards, c => seat.Hand.Any(h => h.Rank == c.Rank));
             index = Math.Max(0, index);
             string? preview = seat.Hand.Length == 4 ? PreviewPayout(index) : null;
+            if (preview != null && !_busy)
+            {
+                bool originalHints = _preferences.ShowLastCardHints;
+                ToggleSettings();
+                _hintsToggle.ButtonPressed = false;
+                ToggleSettings();
+                HoverChoice(index, true);
+                if (_handPreview.Text != "" || _choices.Any(c => c.TooltipText != ""))
+                { FailSmoke("Disabled last-card hints remained visible."); return; }
+                ToggleSettings();
+                _hintsToggle.ButtonPressed = true;
+                ToggleSettings();
+                HoverChoice(index, true);
+                var saved = PlayerPreferences.Load(_preferencesPath);
+                if (!_handPreview.Text.Contains(preview) || _choices.Any(c => c.TooltipText == "")
+                    || !saved.ShowLastCardHints || saved.SoundEnabled != _preferences.SoundEnabled)
+                { FailSmoke("Enabled hints or saved preferences did not match the settings."); return; }
+                SetLastCardHints(originalHints);
+            }
             // Exercise both the actual button wiring and keyboard input path.
             if (seat.Hand.Length % 2 == 0) _choices[index].EmitSignal(Button.SignalName.Pressed);
             else _UnhandledKeyInput(new InputEventKey { Pressed = true, Keycode = Key.Key1 + index });
@@ -267,6 +295,9 @@ public partial class Main : Control
         ToggleGuide();
         ToggleGuide();
         if (!_paused) { FailSmoke("Closing the guide resumed a previously paused race."); return; }
+        ToggleSettings();
+        ToggleSettings();
+        if (!_paused) { FailSmoke("Closing settings resumed a previously paused race."); return; }
         TogglePause();
         StartRace();
         if (!await WaitForHumanTurn()) return;
@@ -281,10 +312,15 @@ public partial class Main : Control
         await ToSignal(GetTree().CreateTimer(0.4), SceneTreeTimer.SignalName.Timeout);
         if (_engine.Seats[HumanSeat].Hand.Length != 1 || _effects.CardsFlown != 1 || _busy || _handImages[0].Modulate.A < 0.99f)
         { FailSmoke("Card selection did not recover after restart."); return; }
+        bool originalSound = _preferences.SoundEnabled;
+        _soundToggle.ButtonPressed = false;
+        if (!_audio.Muted || PlayerPreferences.Load(_preferencesPath).SoundEnabled)
+        { FailSmoke("Sound setting did not mute and persist."); return; }
         ToggleMute();
-        if (!_audio.Muted) { FailSmoke("Mute toggle failed."); return; }
-        ToggleMute();
-        GD.Print("SMOKE PASS: mid-flight restart, selection, sound toggle, and payout-guide pause restoration verified.");
+        if (_audio.Muted || !_soundToggle.ButtonPressed || !PlayerPreferences.Load(_preferencesPath).SoundEnabled)
+        { FailSmoke("Sound shortcut did not update the saved setting."); return; }
+        SetSoundEnabled(originalSound);
+        GD.Print("SMOKE PASS: restart, saved sound and hint settings, and dialog pause restoration verified.");
         _audio.Stop();
         GetTree().Quit();
     }
@@ -303,13 +339,22 @@ public partial class Main : Control
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
-        if (key.Keycode == Key.G || (_guideOpen && key.Keycode == Key.Escape))
+        if (_guideOpen || _settingsOpen)
         {
-            ToggleGuide();
+            if (_settingsOpen && key.Keycode == Key.M) ToggleMute();
+            if (key.Keycode == Key.Escape || (_guideOpen && key.Keycode == Key.G) || (_settingsOpen && key.Keycode == Key.S))
+            {
+                if (_settingsOpen) ToggleSettings(); else ToggleGuide();
+            }
             GetViewport().SetInputAsHandled();
             return;
         }
-        if (_guideOpen) { GetViewport().SetInputAsHandled(); return; }
+        if (key.Keycode is Key.G or Key.S)
+        {
+            if (key.Keycode == Key.G) ToggleGuide(); else ToggleSettings();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
         int index = key.Keycode switch
         {
             Key.Key1 or Key.F1 => 0, Key.Key2 or Key.F2 => 1, Key.Key3 or Key.F3 => 2,
@@ -328,7 +373,7 @@ public partial class Main : Control
 
     public override void _Notification(int what)
     {
-        if (what == NotificationApplicationFocusOut && _guideOpen) _focusLostInGuide = true;
+        if (what == NotificationApplicationFocusOut && (_guideOpen || _settingsOpen)) _focusLostInGuide = true;
         if (what == NotificationApplicationFocusOut && !_smoke && _engine != null && !_paused)
             TogglePause();
     }
@@ -364,11 +409,7 @@ public partial class Main : Control
         Refresh();
     }
 
-    private void ToggleMute()
-    {
-        _audio.ToggleMute();
-        _mute.Text = _audio.Muted ? "Sound off · M" : "Sound on · M";
-    }
+    private void ToggleMute() => SetSoundEnabled(_audio.Muted);
 
     private string PreviewPayout(int index)
     {
@@ -382,7 +423,7 @@ public partial class Main : Control
 
     private void UpdateHandPreview(int? index)
     {
-        bool finalPick = !_paused && _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == HumanSeat
+        bool finalPick = _preferences.ShowLastCardHints && !_paused && _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == HumanSeat
             && _engine.Seats[HumanSeat].Hand.Length == 4;
         _handPreview.Text = !finalPick ? "" : index.HasValue
             ? "WOULD MAKE: " + PreviewPayout(index.Value) : "LAST CARD · Hover a choice to preview its payout";
@@ -403,21 +444,7 @@ public partial class Main : Control
         HandCategory.RoyalFlush => "Royal Flush", HandCategory.HighCard => "High Card", _ => category.ToString()
     };
 
-    private void ToggleGuide()
-    {
-        if (_guideOpen)
-        {
-            _guideLayer.Visible = false;
-            _guideOpen = false;
-            if (_resumeAfterGuide && !_focusLostInGuide) TogglePause();
-            return;
-        }
-        _resumeAfterGuide = !_paused;
-        _focusLostInGuide = false;
-        if (_resumeAfterGuide) TogglePause();
-        _guideOpen = true;
-        _guideLayer.Visible = true;
-    }
+    private void ToggleGuide() => ToggleDialog(_guideLayer, false);
 
     private void BuildPayoutGuide()
     {
@@ -518,7 +545,7 @@ public partial class Main : Control
         _displayedHandCount = shownHand.Length;
         UpdateHandPreview(null);
         for (int i = 0; i < _choices.Length; i++)
-            _choices[i].TooltipText = picking && seat.Hand.Length == 4 ? PreviewPayout(i) : "";
+            _choices[i].TooltipText = _preferences.ShowLastCardHints && picking && seat.Hand.Length == 4 ? PreviewPayout(i) : "";
         if (seat.TotalScore != _previousScore)
         {
             _track.MoveToScore(seat.TotalScore, _engine.Settings.FinishDistance);
@@ -591,8 +618,7 @@ public partial class Main : Control
         header.AddChild(_round);
         _pause = ActionButton("Pause · P", TogglePause);
         header.AddChild(_pause);
-        _mute = ActionButton("Sound on · M", ToggleMute);
-        header.AddChild(_mute);
+        header.AddChild(ActionButton("Settings · S", ToggleSettings));
         var restart = ActionButton("New race", StartRace);
         header.AddChild(restart);
         _score = Text("", 22, "#F4CF75");

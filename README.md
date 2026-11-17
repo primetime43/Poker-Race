@@ -77,6 +77,13 @@ hover a choice to preview its resulting hand and exact core payout. Press **G**
 or click **Payouts** for the hand chart; the guide pauses the race and preserves
 its previous pause state when closed with **G**, **Esc**, or the Back button.
 
+Open **Settings** in the header or press **S** to toggle **Sound effects** and
+**Show last-card hints**. Disabling hints removes both the suggested-hand note
+and choice tooltips. Both preferences save between sessions in Godot's
+`user://preferences.cfg`; **M** also updates the saved sound preference. Settings
+pauses the race and preserves its previous pause state when closed with **S**,
+**Esc**, or the Back button.
+
 Install **Godot 4.5.1 .NET** and the **.NET 8 SDK**. Open
 `src/RacePoker.Godot/project.godot`, build, and press **F6** or **F5**. Alternatively:
 
@@ -94,7 +101,7 @@ leaderboards. The shared core targets .NET 8 and .NET 10 when built with a moder
 SDK; the pinned .NET 8 SDK builds only its .NET 8 target for Godot. WPF continues
 to target .NET 10 and uses the core's .NET 10 target. The Godot folder pins the .NET 8 SDK
 to avoid editor tooling conflicts with newer SDKs. This prototype has no
-multiplayer, settings screen, or leaderboard UI.
+human multiplayer or leaderboard UI.
 
 ### WPF development
 
