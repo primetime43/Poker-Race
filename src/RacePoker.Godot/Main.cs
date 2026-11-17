@@ -22,6 +22,13 @@ public partial class Main : Control
     private Label _standing = null!;
     private Label _computerSummary = null!;
     private Label _handTitle = null!, _watchComputer = null!;
+    private Label _handPreview = null!, _timeLabel = null!;
+    private StyleBoxFlat _timerFill = null!;
+    private Control _guideLayer = null!;
+    private bool _guideOpen, _resumeAfterGuide, _focusLostInGuide;
+    private int _announcedSeat = -1, _announcedRound;
+    private string? _pendingTurnTitle;
+    private string _pendingTurnDetail = "";
     private VBoxContainer _selectionContent = null!;
     private int _displayedSeat = -1, _displayedHandCount;
     private Label _round = null!, _score = null!, _status = null!, _hint = null!;
@@ -33,6 +40,7 @@ public partial class Main : Control
     private bool _smoke;
     private double _smokeTime, _nextPick;
     private int _smokeHands;
+    private int _payoutPreviewsChecked;
     private bool _smokePauseStarted, _smokePauseChecked;
     private int _pausedFrameChanges;
     private float _pausedScore;
@@ -56,7 +64,13 @@ public partial class Main : Control
         _audio = new ArcadeAudio();
         AddChild(_audio);
         StartRace();
+        BuildPayoutGuide();
         if (OS.GetCmdlineUserArgs().Contains("--capture-preview")) CapturePreview("godot.png", 3.3);
+        if (OS.GetCmdlineUserArgs().Contains("--capture-guide"))
+        {
+            ToggleGuide();
+            CapturePreview("godot-payouts.png");
+        }
     }
 
     private async void CapturePreview(string filename = "godot.png", double delay = 1)
@@ -81,6 +95,9 @@ public partial class Main : Control
         _rivalDriver = new RivalDriver();
         _busy = _dealPending = false;
         _displayedSeat = -1;
+        _announcedSeat = -1;
+        _announcedRound = 0;
+        _pendingTurnTitle = null;
         _displayedHandCount = 0;
         foreach (var image in _choiceImages.Concat(_handImages))
         {
@@ -92,7 +109,7 @@ public partial class Main : Control
         _engine = new GameEngine(new GameSettings
         {
             MaxSeats = 2, MaxRounds = _smoke ? 2 : 10, FinishDistance = 150000,
-            PickingTimeoutSeconds = _smoke ? 0 : 30,
+            PickingTimeoutSeconds = _smoke && !OS.GetCmdlineUserArgs().Contains("--capture-player-turn") ? 0 : 30,
             TurnDelaySeconds = 1.5, RacingDurationSeconds = 0.5,
             AutoAdvanceEnabled = false, GameOverTimeoutSeconds = 300
         }, rng: _smoke ? new SmokeRng() : null,
@@ -111,6 +128,11 @@ public partial class Main : Control
 
     public override void _Process(double delta)
     {
+        if (_pendingTurnTitle != null)
+        {
+            _effects.AnnounceTurn(_pendingTurnTitle, _pendingTurnDetail, _track.GetGlobalRect());
+            _pendingTurnTitle = null;
+        }
         if (_dealPending)
         {
             _dealPending = false;
@@ -126,6 +148,11 @@ public partial class Main : Control
         _standing.Text = Math.Abs(lead) < 0.5f ? "NECK AND NECK" : lead > 0
             ? $"1ST PLACE   +{Math.Round(lead):N0} PTS" : $"2ND PLACE   {Math.Round(-lead):N0} PTS TO CATCH";
         _timer.Value = _engine.PhaseTimerProgress * 100;
+        double seconds = Math.Ceiling(_engine.PhaseTimerProgress * _engine.Settings.PickingTimeoutSeconds);
+        _timeLabel.Text = _engine.Settings.PickingTimeoutSeconds <= 0 ? "No time limit" : $"{seconds:00}s left";
+        var timerColor = Color.FromHtml(seconds <= 5 && _engine.Settings.PickingTimeoutSeconds > 0 ? "#F78575" : "#77E4BD");
+        _timerFill.BgColor = timerColor;
+        _timeLabel.Modulate = timerColor;
         if (!_smoke) return;
         if (OS.GetCmdlineUserArgs().Contains("--capture-player-turn") && _engine.ActiveSeatIndex == HumanSeat && !_busy)
         {
@@ -191,9 +218,16 @@ public partial class Main : Control
             var seat = _engine.Seats[HumanSeat];
             int index = Array.FindIndex(seat.SelectionCards, c => seat.Hand.Any(h => h.Rank == c.Rank));
             index = Math.Max(0, index);
+            string? preview = seat.Hand.Length == 4 ? PreviewPayout(index) : null;
             // Exercise both the actual button wiring and keyboard input path.
             if (seat.Hand.Length % 2 == 0) _choices[index].EmitSignal(Button.SignalName.Pressed);
             else _UnhandledKeyInput(new InputEventKey { Pressed = true, Keycode = Key.Key1 + index });
+            if (preview != null && seat.IsHandComplete)
+            {
+                if (preview != $"{seat.HandName} · {seat.RoundPoints:N0} pts")
+                { FailSmoke("Last-card preview did not match the actual core payout."); return; }
+                _payoutPreviewsChecked++;
+            }
         }
         if (_engine.Phase == GamePhase.RoundEnd) Continue();
         if (_engine.Phase == GamePhase.GameOver)
@@ -201,7 +235,7 @@ public partial class Main : Control
             if (_smokeHands != 2 || _engine.Seats[HumanSeat].TotalScore <= 0 || _track.DisplayScore <= 0 || _track.AnimationFrameChanges < 16
                 || _effects.CardsFlown != 10 || _effects.RewardsShown != 4 || _effects.CelebrationsShown != 1
                 || _rivalDriver.PicksMade != 10 || _engine.Seats[ComputerSeat].TotalScore <= 0 || _track.RivalDisplayScore <= 0 || !_rivalPauseChecked
-                || _effects.ComputerCardsRevealed != 10)
+                || _effects.ComputerCardsRevealed != 10 || _effects.TurnAnnouncements != 4 || _payoutPreviewsChecked != 2)
                 FailSmoke("Expected two rounds, ten picks per runner, four payouts, two running horses, and a celebration.");
             else
             {
@@ -225,6 +259,15 @@ public partial class Main : Control
     private async void VerifyRestartAndQuit()
     {
         _smoke = false;
+        ToggleGuide();
+        if (!_paused || !_guideLayer.Visible) { FailSmoke("Payout guide did not pause the race."); return; }
+        ToggleGuide();
+        if (_paused) { FailSmoke("Payout guide did not resume a running race."); return; }
+        TogglePause();
+        ToggleGuide();
+        ToggleGuide();
+        if (!_paused) { FailSmoke("Closing the guide resumed a previously paused race."); return; }
+        TogglePause();
         StartRace();
         if (!await WaitForHumanTurn()) return;
         Pick(0);
@@ -241,7 +284,7 @@ public partial class Main : Control
         ToggleMute();
         if (!_audio.Muted) { FailSmoke("Mute toggle failed."); return; }
         ToggleMute();
-        GD.Print("SMOKE PASS: mid-flight restart, subsequent selection, and sound toggle verified.");
+        GD.Print("SMOKE PASS: mid-flight restart, selection, sound toggle, and payout-guide pause restoration verified.");
         _audio.Stop();
         GetTree().Quit();
     }
@@ -260,6 +303,13 @@ public partial class Main : Control
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
+        if (key.Keycode == Key.G || (_guideOpen && key.Keycode == Key.Escape))
+        {
+            ToggleGuide();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (_guideOpen) { GetViewport().SetInputAsHandled(); return; }
         int index = key.Keycode switch
         {
             Key.Key1 or Key.F1 => 0, Key.Key2 or Key.F2 => 1, Key.Key3 or Key.F3 => 2,
@@ -278,6 +328,7 @@ public partial class Main : Control
 
     public override void _Notification(int what)
     {
+        if (what == NotificationApplicationFocusOut && _guideOpen) _focusLostInGuide = true;
         if (what == NotificationApplicationFocusOut && !_smoke && _engine != null && !_paused)
             TogglePause();
     }
@@ -319,12 +370,106 @@ public partial class Main : Control
         _mute.Text = _audio.Muted ? "Sound off · M" : "Sound on · M";
     }
 
+    private string PreviewPayout(int index)
+    {
+        var seat = _engine.Seats[HumanSeat];
+        var hand = seat.Hand.Append(seat.SelectionCards[index]).ToArray();
+        var result = HandEvaluator.Evaluate(hand);
+        int points = result.Category == HandCategory.HighCard && _engine.Settings.HighCardRule == HighCardRule.SumOfRanks
+            ? hand.Sum(c => (int)c.Rank) : _engine.PointTable.GetPoints(result);
+        return $"{HandName(result.Category)} · {points:N0} pts";
+    }
+
+    private void UpdateHandPreview(int? index)
+    {
+        bool finalPick = !_paused && _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == HumanSeat
+            && _engine.Seats[HumanSeat].Hand.Length == 4;
+        _handPreview.Text = !finalPick ? "" : index.HasValue
+            ? "WOULD MAKE: " + PreviewPayout(index.Value) : "LAST CARD · Hover a choice to preview its payout";
+    }
+
+    private void HoverChoice(int index, bool active)
+    {
+        if (_choices[index].Disabled) return;
+        _effects.Hover(_choiceImages[index], active);
+        UpdateHandPreview(active ? index : null);
+    }
+
+    private static string HandName(HandCategory category) => category switch
+    {
+        HandCategory.OnePair => "Pair", HandCategory.TwoPair => "Two Pair",
+        HandCategory.ThreeOfAKind => "Three of a Kind", HandCategory.FourOfAKind => "Four of a Kind",
+        HandCategory.FullHouse => "Full House", HandCategory.StraightFlush => "Straight Flush",
+        HandCategory.RoyalFlush => "Royal Flush", HandCategory.HighCard => "High Card", _ => category.ToString()
+    };
+
+    private void ToggleGuide()
+    {
+        if (_guideOpen)
+        {
+            _guideLayer.Visible = false;
+            _guideOpen = false;
+            if (_resumeAfterGuide && !_focusLostInGuide) TogglePause();
+            return;
+        }
+        _resumeAfterGuide = !_paused;
+        _focusLostInGuide = false;
+        if (_resumeAfterGuide) TogglePause();
+        _guideOpen = true;
+        _guideLayer.Visible = true;
+    }
+
+    private void BuildPayoutGuide()
+    {
+        _guideLayer = new Control { Visible = false, ZIndex = 60 };
+        _guideLayer.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(_guideLayer);
+        var shade = new ColorRect { Color = new Color(0, 0, 0, 0.78f), MouseFilter = MouseFilterEnum.Stop };
+        shade.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _guideLayer.AddChild(shade);
+        var center = new CenterContainer();
+        center.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _guideLayer.AddChild(center);
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(560, 0) };
+        var style = Panel("#0B2025", "#77E4BD");
+        style.ContentMarginLeft = style.ContentMarginRight = 24;
+        style.ContentMarginTop = style.ContentMarginBottom = 20;
+        panel.AddThemeStyleboxOverride("panel", style);
+        center.AddChild(panel);
+        var content = new VBoxContainer();
+        content.AddThemeConstantOverride("separation", 10);
+        panel.AddChild(content);
+        content.AddChild(Text("BUILD A WINNING HAND", 26, "#F4CF75"));
+        content.AddChild(Text("Fixed points per hand · both runners use this chart", 15, "#ADD0C7"));
+        content.AddChild(new HSeparator());
+        foreach (var category in Enum.GetValues<HandCategory>().Reverse())
+        {
+            var row = new HBoxContainer();
+            var name = Text(HandName(category), 18, "#FFFFFF");
+            name.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            row.AddChild(name);
+            string payout = category == HandCategory.HighCard ? "Highest card · 2–14 pts" : $"{_engine.PointTable.Points[category]:N0} pts";
+            row.AddChild(Text(payout, 18, "#F4CF75"));
+            content.AddChild(row);
+        }
+        content.AddChild(new HSeparator());
+        content.AddChild(Text("No discards. Each pick replaces a card in the choice row.", 15, "#ADD0C7"));
+        content.AddChild(ActionButton("Back to race · G / Esc", ToggleGuide));
+    }
+
     private void Refresh()
     {
         var seat = _engine.Seats[HumanSeat];
         var rival = _engine.Seats[ComputerSeat];
         _track.SetRacing(_engine.Phase is GamePhase.Picking or GamePhase.Racing);
         bool rivalTurn = _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == ComputerSeat;
+        if (_engine.Phase == GamePhase.Picking && (_announcedSeat != _engine.ActiveSeatIndex || _announcedRound != _engine.Round))
+        {
+            _announcedSeat = _engine.ActiveSeatIndex;
+            _announcedRound = _engine.Round;
+            _pendingTurnTitle = rivalTurn ? $"ROUND {_engine.Round} · COMPUTER FIRST" : "YOUR TURN";
+            _pendingTurnDetail = rivalTurn ? "Watch its hand, then build yours." : $"Computer scored {rival.RoundPoints:N0} points. Make your hand count.";
+        }
         if (_engine.Round > 0 && _engine.Round != _lastRound && _engine.ActiveSeatIndex == HumanSeat)
         {
             _lastRound = _engine.Round;
@@ -345,10 +490,11 @@ public partial class Main : Control
         _continue.Disabled = _paused || _busy;
         _continue.Text = _engine.Phase == GamePhase.GameOver ? "Race again · Enter" : "Next hand · Enter";
         _timer.Visible = picking;
+        _timeLabel.Visible = picking;
         _computerSummary.Text = rival.IsHandComplete ? $"{rival.HandName} · +{rival.RoundPoints:N0} pts"
             : rivalTurn ? $"Choosing cards · {rival.Hand.Length}/5" : "Computer plays first";
         _handTitle.Text = rivalTurn ? "COMPUTER'S HAND" : "YOUR HAND";
-        _handTitle.Modulate = rivalTurn ? Color.FromHtml("#8FC5FF") : Colors.White;
+        _handTitle.AddThemeColorOverride("font_color", Color.FromHtml(rivalTurn ? "#8FC5FF" : "#77E4BD"));
         _selectionContent.Visible = !rivalTurn;
         _watchComputer.Visible = rivalTurn;
         _watchComputer.Text = rival.IsHandComplete ? "Your turn is next…" : "Computer is choosing its cards…";
@@ -370,6 +516,9 @@ public partial class Main : Control
             for (int i = _displayedHandCount; i < shownHand.Length; i++)
                 _effects.RevealComputerCard(_handImages[i]);
         _displayedHandCount = shownHand.Length;
+        UpdateHandPreview(null);
+        for (int i = 0; i < _choices.Length; i++)
+            _choices[i].TooltipText = picking && seat.Hand.Length == 4 ? PreviewPayout(i) : "";
         if (seat.TotalScore != _previousScore)
         {
             _track.MoveToScore(seat.TotalScore, _engine.Settings.FinishDistance);
@@ -455,8 +604,14 @@ public partial class Main : Control
         column.AddChild(_status);
         _hint = Text("", 17, "#ADD0C7");
         column.AddChild(_hint);
+        var handHeading = new HBoxContainer();
         _handTitle = Text("COMPUTER'S HAND", 14, "#77E4BD");
-        column.AddChild(_handTitle);
+        handHeading.AddChild(_handTitle);
+        _handPreview = Text("", 14, "#F4CF75");
+        _handPreview.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _handPreview.HorizontalAlignment = HorizontalAlignment.Right;
+        handHeading.AddChild(_handPreview);
+        column.AddChild(handHeading);
         var handArea = new HBoxContainer();
         handArea.AddThemeConstantOverride("separation", 24);
         column.AddChild(handArea);
@@ -498,7 +653,14 @@ public partial class Main : Control
         choose.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         choiceHeader.AddChild(choose);
         _timer = new ProgressBar { CustomMinimumSize = new Vector2(240, 10), ShowPercentage = false, MaxValue = 100 };
+        _timerFill = new StyleBoxFlat { BgColor = Color.FromHtml("#77E4BD"), CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5, CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5 };
+        _timer.AddThemeStyleboxOverride("fill", _timerFill);
+        _timer.TooltipText = "Time remaining to build your hand. At zero, the core completes it automatically.";
         choiceHeader.AddChild(_timer);
+        _timeLabel = Text("30s left", 16, "#FFFFFF");
+        _timeLabel.CustomMinimumSize = new Vector2(90, 0);
+        _timeLabel.HorizontalAlignment = HorizontalAlignment.Right;
+        choiceHeader.AddChild(_timeLabel);
         var choices = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
         choices.AddThemeConstantOverride("separation", 18);
         _selectionContent.AddChild(choices);
@@ -511,8 +673,8 @@ public partial class Main : Control
             _choices[i].CustomMinimumSize = new Vector2(132, 150);
             // Use keyboard shortcuts without a focused button consuming Enter or Space.
             _choices[i].FocusMode = FocusModeEnum.None;
-            _choices[i].MouseEntered += () => { if (!_choices[index].Disabled) _effects.Hover(_choiceImages[index], true); };
-            _choices[i].MouseExited += () => _effects.Hover(_choiceImages[index], false);
+            _choices[i].MouseEntered += () => HoverChoice(index, true);
+            _choices[i].MouseExited += () => HoverChoice(index, false);
             stack.AddChild(_choices[i]);
             _choiceImages[i] = Image(Vector2.Zero);
             _choices[i].AddChild(_choiceImages[i]);
@@ -525,9 +687,10 @@ public partial class Main : Control
         }
         var footer = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.End };
         column.AddChild(footer);
-        var keys = Text("CLICK OR 1–5 TO PICK     •     P PAUSE     •     F11 FULLSCREEN", 14, "#ADD0C7");
+        var keys = Text("1–5 PICK     •     P PAUSE     •     M SOUND     •     F11 FULLSCREEN", 14, "#ADD0C7");
         keys.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         footer.AddChild(keys);
+        footer.AddChild(ActionButton("Payouts · G", ToggleGuide));
         _continue = ActionButton("Next hand · Enter", Continue);
         footer.AddChild(_continue);
     }

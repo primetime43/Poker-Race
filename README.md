@@ -71,6 +71,12 @@ available on its last card. Live standings show the point gap, and results show
 the winner or shared first place and the final margin. Finish and round-limit
 rules still come from the core. Pause freezes the rival's decisions and movement.
 
+Animated banners announce each computer and player turn. Your picking timer shows
+seconds remaining and turns red in the last five seconds. On the fifth pick,
+hover a choice to preview its resulting hand and exact core payout. Press **G**
+or click **Payouts** for the hand chart; the guide pauses the race and preserves
+its previous pause state when closed with **G**, **Esc**, or the Back button.
+
 Install **Godot 4.5.1 .NET** and the **.NET 8 SDK**. Open
 `src/RacePoker.Godot/project.godot`, build, and press **F6** or **F5**. Alternatively:
 

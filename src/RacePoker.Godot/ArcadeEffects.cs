@@ -13,6 +13,7 @@ public partial class ArcadeEffects : Control
     public int RewardsShown { get; private set; }
     public int CelebrationsShown { get; private set; }
     public int ComputerCardsRevealed { get; private set; }
+    public int TurnAnnouncements { get; private set; }
     public float CardFlightProgress { get; private set; }
 
     public override void _Ready()
@@ -48,6 +49,7 @@ public partial class ArcadeEffects : Control
         _paused = false;
         CardsFlown = RewardsShown = CelebrationsShown = 0;
         ComputerCardsRevealed = 0;
+        TurnAnnouncements = 0;
         CardFlightProgress = 0;
     }
 
@@ -84,6 +86,42 @@ public partial class ArcadeEffects : Control
         card.Scale = new Vector2(0.05f, 1);
         Animate().TweenProperty(card, "scale", Vector2.One, 0.22)
             .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+    }
+
+    public void AnnounceTurn(string title, string detail, Rect2 track)
+    {
+        TurnAnnouncements++;
+        var panel = new PanelContainer
+        {
+            Position = GetGlobalTransform().AffineInverse() * (track.Position + new Vector2(track.Size.X / 2 - 230, track.Size.Y / 2 - 38)),
+            Size = new Vector2(460, 76), MouseFilter = MouseFilterEnum.Ignore
+        };
+        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = new Color(0.025f, 0.08f, 0.1f, 0.96f),
+            BorderColor = Color.FromHtml("#77E4BD"), BorderWidthBottom = 2,
+            CornerRadiusTopLeft = 10, CornerRadiusTopRight = 10,
+            CornerRadiusBottomLeft = 10, CornerRadiusBottomRight = 10
+        });
+        var lines = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+        var heading = new Label { Text = title, HorizontalAlignment = HorizontalAlignment.Center, MouseFilter = MouseFilterEnum.Ignore };
+        heading.AddThemeFontSizeOverride("font_size", 26);
+        heading.AddThemeColorOverride("font_color", Color.FromHtml("#F4CF75"));
+        var subtitle = new Label { Text = detail, HorizontalAlignment = HorizontalAlignment.Center, MouseFilter = MouseFilterEnum.Ignore };
+        subtitle.AddThemeFontSizeOverride("font_size", 15);
+        lines.AddChild(heading);
+        lines.AddChild(subtitle);
+        panel.AddChild(lines);
+        AddChild(panel);
+        panel.PivotOffset = panel.Size / 2;
+        panel.Modulate = new Color(1, 1, 1, 0);
+        panel.Scale = Vector2.One * 0.94f;
+        var tween = Animate().SetParallel();
+        tween.TweenProperty(panel, "modulate:a", 1f, 0.15);
+        tween.TweenProperty(panel, "scale", Vector2.One, 0.2).SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+        tween.Chain().TweenInterval(0.7);
+        tween.Chain().TweenProperty(panel, "modulate:a", 0f, 0.25);
+        tween.Chain().TweenCallback(Callable.From(panel.QueueFree));
     }
 
     public void FlyCard(Texture2D texture, Rect2 source, TextureRect target, Action finished)
