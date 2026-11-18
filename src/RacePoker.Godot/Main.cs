@@ -107,6 +107,7 @@ public partial class Main : Control
         _rivalDriver = new RivalDriver();
         _busy = _dealPending = false;
         _displayedSeat = -1;
+        _lastRecapRound = _recapsShown = 0;
         _announcedSeat = -1;
         _announcedRound = 0;
         _pendingTurnTitle = null;
@@ -218,6 +219,10 @@ public partial class Main : Control
             TogglePause();
             _rivalPauseChecked = true;
         }
+        if (_engine.Phase == GamePhase.RoundEnd && (!_recapPanel.Visible || _playArea.Visible
+            || _recapPoints[0].Text != $"+{_engine.Seats[HumanSeat].RoundPoints:N0} pts"
+            || _recapPoints[1].Text != $"+{_engine.Seats[ComputerSeat].RoundPoints:N0} pts"))
+        { FailSmoke("Round recap did not replace selection with both actual payouts."); return; }
         if (_engine.Phase == GamePhase.RoundEnd && OS.GetCmdlineUserArgs().Contains("--capture-round-break"))
         {
             _smoke = false;
@@ -298,7 +303,7 @@ public partial class Main : Control
                 || _effects.CardsFlown != 10 || _effects.RewardsShown != 4 || _effects.CelebrationsShown != 1
                 || _rivalDriver.PicksMade != 10 || _engine.Seats[ComputerSeat].TotalScore <= 0 || _track.RivalDisplayScore <= 0 || !_rivalPauseChecked
                 || _effects.ComputerCardsRevealed != 10 || _effects.TurnAnnouncements != 4 || _payoutPreviewsChecked != 2
-                || !_roundCountdownChecked || !_automaticNextRoundObserved)
+                || !_roundCountdownChecked || !_automaticNextRoundObserved || _recapsShown != 2 || !_recapPanel.Visible)
                 FailSmoke("Expected two rounds, ten picks per runner, four payouts, two running horses, and a celebration.");
             else
             {
@@ -540,11 +545,13 @@ public partial class Main : Control
         bool picking = _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == HumanSeat && !_engine.IsTurnTransitioning;
         _round.Text = $"ROUND {Math.Max(1, _engine.Round):00} / {_engine.Settings.MaxRounds:00}";
         _status.Text = _paused ? "Race paused" : _engine.Phase == GamePhase.GameOver ? ResultTitle()
+            : _engine.Phase == GamePhase.RoundEnd ? $"ROUND {_engine.Round} COMPLETE"
             : rivalTurn ? rival.IsHandComplete ? $"COMPUTER: {rival.HandName.ToUpperInvariant()}   +{rival.RoundPoints:N0} PTS" : $"COMPUTER IS THINKING   {rival.Hand.Length} / 5" : seat.IsHandComplete
             ? $"{seat.HandName.ToUpperInvariant()}   +{seat.RoundPoints:N0} PTS"
             : $"BUILD YOUR HAND   {seat.Hand.Length} / 5";
         _hint.Text = _paused ? "Press P or Resume to keep playing."
             : _engine.Phase == GamePhase.GameOver ? $"You: {seat.TotalScore:N0} pts   ·   Computer: {rival.TotalScore:N0} pts   ·   Enter to race again."
+            : _engine.Phase == GamePhase.RoundEnd ? "Compare the scoring cards below. Press Enter to skip the countdown."
             : rivalTurn ? "The computer goes first. Watch its hand, then build yours."
             : seat.IsHandComplete ? "Your hand is scored. Watch your horse advance."
             : "Pick one of the five cards below. A new card replaces every pick.";
@@ -579,6 +586,8 @@ public partial class Main : Control
             for (int i = _displayedHandCount; i < shownHand.Length; i++)
                 _effects.RevealComputerCard(_handImages[i]);
         _displayedHandCount = shownHand.Length;
+        StyleScoringCards(shownHand, _handImages, _handStyles);
+        RefreshRoundRecap();
         UpdateHandPreview(null);
         for (int i = 0; i < _choices.Length; i++)
             _choices[i].TooltipText = _preferences.ShowLastCardHints && picking && seat.Hand.Length == 4 ? PreviewPayout(i) : "";
@@ -666,6 +675,12 @@ public partial class Main : Control
         column.AddChild(_status);
         _hint = Text("", 17, "#ADD0C7");
         column.AddChild(_hint);
+        var playStage = new Control { CustomMinimumSize = new Vector2(0, 360) };
+        column.AddChild(playStage);
+        _playArea = new VBoxContainer();
+        _playArea.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _playArea.AddThemeConstantOverride("separation", 10);
+        playStage.AddChild(_playArea);
         var handHeading = new HBoxContainer();
         _handTitle = Text("COMPUTER'S HAND", 14, "#77E4BD");
         handHeading.AddChild(_handTitle);
@@ -673,10 +688,10 @@ public partial class Main : Control
         _handPreview.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         _handPreview.HorizontalAlignment = HorizontalAlignment.Right;
         handHeading.AddChild(_handPreview);
-        column.AddChild(handHeading);
+        _playArea.AddChild(handHeading);
         var handArea = new HBoxContainer();
         handArea.AddThemeConstantOverride("separation", 24);
-        column.AddChild(handArea);
+        _playArea.AddChild(handArea);
         var hand = new HBoxContainer
         {
             Alignment = BoxContainer.AlignmentMode.Center, SizeFlagsHorizontal = SizeFlags.ExpandFill
@@ -686,7 +701,8 @@ public partial class Main : Control
         for (int i = 0; i < 5; i++)
         {
             var panel = new PanelContainer { CustomMinimumSize = new Vector2(100, 120) };
-            panel.AddThemeStyleboxOverride("panel", Panel("#102E32", "#2B5553"));
+            _handStyles[i] = Panel("#102E32", "#2B5553");
+            panel.AddThemeStyleboxOverride("panel", _handStyles[i]);
             _handImages[i] = Image(new Vector2(88, 108));
             panel.AddChild(_handImages[i]);
             hand.AddChild(panel);
@@ -700,7 +716,7 @@ public partial class Main : Control
         _computerSummary.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         computer.AddChild(_computerSummary);
         var selectionStage = new Control { CustomMinimumSize = new Vector2(0, 202) };
-        column.AddChild(selectionStage);
+        _playArea.AddChild(selectionStage);
         _selectionContent = new VBoxContainer();
         _selectionContent.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _selectionContent.AddThemeConstantOverride("separation", 10);
@@ -740,6 +756,7 @@ public partial class Main : Control
             number.HorizontalAlignment = HorizontalAlignment.Center;
             stack.AddChild(number);
         }
+        BuildRoundRecap(playStage);
         var footer = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.End };
         column.AddChild(footer);
         var keys = Text("1–5 PICK     •     P PAUSE     •     M SOUND     •     F11 FULLSCREEN", 14, "#ADD0C7");

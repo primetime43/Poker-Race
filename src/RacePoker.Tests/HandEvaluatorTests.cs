@@ -129,4 +129,48 @@ public class HandEvaluatorTests
         var result = HandEvaluator.Evaluate(hand);
         Assert.Equal(HandCategory.StraightFlush, result.Category);
     }
+
+    public static IEnumerable<object[]> ScoringCardCases()
+    {
+        yield return new object[] { new[] { 2, 12, 4, 9, 12 }, false, HandCategory.OnePair, new[] { 1, 4 } };
+        yield return new object[] { new[] { 4, 9, 14, 4, 9 }, false, HandCategory.TwoPair, new[] { 0, 1, 3, 4 } };
+        yield return new object[] { new[] { 7, 2, 7, 13, 7 }, false, HandCategory.ThreeOfAKind, new[] { 0, 2, 4 } };
+        yield return new object[] { new[] { 11, 3, 11, 11, 11 }, false, HandCategory.FourOfAKind, new[] { 0, 2, 3, 4 } };
+        yield return new object[] { new[] { 13, 9, 13, 9, 13 }, false, HandCategory.FullHouse, new[] { 0, 1, 2, 3, 4 } };
+        yield return new object[] { new[] { 14, 2, 3, 4, 5 }, false, HandCategory.Straight, new[] { 0, 1, 2, 3, 4 } };
+        yield return new object[] { new[] { 8, 6, 10, 7, 9 }, false, HandCategory.Straight, new[] { 0, 1, 2, 3, 4 } };
+        yield return new object[] { new[] { 2, 5, 8, 11, 14 }, true, HandCategory.Flush, new[] { 0, 1, 2, 3, 4 } };
+        yield return new object[] { new[] { 5, 6, 7, 8, 9 }, true, HandCategory.StraightFlush, new[] { 0, 1, 2, 3, 4 } };
+        yield return new object[] { new[] { 10, 11, 12, 13, 14 }, true, HandCategory.RoyalFlush, new[] { 0, 1, 2, 3, 4 } };
+        yield return new object[] { new[] { 2, 4, 13, 8, 6 }, false, HandCategory.HighCard, new[] { 2 } };
+    }
+
+    [Theory]
+    [MemberData(nameof(ScoringCardCases))]
+    public void ScoringCards_KeepOriginalPositionsAndExcludeUnusedKickers(int[] ranks, bool flush, HandCategory category, int[] expected)
+    {
+        var hand = new List<Card>();
+        for (int i = 0; i < ranks.Length; i++)
+        {
+            var suit = flush ? Suit.Hearts : (Suit)(i % 4);
+            while (hand.Contains(C((Rank)ranks[i], suit))) suit = (Suit)(((int)suit + 1) % 4);
+            hand.Add(C((Rank)ranks[i], suit));
+        }
+        Assert.Equal(category, HandEvaluator.Evaluate(hand).Category);
+        Assert.Equal(expected, HandEvaluator.GetScoringCardIndices(hand));
+    }
+
+    [Fact]
+    public void SummedHighCardRule_UsesEveryCard()
+    {
+        var hand = new[] { C(Rank.Two, Suit.Clubs), C(Rank.Five, Suit.Diamonds), C(Rank.Eight, Suit.Hearts), C(Rank.Jack, Suit.Spades), C(Rank.Ace, Suit.Clubs) };
+        Assert.Equal(new[] { 0, 1, 2, 3, 4 }, HandEvaluator.GetScoringCardIndices(hand, HighCardRule.SumOfRanks));
+        Assert.Equal(new[] { 4 }, HandEvaluator.GetScoringCardIndices(hand, HighCardRule.HighestRank));
+    }
+
+    [Fact]
+    public void ScoringCards_RejectIncompleteHands()
+    {
+        Assert.Throws<ArgumentException>(() => HandEvaluator.GetScoringCardIndices(new[] { C(Rank.Ace, Suit.Hearts) }));
+    }
 }

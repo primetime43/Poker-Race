@@ -5,6 +5,25 @@ namespace RacePoker.Core.Engine;
 
 public static class HandEvaluator
 {
+    /// <summary>Original card positions that make the paid combination, excluding unused kickers.</summary>
+    public static int[] GetScoringCardIndices(IReadOnlyList<Card> hand, HighCardRule highCardRule = HighCardRule.HighestRank)
+    {
+        var result = Evaluate(hand);
+        if (result.Category == HandCategory.HighCard)
+            return Enumerable.Range(0, hand.Count)
+                .Where(i => highCardRule == HighCardRule.SumOfRanks || (int)hand[i].Rank == result.HighCard).ToArray();
+        int groupSize = result.Category switch
+        {
+            HandCategory.OnePair or HandCategory.TwoPair => 2,
+            HandCategory.ThreeOfAKind => 3,
+            HandCategory.FourOfAKind => 4,
+            _ => 0
+        };
+        if (groupSize == 0) return Enumerable.Range(0, hand.Count).ToArray();
+        var counts = hand.GroupBy(c => c.Rank).ToDictionary(g => g.Key, g => g.Count());
+        return Enumerable.Range(0, hand.Count).Where(i => counts[hand[i].Rank] == groupSize).ToArray();
+    }
+
     public static HandResult Evaluate(IReadOnlyList<Card> hand)
     {
         if (hand.Count != 5)

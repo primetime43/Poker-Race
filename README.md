@@ -90,6 +90,13 @@ applies immediately. The between-round timer shows the time remaining, and
 **Enter / Next round** skips the wait. The final round counts down to results
 instead. Pausing or opening a dialog freezes the countdown.
 
+Completed hands outline the scoring cards in gold and dim unused kickers. Pairs
+highlight only their matching cards; straights, flushes, and full houses use all
+five. High-card highlights follow the configured highest-rank or rank-sum rule.
+During the round break, a recap replaces the choices with both hands, their actual
+payouts, and who gained points on the other runner. It also calls out lead changes
+and ties. The six-second countdown and Enter-to-continue still work from the recap.
+
 Install **Godot 4.5.1 .NET** and the **.NET 8 SDK**. Open
 `src/RacePoker.Godot/project.godot`, build, and press **F6** or **F5**. Alternatively:
 

@@ -88,6 +88,12 @@ public partial class ArcadeEffects : Control
             .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
     }
 
+    public void RevealRecap(Control panel)
+    {
+        panel.Modulate = new Color(1, 1, 1, 0);
+        Animate().TweenProperty(panel, "modulate:a", 1f, 0.22).SetEase(Tween.EaseType.Out);
+    }
+
     public void AnnounceTurn(string title, string detail, Rect2 track)
     {
         TurnAnnouncements++;
