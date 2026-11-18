@@ -1,4 +1,5 @@
 using Godot;
+using RacePoker.Core.Enums;
 using RacePoker.Core.Models;
 
 namespace RacePoker.Godot;
@@ -15,6 +16,8 @@ public partial class Main
     private bool _setupOpen => _openDialog != null && _openDialog == _setupLayer;
     private readonly Button[] _playerCounts = new Button[4];
     private SettingSwitch _setupComputer = null!;
+    private OptionButton _setupDifficultyPicker = null!;
+    private ComputerDifficulty _setupDifficulty = ComputerDifficulty.Normal;
     private Label _setupExplanation = null!, _setupSummary = null!;
     private int _setupHumans = 1;
     private bool _setupAddComputer = true;
@@ -25,6 +28,7 @@ public partial class Main
         {
             _setupHumans = _preferences.HumanPlayers;
             _setupAddComputer = _preferences.IncludeComputer;
+            _setupDifficulty = _preferences.Difficulty;
             UpdateRaceSetup();
         }
         ToggleDialog(_setupLayer);
@@ -37,11 +41,15 @@ public partial class Main
         _setupComputer.SyncState(preview.HasComputer);
         _setupComputer.Disabled = _setupHumans is 1 or 4;
         _setupComputer.Modulate = _setupComputer.Disabled ? new Color(0.65f, 0.65f, 0.65f, 1) : Colors.White;
+        _setupDifficultyPicker.Select((int)_setupDifficulty);
+        _setupDifficultyPicker.Disabled = !preview.HasComputer;
+        _setupDifficultyPicker.TooltipText = preview.HasComputer ? "Choose the computer's difficulty for this race."
+            : "Add a computer to choose its difficulty.";
         _setupExplanation.Text = _setupHumans == 1 ? "Required for single player: you race the computer."
             : _setupHumans == 4 ? "All four places are filled by human players."
             : "Optional. The computer takes one of the four race places.";
-        _setupSummary.Text = _setupHumans == 1 ? $"You vs computer · {_preferences.Difficulty} difficulty"
-            : $"{_setupHumans} human players{(preview.HasComputer ? $" + computer ({_preferences.Difficulty})" : "")} · {preview.RacerCount} racers";
+        _setupSummary.Text = _setupHumans == 1 ? $"You vs computer · {_setupDifficulty} difficulty"
+            : $"{_setupHumans} human players{(preview.HasComputer ? $" + computer ({_setupDifficulty})" : "")} · {preview.RacerCount} racers";
     }
 
     private void StartFromSetup()
@@ -49,7 +57,7 @@ public partial class Main
         var lineup = new RaceLineup(_setupHumans, _setupAddComputer);
         _preferences.HumanPlayers = lineup.HumanPlayers;
         _preferences.IncludeComputer = lineup.HasComputer;
-        SavePreferences();
+        SetDifficulty(_setupDifficulty); // Synchronizes Settings and saves the full setup before starting.
         _setupLayer.Visible = false;
         _openDialog = null;
         StartRace();
@@ -107,6 +115,22 @@ public partial class Main
         column.AddChild(computer);
         _setupExplanation = Text("", 16, "#ADD0C7");
         column.AddChild(_setupExplanation);
+        var difficulty = new HBoxContainer();
+        var difficultyLabel = Text("Computer difficulty", 20, "#FFFFFF");
+        difficultyLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        difficulty.AddChild(difficultyLabel);
+        _setupDifficultyPicker = new OptionButton { CustomMinimumSize = new Vector2(180, 48) };
+        foreach (var level in Enum.GetValues<ComputerDifficulty>()) _setupDifficultyPicker.AddItem(level.ToString(), (int)level);
+        _setupDifficultyPicker.AddThemeFontSizeOverride("font_size", 18);
+        _setupDifficultyPicker.AddThemeStyleboxOverride("normal", Panel("#15383B", "#39625E"));
+        _setupDifficultyPicker.AddThemeStyleboxOverride("hover", Panel("#24504C", "#F4CF75"));
+        _setupDifficultyPicker.ItemSelected += index =>
+        {
+            _setupDifficulty = (ComputerDifficulty)_setupDifficultyPicker.GetItemId((int)index);
+            UpdateRaceSetup();
+        };
+        difficulty.AddChild(_setupDifficultyPicker);
+        column.AddChild(difficulty);
         column.AddChild(new HSeparator());
         _setupSummary = Text("", 20, "#F4CF75");
         column.AddChild(_setupSummary);

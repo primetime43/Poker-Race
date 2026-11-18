@@ -29,10 +29,29 @@ public partial class Main
             ToggleRaceSetup();
             if (_setupComputer.ButtonPressed != _lineup.HasComputer || _setupComputer.Disabled != (_lineup.HumanPlayers is 1 or 4))
             { FailSmoke("Race setup did not enforce required/forbidden computer slots."); return; }
+            if (_setupDifficultyPicker.Disabled == _lineup.HasComputer)
+            { FailSmoke("Setup difficulty was not enabled only for computer races."); return; }
+            if (_lineup.HasComputer)
+            {
+                var difficulty = (ComputerDifficulty)(_lineupCase % 3);
+                _setupDifficultyPicker.Select((int)difficulty);
+                _setupDifficultyPicker.EmitSignal(OptionButton.SignalName.ItemSelected, (long)difficulty);
+                if (_setupDifficulty != difficulty || !_setupSummary.Text.Contains(difficulty.ToString()))
+                { FailSmoke("Race setup did not reflect the selected difficulty."); return; }
+                if (PlayerPreferences.Load(_preferencesPath).Difficulty != _preferences.Difficulty)
+                { FailSmoke("Changing setup difficulty saved before starting the race."); return; }
+                ToggleRaceSetup();
+                ToggleRaceSetup();
+                if (_setupDifficulty != _preferences.Difficulty)
+                { FailSmoke("Canceling setup kept an uncommitted difficulty change."); return; }
+                _setupDifficultyPicker.Select((int)difficulty);
+                _setupDifficultyPicker.EmitSignal(OptionButton.SignalName.ItemSelected, (long)difficulty);
+            }
             _setupFormVerified = true;
             StartFromSetup();
             var savedSetup = PlayerPreferences.Load(_preferencesPath);
-            if (savedSetup.HumanPlayers != _lineup.HumanPlayers || savedSetup.IncludeComputer != _lineup.HasComputer)
+            if (savedSetup.HumanPlayers != _lineup.HumanPlayers || savedSetup.IncludeComputer != _lineup.HasComputer
+                || savedSetup.Difficulty != _setupDifficulty || _raceDifficulty != _setupDifficulty || _rivalDriver.Difficulty != _setupDifficulty)
             { FailSmoke("Race setup did not save or start the selected lineup."); return; }
             return;
         }

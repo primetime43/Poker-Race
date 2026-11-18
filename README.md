@@ -58,6 +58,11 @@ first when added, followed by Player 1, Player 2, and so on. Horse lanes, turn
 labels, recaps, results, and saved history adapt to the lineup. Your last lineup
 is remembered.
 
+Choose **Computer difficulty** directly on the setup screen before starting a
+race. It is enabled when a computer is included and disabled for human-only
+lineups. Starting saves the choice and keeps the Settings difficulty in sync;
+closing setup without starting leaves your saved difficulty unchanged.
+
 The horse uses an eight-pose `AnimatedSprite2D` gallop with articulated legs and
 rider movement, a faster scoring burst, dust particles, and scrolling turf.
 Cards lift on hover, deal in sequence, and fly into your hand when selected.
