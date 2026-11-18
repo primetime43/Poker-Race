@@ -83,10 +83,6 @@ public partial class Main
         heading.AddChild(Text("Settings", 36, "#F1F8F5"));
         heading.AddChild(Text("Sound and gameplay assistance", 17, "#A8BEC5"));
         header.AddChild(heading);
-        var paused = new PanelContainer { SizeFlagsVertical = SizeFlags.ShrinkCenter };
-        paused.AddThemeStyleboxOverride("panel", Panel("#12372F", "#2D6453"));
-        paused.AddChild(Text("RACE PAUSED", 12, "#9AE8C4"));
-        header.AddChild(paused);
         var close = ActionButton("×", ToggleSettings);
         close.CustomMinimumSize = new Vector2(44, 44);
         close.SizeFlagsVertical = SizeFlags.ShrinkBegin;

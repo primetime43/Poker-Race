@@ -22,8 +22,7 @@ public partial class Main : Control
     private Label _standing = null!;
     private Label _computerSummary = null!;
     private Label _handTitle = null!, _watchComputer = null!;
-    private Label _handPreview = null!, _timeLabel = null!;
-    private StyleBoxFlat _timerFill = null!;
+    private Label _handPreview = null!;
     private Control _guideLayer = null!;
     private bool _guideOpen, _resumeAfterGuide, _focusLostInGuide;
     private int _announcedSeat = -1, _announcedRound;
@@ -32,7 +31,7 @@ public partial class Main : Control
     private VBoxContainer _selectionContent = null!;
     private int _displayedSeat = -1, _displayedHandCount;
     private Label _round = null!, _score = null!, _status = null!, _hint = null!;
-    private ProgressBar _timer = null!;
+    private CountdownBadge _timer = null!;
     private Button _continue = null!, _pause = null!;
     private bool _busy, _dealPending;
     private int _lastRound;
@@ -56,7 +55,7 @@ public partial class Main : Control
     public override void _Ready()
     {
         _smoke = OS.GetCmdlineUserArgs().Contains("--smoke-test") || OS.GetCmdlineUserArgs().Contains("--capture-results")
-            || OS.GetCmdlineUserArgs().Contains("--capture-player-turn");
+            || OS.GetCmdlineUserArgs().Contains("--capture-player-turn") || OS.GetCmdlineUserArgs().Contains("--capture-countdown");
         if (_smoke) _preferencesPath = "user://smoke-preferences.cfg";
         _preferences = PlayerPreferences.Load(_preferencesPath);
         BuildScreen();
@@ -118,7 +117,8 @@ public partial class Main : Control
         _engine = new GameEngine(new GameSettings
         {
             MaxSeats = 2, MaxRounds = _smoke ? 2 : 10, FinishDistance = 150000,
-            PickingTimeoutSeconds = _smoke && !OS.GetCmdlineUserArgs().Contains("--capture-player-turn") ? 0 : 30,
+            PickingTimeoutSeconds = _smoke && !OS.GetCmdlineUserArgs().Contains("--capture-player-turn")
+                && !OS.GetCmdlineUserArgs().Contains("--capture-countdown") ? 0 : 30,
             TurnDelaySeconds = 1.5, RacingDurationSeconds = 0.5,
             AutoAdvanceEnabled = false, GameOverTimeoutSeconds = 300
         }, rng: _smoke ? new SmokeRng() : null,
@@ -156,17 +156,15 @@ public partial class Main : Control
         float lead = _track.DisplayScore - _track.RivalDisplayScore;
         _standing.Text = Math.Abs(lead) < 0.5f ? "NECK AND NECK" : lead > 0
             ? $"1ST PLACE   +{Math.Round(lead):N0} PTS" : $"2ND PLACE   {Math.Round(-lead):N0} PTS TO CATCH";
-        _timer.Value = _engine.PhaseTimerProgress * 100;
-        double seconds = Math.Ceiling(_engine.PhaseTimerProgress * _engine.Settings.PickingTimeoutSeconds);
-        _timeLabel.Text = _engine.Settings.PickingTimeoutSeconds <= 0 ? "No time limit" : $"{seconds:00}s left";
-        var timerColor = Color.FromHtml(seconds <= 5 && _engine.Settings.PickingTimeoutSeconds > 0 ? "#F78575" : "#77E4BD");
-        _timerFill.BgColor = timerColor;
-        _timeLabel.Modulate = timerColor;
+        _timer.UpdateTime(_engine.PhaseTimerProgress, _engine.Settings.PickingTimeoutSeconds, _paused);
         if (!_smoke) return;
-        if (OS.GetCmdlineUserArgs().Contains("--capture-player-turn") && _engine.ActiveSeatIndex == HumanSeat && !_busy)
+        if ((OS.GetCmdlineUserArgs().Contains("--capture-player-turn") || OS.GetCmdlineUserArgs().Contains("--capture-countdown"))
+            && _engine.ActiveSeatIndex == HumanSeat && !_busy)
         {
             _smoke = false;
-            CapturePreview("godot-player-turn.png");
+            bool countdown = OS.GetCmdlineUserArgs().Contains("--capture-countdown");
+            if (countdown) _engine.Tick(TimeSpan.FromSeconds(Math.Max(0, _engine.PhaseTimerProgress * _engine.Settings.PickingTimeoutSeconds - 4)));
+            CapturePreview(countdown ? "godot-countdown.png" : "godot-player-turn.png");
             return;
         }
         _smokeTime += delta;
@@ -517,7 +515,6 @@ public partial class Main : Control
         _continue.Disabled = _paused || _busy;
         _continue.Text = _engine.Phase == GamePhase.GameOver ? "Race again · Enter" : "Next hand · Enter";
         _timer.Visible = picking;
-        _timeLabel.Visible = picking;
         _computerSummary.Text = rival.IsHandComplete ? $"{rival.HandName} · +{rival.RoundPoints:N0} pts"
             : rivalTurn ? $"Choosing cards · {rival.Hand.Length}/5" : "Computer plays first";
         _handTitle.Text = rivalTurn ? "COMPUTER'S HAND" : "YOUR HAND";
@@ -678,15 +675,8 @@ public partial class Main : Control
         var choose = Text("PICK A CARD", 14, "#77E4BD");
         choose.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         choiceHeader.AddChild(choose);
-        _timer = new ProgressBar { CustomMinimumSize = new Vector2(240, 10), ShowPercentage = false, MaxValue = 100 };
-        _timerFill = new StyleBoxFlat { BgColor = Color.FromHtml("#77E4BD"), CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5, CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5 };
-        _timer.AddThemeStyleboxOverride("fill", _timerFill);
-        _timer.TooltipText = "Time remaining to build your hand. At zero, the core completes it automatically.";
+        _timer = new CountdownBadge();
         choiceHeader.AddChild(_timer);
-        _timeLabel = Text("30s left", 16, "#FFFFFF");
-        _timeLabel.CustomMinimumSize = new Vector2(90, 0);
-        _timeLabel.HorizontalAlignment = HorizontalAlignment.Right;
-        choiceHeader.AddChild(_timeLabel);
         var choices = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
         choices.AddThemeConstantOverride("separation", 18);
         _selectionContent.AddChild(choices);
