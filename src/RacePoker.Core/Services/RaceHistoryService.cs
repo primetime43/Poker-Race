@@ -15,8 +15,8 @@ public sealed class RaceHistoryService(string path)
         Data.Recent = (Data.Recent ?? new()).Where(Valid).DistinctBy(e => e.RaceId)
             .OrderByDescending(e => e.PlayedAt).Take(20).ToList();
         Data.TotalRaces = Math.Max(Data.Recent.Count, Data.TotalRaces);
-        Data.Wins = Math.Clamp(Math.Max(Data.Wins, Data.Recent.Count(e => e.PlayerScore > e.ComputerScore)), 0, Data.TotalRaces);
-        Data.Draws = Math.Clamp(Math.Max(Data.Draws, Data.Recent.Count(e => e.PlayerScore == e.ComputerScore)), 0, Data.TotalRaces - Data.Wins);
+        Data.Wins = Math.Clamp(Math.Max(Data.Wins, Data.Recent.Count(e => e.PlayerScore > e.OpponentScore)), 0, Data.TotalRaces);
+        Data.Draws = Math.Clamp(Math.Max(Data.Draws, Data.Recent.Count(e => e.PlayerScore == e.OpponentScore)), 0, Data.TotalRaces - Data.Wins);
         Data.BestScore = Math.Max(Math.Max(0, Data.BestScore), Data.Recent.Select(e => e.PlayerScore).DefaultIfEmpty(0).Max());
     }
 
@@ -25,8 +25,8 @@ public sealed class RaceHistoryService(string path)
         if (!Valid(entry)) throw new ArgumentException("A completed race needs valid scores, rounds, difficulty, and an ID.");
         if (Data.Recent.Any(e => e.RaceId == entry.RaceId)) return false;
         Data.TotalRaces++;
-        if (entry.PlayerScore > entry.ComputerScore) Data.Wins++;
-        if (entry.PlayerScore == entry.ComputerScore) Data.Draws++;
+        if (entry.PlayerScore > entry.OpponentScore) Data.Wins++;
+        if (entry.PlayerScore == entry.OpponentScore) Data.Draws++;
         Data.BestScore = Math.Max(Data.BestScore, entry.PlayerScore);
         Data.Recent.Insert(0, entry);
         Data.Recent = Data.Recent.OrderByDescending(e => e.PlayedAt).Take(20).ToList();
@@ -43,5 +43,9 @@ public sealed class RaceHistoryService(string path)
     }
 
     private static bool Valid(RaceHistoryEntry? entry) => entry is not null && entry.RaceId != Guid.Empty
-        && entry.PlayerScore >= 0 && entry.ComputerScore >= 0 && entry.Rounds > 0 && Enum.IsDefined(entry.Difficulty);
+        && entry.PlayerScore >= 0 && entry.ComputerScore >= 0 && entry.Rounds > 0 && Enum.IsDefined(entry.Difficulty)
+        && entry.HumanPlayers is >= 1 and <= 4
+        && (entry.Racers is not { Count: > 0 } || (entry.Racers.Count <= 4
+            && entry.Racers.All(r => r is not null && r.Score >= 0 && !string.IsNullOrWhiteSpace(r.Name))
+            && entry.Racers.Count(r => r.IsPrimaryHuman) == 1));
 }

@@ -44,11 +44,19 @@ See [scoring notes](docs/reference-scoring.md) for the photo-based payouts and c
 
 ### Godot playable prototype
 
-A separate **player vs. computer** Godot screen reuses `RacePoker.Core.GameEngine` for dealing,
+A separate Godot game for **1–4 local human players** reuses `RacePoker.Core.GameEngine` for dealing,
 card picks, payouts, round progression, and the finish rule. Build a five-card
 hand, watch the horse gallop and advance by your score, then continue through a ten-round
 race. Click cards or press **1–5 / F1–F5**; **Enter** continues, **P** pauses,
 **M** toggles sound, and **F11** toggles fullscreen. Losing focus pauses the game.
+
+Choose the lineup on **Set up a race** at launch or through **New race**.
+Single player always includes the computer. With two or three humans, **Add
+computer** is optional. Four humans fill all four places, so the computer is
+disabled. Everyone takes turns using the same screen and controls: the computer
+first when added, followed by Player 1, Player 2, and so on. Horse lanes, turn
+labels, recaps, results, and saved history adapt to the lineup. Your last lineup
+is remembered.
 
 The horse uses an eight-pose `AnimatedSprite2D` gallop with articulated legs and
 rider movement, a faster scoring burst, dust particles, and scrolling turf.
@@ -59,7 +67,7 @@ picks and payouts; a confetti burst and fanfare mark the end of the race.
 Pausing freezes the gallop, particles, scenery, card animations, audio, and score
 movement together. Starting a new race clears any animations in progress.
 
-Race a blue-tinted rival in a second animated lane. Both runners use the same
+Add a blue-tinted computer to the race. All runners use the same
 core rules, separate decks, and the same payouts. The computer goes first each
 round, revealing five cards one at a time in the full-size main hand area. Its
 completed hand remains visible while its horse advances. The display then switches
@@ -93,7 +101,7 @@ instead. Pausing or opening a dialog freezes the countdown.
 Completed hands outline the scoring cards in gold and dim unused kickers. Pairs
 highlight only their matching cards; straights, flushes, and full houses use all
 five. High-card highlights follow the configured highest-rank or rank-sum rule.
-During the round break, a recap replaces the choices with both hands, their actual
+During the round break, a recap replaces the choices with every hand, their actual
 payouts, and who gained points on the other runner. It also calls out lead changes
 and ties. The six-second countdown and Enter-to-continue still work from the recap.
 
@@ -114,7 +122,7 @@ leaderboards. The shared core targets .NET 8 and .NET 10 when built with a moder
 SDK; the pinned .NET 8 SDK builds only its .NET 8 target for Godot. WPF continues
 to target .NET 10 and uses the core's .NET 10 target. The Godot folder pins the .NET 8 SDK
 to avoid editor tooling conflicts with newer SDKs. This prototype has no
-human multiplayer or leaderboard UI.
+online multiplayer or leaderboard UI.
 
 ### Computer difficulty and race history
 
@@ -126,8 +134,10 @@ and applies when you start the next race; the computer's header shows the curren
 race's level.
 
 Open **History** in the footer or press **H** for lifetime completed-race count,
-wins, draws, best player score, and the 20 most recent results with difficulty and
-both scores. Draws are separate from wins. Restarted or abandoned races do not
+wins, draws, best player score, and the 20 most recent results with lineup and
+scores. Statistics refer to you in solo and Player 1 in local multiplayer; winning
+requires beating every other racer. All racers' scores are saved and shown in each
+history row's tooltip. Draws are separate from wins. Restarted or abandoned races do not
 count. Results save to Godot's `user://race-history.json`, with a previous-save
 backup and a retry button if saving fails. The History dialog pauses the race
 and restores its previous pause state when closed.

@@ -52,7 +52,7 @@ public partial class Main
         close.CustomMinimumSize = new Vector2(44, 44);
         header.AddChild(close);
         column.AddChild(header);
-        column.AddChild(Text("All difficulties · completed races only · draws count separately", 15, "#ADD0C7"));
+        column.AddChild(Text("Your stats in solo; Player 1's stats in local races · completed races only", 15, "#ADD0C7"));
         var stats = new HBoxContainer();
         stats.AddThemeConstantOverride("separation", 12);
         column.AddChild(stats);
@@ -100,8 +100,8 @@ public partial class Main
         int[] values = { data.TotalRaces, data.Wins, data.Draws, data.BestScore };
         for (int i = 0; i < values.Length; i++) _historyStats[i].Text = values[i].ToString("N0");
         foreach (var child in _historyRows.GetChildren()) { _historyRows.RemoveChild(child); child.QueueFree(); }
-        string[] headers = { "WHEN", "DIFFICULTY", "RESULT", "YOU", "COMPUTER" };
-        int[] widths = { 190, 90, 70, 110, 110 };
+        string[] headers = { "WHEN", "LINEUP", "RESULT", "YOU / P1", "TOP OPPONENT" };
+        int[] widths = { 160, 160, 70, 90, 120 };
         for (int i = 0; i < headers.Length; i++)
         {
             var label = Text(headers[i], 12, "#ADD0C7");
@@ -110,14 +110,16 @@ public partial class Main
         }
         foreach (var entry in data.Recent)
         {
-            string outcome = entry.PlayerScore > entry.ComputerScore ? "WIN" : entry.PlayerScore == entry.ComputerScore ? "DRAW" : "LOSS";
+            string outcome = entry.PlayerScore > entry.OpponentScore ? "WIN" : entry.PlayerScore == entry.OpponentScore ? "DRAW" : "LOSS";
             var date = Text(entry.PlayedAt.LocalDateTime.ToString("MMM d · h:mm tt"), 15, "#ADD0C7");
-            date.TooltipText = $"{entry.Rounds} rounds · {entry.PlayedAt.LocalDateTime:g}";
+            date.TooltipText = $"{entry.Rounds} rounds · {entry.PlayedAt.LocalDateTime:g}\n" + string.Join("\n", (entry.Racers ?? new()).Select(r => $"{r.Name}: {r.Score:N0}"));
             _historyRows.AddChild(date);
-            _historyRows.AddChild(Text(entry.Difficulty.ToString(), 15, "#ADD0C7"));
+            string lineup = entry.HumanPlayers == 1 ? $"Solo · {entry.Difficulty}"
+                : $"{entry.HumanPlayers} players" + (entry.HasComputer ? $" + CPU · {entry.Difficulty}" : "");
+            _historyRows.AddChild(Text(lineup, 14, "#ADD0C7"));
             _historyRows.AddChild(Text(outcome, 15, outcome == "WIN" ? "#77E4BD" : outcome == "DRAW" ? "#F4CF75" : "#F78575"));
             _historyRows.AddChild(Text(entry.PlayerScore.ToString("N0"), 17, "#FFFFFF"));
-            _historyRows.AddChild(Text(entry.ComputerScore.ToString("N0"), 17, "#ADD0C7"));
+            _historyRows.AddChild(Text(entry.OpponentScore.ToString("N0"), 17, "#ADD0C7"));
         }
         _historyEmpty.Visible = data.Recent.Count == 0;
         _historyRows.Visible = data.Recent.Count != 0;

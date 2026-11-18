@@ -77,6 +77,36 @@ public class RaceHistoryServiceTests : IDisposable
         Assert.Equal(1, reloaded.Data.TotalRaces);
     }
 
+    [Fact]
+    public void MultiplayerHistoryComparesPlayerOneWithAllOtherRacersAndKeepsTheirScores()
+    {
+        var service = new RaceHistoryService(HistoryPath);
+        var race = Entry(100, 50) with
+        {
+            HumanPlayers = 2, HasComputer = true,
+            Racers = new()
+            {
+                new("PLAYER 1", 100, false, true), new("PLAYER 2", 300, false, false), new("COMPUTER", 50, true, false)
+            }
+        };
+        service.Record(race);
+        Assert.Equal(0, service.Data.Wins); // Beating the computer alone is not a multiplayer win.
+        Assert.Equal(300, race.OpponentScore);
+        var tied = race with
+        {
+            RaceId = Guid.NewGuid(), PlayerScore = 300,
+            Racers = new() { new("PLAYER 1", 300, false, true), new("PLAYER 2", 300, false, false), new("COMPUTER", 50, true, false) }
+        };
+        service.Record(tied);
+        var loaded = new RaceHistoryService(HistoryPath);
+        loaded.Load();
+        Assert.Equal(2, loaded.Data.TotalRaces);
+        Assert.Equal(0, loaded.Data.Wins);
+        Assert.Equal(1, loaded.Data.Draws);
+        Assert.All(loaded.Data.Recent, result => Assert.Equal(3, result.Racers.Count));
+        Assert.Equal(300, loaded.Data.BestScore);
+    }
+
     public void Dispose()
     {
         foreach (string file in Directory.EnumerateFiles(_directory)) File.Delete(file);

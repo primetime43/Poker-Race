@@ -9,6 +9,8 @@ public sealed class PlayerPreferences
     public bool ShowLastCardHints { get; set; } = true;
     public int NextRoundDelaySeconds { get; set; } = 6;
     public ComputerDifficulty Difficulty { get; set; } = ComputerDifficulty.Normal;
+    public int HumanPlayers { get; set; } = 1;
+    public bool IncludeComputer { get; set; } = true;
 
     public static PlayerPreferences Load(string path)
     {
@@ -19,8 +21,16 @@ public sealed class PlayerPreferences
             SoundEnabled = ReadBool(file, "audio", "sound_enabled"),
             ShowLastCardHints = ReadBool(file, "assistance", "last_card_hints"),
             NextRoundDelaySeconds = ReadDelay(file),
-            Difficulty = ReadDifficulty(file)
+            Difficulty = ReadDifficulty(file),
+            HumanPlayers = ReadHumanPlayers(file),
+            IncludeComputer = ReadBool(file, "race", "include_computer")
         };
+    }
+
+    private static int ReadHumanPlayers(ConfigFile file)
+    {
+        var value = file.GetValue("race", "human_players", 1);
+        return value.VariantType == Variant.Type.Int ? (int)Math.Clamp(value.AsInt64(), 1, 4) : 1;
     }
 
     private static ComputerDifficulty ReadDifficulty(ConfigFile file)
@@ -49,6 +59,8 @@ public sealed class PlayerPreferences
         file.SetValue("assistance", "last_card_hints", ShowLastCardHints);
         file.SetValue("race", "next_round_delay_seconds", NextRoundDelaySeconds);
         file.SetValue("race", "computer_difficulty", Difficulty.ToString());
+        file.SetValue("race", "human_players", HumanPlayers);
+        file.SetValue("race", "include_computer", IncludeComputer);
         return file.Save(path);
     }
 }
