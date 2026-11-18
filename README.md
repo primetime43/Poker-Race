@@ -116,6 +116,22 @@ to target .NET 10 and uses the core's .NET 10 target. The Godot folder pins the 
 to avoid editor tooling conflicts with newer SDKs. This prototype has no
 human multiplayer or leaderboard UI.
 
+### Computer difficulty and race history
+
+In **Settings → Computer → Difficulty**, choose **Easy** (random card picks),
+**Normal** (matching ranks and suits), or **Hard** (samples possible future hands
+to compare expected payouts). Hard uses only its visible cards and a standard
+unknown deck. It does not read your cards or its hidden deck. Difficulty is saved
+and applies when you start the next race; the computer's header shows the current
+race's level.
+
+Open **History** in the footer or press **H** for lifetime completed-race count,
+wins, draws, best player score, and the 20 most recent results with difficulty and
+both scores. Draws are separate from wins. Restarted or abandoned races do not
+count. Results save to Godot's `user://race-history.json`, with a previous-save
+backup and a retry button if saving fails. The History dialog pauses the race
+and restores its previous pause state when closed.
+
 ### WPF development
 
 ```powershell

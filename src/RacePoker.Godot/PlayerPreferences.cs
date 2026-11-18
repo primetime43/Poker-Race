@@ -1,4 +1,5 @@
 using Godot;
+using RacePoker.Core.Enums;
 
 namespace RacePoker.Godot;
 
@@ -7,6 +8,7 @@ public sealed class PlayerPreferences
     public bool SoundEnabled { get; set; } = true;
     public bool ShowLastCardHints { get; set; } = true;
     public int NextRoundDelaySeconds { get; set; } = 6;
+    public ComputerDifficulty Difficulty { get; set; } = ComputerDifficulty.Normal;
 
     public static PlayerPreferences Load(string path)
     {
@@ -16,8 +18,16 @@ public sealed class PlayerPreferences
         {
             SoundEnabled = ReadBool(file, "audio", "sound_enabled"),
             ShowLastCardHints = ReadBool(file, "assistance", "last_card_hints"),
-            NextRoundDelaySeconds = ReadDelay(file)
+            NextRoundDelaySeconds = ReadDelay(file),
+            Difficulty = ReadDifficulty(file)
         };
+    }
+
+    private static ComputerDifficulty ReadDifficulty(ConfigFile file)
+    {
+        var value = file.GetValue("race", "computer_difficulty", "Normal");
+        return value.VariantType == Variant.Type.String && Enum.TryParse<ComputerDifficulty>(value.AsString(), out var difficulty)
+            && Enum.IsDefined(difficulty) ? difficulty : ComputerDifficulty.Normal;
     }
 
     private static int ReadDelay(ConfigFile file)
@@ -38,6 +48,7 @@ public sealed class PlayerPreferences
         file.SetValue("audio", "sound_enabled", SoundEnabled);
         file.SetValue("assistance", "last_card_hints", ShowLastCardHints);
         file.SetValue("race", "next_round_delay_seconds", NextRoundDelaySeconds);
+        file.SetValue("race", "computer_difficulty", Difficulty.ToString());
         return file.Save(path);
     }
 }

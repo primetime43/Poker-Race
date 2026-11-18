@@ -24,7 +24,8 @@ public partial class Main : Control
     private Label _handTitle = null!, _watchComputer = null!;
     private Label _handPreview = null!;
     private Control _guideLayer = null!;
-    private bool _guideOpen, _resumeAfterGuide, _focusLostInGuide;
+    private bool _guideOpen => _openDialog != null && _openDialog == _guideLayer;
+    private bool _resumeAfterGuide, _focusLostInGuide;
     private int _announcedSeat = -1, _announcedRound;
     private string? _pendingTurnTitle;
     private string _pendingTurnDetail = "";
@@ -59,9 +60,12 @@ public partial class Main : Control
     {
         _smoke = OS.GetCmdlineUserArgs().Contains("--smoke-test") || OS.GetCmdlineUserArgs().Contains("--capture-results")
             || OS.GetCmdlineUserArgs().Contains("--capture-player-turn") || OS.GetCmdlineUserArgs().Contains("--capture-countdown")
-            || OS.GetCmdlineUserArgs().Contains("--capture-round-break");
+            || OS.GetCmdlineUserArgs().Contains("--capture-round-break") || OS.GetCmdlineUserArgs().Contains("--capture-history");
         if (_smoke) _preferencesPath = "user://smoke-preferences.cfg";
         _preferences = PlayerPreferences.Load(_preferencesPath);
+        _history = new RaceHistoryService(ProjectSettings.GlobalizePath(_smoke ? "user://smoke-race-history.json" : "user://race-history.json"));
+        _history.Load();
+        _historyCountAtStart = _history.Data.TotalRaces;
         BuildScreen();
         _effects = new ArcadeEffects();
         _effects.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -72,6 +76,7 @@ public partial class Main : Control
         StartRace();
         BuildPayoutGuide();
         BuildSettings();
+        BuildHistory();
         if (OS.GetCmdlineUserArgs().Contains("--capture-preview")) CapturePreview("godot.png", 3.3);
         if (OS.GetCmdlineUserArgs().Contains("--capture-guide"))
         {
@@ -104,7 +109,9 @@ public partial class Main : Control
         _audio.SetPaused(false);
         _lastRound = 0;
         _previousRivalScore = 0;
-        _rivalDriver = new RivalDriver();
+        _raceDifficulty = _preferences.Difficulty;
+        _rivalDriver = new RivalDriver(_raceDifficulty, _smoke ? new SmokeRng() : null);
+        _raceId = Guid.NewGuid();
         _busy = _dealPending = false;
         _displayedSeat = -1;
         _lastRecapRound = _recapsShown = 0;
@@ -303,12 +310,19 @@ public partial class Main : Control
                 || _effects.CardsFlown != 10 || _effects.RewardsShown != 4 || _effects.CelebrationsShown != 1
                 || _rivalDriver.PicksMade != 10 || _engine.Seats[ComputerSeat].TotalScore <= 0 || _track.RivalDisplayScore <= 0 || !_rivalPauseChecked
                 || _effects.ComputerCardsRevealed != 10 || _effects.TurnAnnouncements != 4 || _payoutPreviewsChecked != 2
-                || !_roundCountdownChecked || !_automaticNextRoundObserved || _recapsShown != 2 || !_recapPanel.Visible)
+                || !_roundCountdownChecked || !_automaticNextRoundObserved || _recapsShown != 2 || !_recapPanel.Visible
+                || _history.Data.TotalRaces != _historyCountAtStart + 1 || _history.Data.Recent[0].RaceId != _raceId)
                 FailSmoke("Expected two rounds, ten picks per runner, four payouts, two running horses, and a celebration.");
             else
             {
                 GD.Print($"SMOKE PASS: {_smokeHands} rounds, YOU {_engine.Seats[HumanSeat].TotalScore} vs RIVAL {_engine.Seats[ComputerSeat].TotalScore}, 10 rival picks, {_effects.CardsFlown} card flights, {_effects.RewardsShown} payouts; both horses pause correctly.");
-                if (OS.GetCmdlineUserArgs().Contains("--capture-results"))
+                if (OS.GetCmdlineUserArgs().Contains("--capture-history"))
+                {
+                    _smoke = false;
+                    ToggleHistory();
+                    CapturePreview("godot-history.png");
+                }
+                else if (OS.GetCmdlineUserArgs().Contains("--capture-results"))
                 {
                     _smoke = false;
                     CapturePreview("godot-results.png");
@@ -327,6 +341,18 @@ public partial class Main : Control
     private async void VerifyRestartAndQuit()
     {
         _smoke = false;
+        var originalDifficulty = _preferences.Difficulty;
+        foreach (var difficulty in Enum.GetValues<ComputerDifficulty>())
+        {
+            SetDifficulty(difficulty);
+            if (PlayerPreferences.Load(_preferencesPath).Difficulty != difficulty || _rivalDriver.Difficulty != _raceDifficulty)
+            { FailSmoke("Difficulty did not save or changed during an existing race."); return; }
+        }
+        ToggleHistory();
+        if (!_paused || !_historyLayer.Visible || _historyStats[0].Text != _history.Data.TotalRaces.ToString("N0"))
+        { FailSmoke("History did not show completed-race totals and pause the game."); return; }
+        ToggleHistory();
+        if (_paused) { FailSmoke("Closing history did not resume the game."); return; }
         ToggleGuide();
         if (!_paused || !_guideLayer.Visible) { FailSmoke("Payout guide did not pause the race."); return; }
         ToggleGuide();
@@ -340,6 +366,8 @@ public partial class Main : Control
         if (!_paused) { FailSmoke("Closing settings resumed a previously paused race."); return; }
         TogglePause();
         StartRace();
+        if (_raceDifficulty != ComputerDifficulty.Hard || _rivalDriver.Difficulty != ComputerDifficulty.Hard)
+        { FailSmoke("New race did not use the selected difficulty."); return; }
         if (!await WaitForHumanTurn()) return;
         Pick(0);
         await ToSignal(GetTree().CreateTimer(0.08), SceneTreeTimer.SignalName.Timeout);
@@ -360,7 +388,14 @@ public partial class Main : Control
         if (_audio.Muted || !_soundToggle.ButtonPressed || !PlayerPreferences.Load(_preferencesPath).SoundEnabled)
         { FailSmoke("Sound shortcut did not update the saved setting."); return; }
         SetSoundEnabled(originalSound);
-        GD.Print("SMOKE PASS: restart, saved sound and hint settings, and dialog pause restoration verified.");
+        SetDifficulty(originalDifficulty);
+        if (_history.Data.TotalRaces != _historyCountAtStart + 1)
+        { FailSmoke("Abandoned races were added to history."); return; }
+        var loadedHistory = new RaceHistoryService(ProjectSettings.GlobalizePath("user://smoke-race-history.json"));
+        loadedHistory.Load();
+        if (loadedHistory.Data.TotalRaces != _history.Data.TotalRaces || loadedHistory.Data.BestScore != _history.Data.BestScore)
+        { FailSmoke("Race history did not survive reload."); return; }
+        GD.Print("SMOKE PASS: saved difficulty, Hard strategy, completed-only history, restart, and dialog pause restoration verified.");
         _audio.Stop();
         GetTree().Quit();
     }
@@ -379,19 +414,20 @@ public partial class Main : Control
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
-        if (_guideOpen || _settingsOpen)
+        if (_openDialog != null)
         {
             if (_settingsOpen && key.Keycode == Key.M) ToggleMute();
-            if (key.Keycode == Key.Escape || (_guideOpen && key.Keycode == Key.G) || (_settingsOpen && key.Keycode == Key.S))
+            if (key.Keycode == Key.Escape || (_guideOpen && key.Keycode == Key.G) || (_settingsOpen && key.Keycode == Key.S)
+                || (_historyOpen && key.Keycode == Key.H))
             {
-                if (_settingsOpen) ToggleSettings(); else ToggleGuide();
+                ToggleDialog(_openDialog);
             }
             GetViewport().SetInputAsHandled();
             return;
         }
-        if (key.Keycode is Key.G or Key.S)
+        if (key.Keycode is Key.G or Key.S or Key.H)
         {
-            if (key.Keycode == Key.G) ToggleGuide(); else ToggleSettings();
+            if (key.Keycode == Key.G) ToggleGuide(); else if (key.Keycode == Key.S) ToggleSettings(); else ToggleHistory();
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -413,7 +449,7 @@ public partial class Main : Control
 
     public override void _Notification(int what)
     {
-        if (what == NotificationApplicationFocusOut && (_guideOpen || _settingsOpen)) _focusLostInGuide = true;
+        if (what == NotificationApplicationFocusOut && _openDialog != null) _focusLostInGuide = true;
         if (what == NotificationApplicationFocusOut && !_smoke && _engine != null && !_paused)
             TogglePause();
     }
@@ -484,7 +520,7 @@ public partial class Main : Control
         HandCategory.RoyalFlush => "Royal Flush", HandCategory.HighCard => "High Card", _ => category.ToString()
     };
 
-    private void ToggleGuide() => ToggleDialog(_guideLayer, false);
+    private void ToggleGuide() => ToggleDialog(_guideLayer);
 
     private void BuildPayoutGuide()
     {
@@ -528,6 +564,7 @@ public partial class Main : Control
     {
         var seat = _engine.Seats[HumanSeat];
         var rival = _engine.Seats[ComputerSeat];
+        _computerHeading.Text = $"COMPUTER · {_raceDifficulty.ToString().ToUpperInvariant()}";
         _track.SetRacing(_engine.Phase is GamePhase.Picking or GamePhase.Racing);
         bool rivalTurn = _engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == ComputerSeat;
         if (_engine.Phase == GamePhase.Picking && (_announcedSeat != _engine.ActiveSeatIndex || _announcedRound != _engine.Round))
@@ -606,11 +643,15 @@ public partial class Main : Control
         }
         if (_engine.Phase == GamePhase.GameOver && _previousPhase != GamePhase.GameOver)
         {
+            _history.Record(new RaceHistoryEntry(_raceId, DateTimeOffset.UtcNow, seat.TotalScore, rival.TotalScore,
+                _engine.Round, _raceDifficulty, _engine.ScoreRulesKey));
             _effects.Celebrate();
             _audio.Finish();
         }
         if (_smoke && _engine.Phase == GamePhase.Racing && _previousPhase != GamePhase.Racing)
             _smokeHands++;
+        if (_history.HasPendingSave && _engine.Phase == GamePhase.GameOver)
+            _hint.Text += " · History could not be saved. Open History to retry.";
         _previousPhase = _engine.Phase;
     }
 
@@ -710,7 +751,8 @@ public partial class Main : Control
         var computer = new VBoxContainer();
         computer.AddThemeConstantOverride("separation", 5);
         computerPanel.AddChild(computer);
-        computer.AddChild(Text("COMPUTER OPPONENT", 13, "#8FC5FF"));
+        _computerHeading = Text("COMPUTER · NORMAL", 13, "#8FC5FF");
+        computer.AddChild(_computerHeading);
         _computerSummary = Text("", 12, "#93ADBE");
         _computerSummary.CustomMinimumSize = new Vector2(180, 0);
         _computerSummary.AutowrapMode = TextServer.AutowrapMode.WordSmart;
@@ -766,6 +808,7 @@ public partial class Main : Control
         footer.AddChild(_roundCountdown);
         _roundCountdown.TooltipText = "The next round starts automatically. Press Enter to skip the wait.";
         footer.AddChild(ActionButton("Payouts · G", ToggleGuide));
+        footer.AddChild(ActionButton("History · H", ToggleHistory));
         _continue = ActionButton("Next hand · Enter", Continue);
         footer.AddChild(_continue);
     }

@@ -1,4 +1,5 @@
 using Godot;
+using RacePoker.Core.Enums;
 
 namespace RacePoker.Godot;
 
@@ -11,7 +12,16 @@ public partial class Main
     private Label _settingsNotice = null!;
     private Label _roundDelayLabel = null!;
     private Button _shorterDelay = null!, _longerDelay = null!;
-    private bool _settingsOpen;
+    private OptionButton _difficultyPicker = null!;
+    private Control? _openDialog;
+    private bool _settingsOpen => _openDialog != null && _openDialog == _settingsLayer;
+
+    private void SetDifficulty(ComputerDifficulty difficulty)
+    {
+        _preferences.Difficulty = difficulty;
+        _difficultyPicker.Select((int)difficulty);
+        SavePreferences();
+    }
 
     private void SavePreferences()
     {
@@ -51,23 +61,22 @@ public partial class Main
         _longerDelay.Disabled = _preferences.NextRoundDelaySeconds >= 10;
     }
 
-    private void ToggleSettings() => ToggleDialog(_settingsLayer, true);
+    private void ToggleSettings() => ToggleDialog(_settingsLayer);
 
-    private void ToggleDialog(Control layer, bool settings)
+    private void ToggleDialog(Control layer)
     {
-        bool alreadyOpen = settings ? _settingsOpen : _guideOpen;
-        if (alreadyOpen)
+        if (_openDialog == layer)
         {
             layer.Visible = false;
-            if (settings) _settingsOpen = false; else _guideOpen = false;
+            _openDialog = null;
             if (_resumeAfterGuide && !_focusLostInGuide) TogglePause();
             return;
         }
-        if (_settingsOpen || _guideOpen) return;
+        if (_openDialog != null) return;
         _resumeAfterGuide = !_paused;
         _focusLostInGuide = false;
         if (_resumeAfterGuide) TogglePause();
-        if (settings) _settingsOpen = true; else _guideOpen = true;
+        _openDialog = layer;
         layer.Visible = true;
     }
 
@@ -108,10 +117,29 @@ public partial class Main
         close.AddThemeFontSizeOverride("font_size", 26);
         header.AddChild(close);
         content.AddChild(header);
+        var scroll = new ScrollContainer
+        {
+            CustomMinimumSize = new Vector2(0, 440), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            FollowFocus = true
+        };
+        content.AddChild(scroll);
+        var sections = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        sections.AddThemeConstantOverride("separation", 20);
+        scroll.AddChild(sections);
         _soundToggle = SettingToggle("Sound effects", _preferences.SoundEnabled, SetSoundEnabled);
-        content.AddChild(SettingSection("AUDIO", "Sound effects", "Card picks, payouts, and the finish fanfare.\nPress M to toggle sound anytime.", _soundToggle));
+        sections.AddChild(SettingSection("AUDIO", "Sound effects", "Card picks, payouts, and the finish fanfare.\nPress M to toggle sound anytime.", _soundToggle));
         _hintsToggle = SettingToggle("Last-card hints", _preferences.ShowLastCardHints, SetLastCardHints);
-        content.AddChild(SettingSection("GAMEPLAY ASSISTANCE", "Last-card hints", "See the resulting hand and payout when you hover over your final card choice.", _hintsToggle));
+        sections.AddChild(SettingSection("GAMEPLAY ASSISTANCE", "Last-card hints", "See the resulting hand and payout when you hover over your final card choice.", _hintsToggle));
+        _difficultyPicker = new OptionButton { CustomMinimumSize = new Vector2(132, 48) };
+        foreach (var difficulty in Enum.GetValues<ComputerDifficulty>()) _difficultyPicker.AddItem(difficulty.ToString(), (int)difficulty);
+        _difficultyPicker.Select((int)_preferences.Difficulty);
+        _difficultyPicker.AddThemeFontSizeOverride("font_size", 17);
+        _difficultyPicker.AddThemeStyleboxOverride("normal", Panel("#15383B", "#39625E"));
+        _difficultyPicker.AddThemeStyleboxOverride("hover", Panel("#24504C", "#F4CF75"));
+        _difficultyPicker.ItemSelected += index => SetDifficulty((ComputerDifficulty)_difficultyPicker.GetItemId((int)index));
+        var computerSection = SettingSection("COMPUTER", "Difficulty", "Easy picks casually. Normal builds combinations. Hard plans ahead. Applies next race.", _difficultyPicker);
+        sections.AddChild(computerSection);
+        sections.MoveChild(computerSection, 0);
         var delayControl = new HBoxContainer();
         delayControl.AddThemeConstantOverride("separation", 6);
         _shorterDelay = ActionButton("−", () => SetRoundDelay(_preferences.NextRoundDelaySeconds - 1));
@@ -131,7 +159,7 @@ public partial class Main
         delayControl.AddChild(_roundDelayLabel);
         delayControl.AddChild(_longerDelay);
         UpdateRoundDelayControl();
-        content.AddChild(SettingSection("RACE PACING", "Next-round countdown", "Start the next round automatically after 1–10 seconds. Press Enter to start sooner.", delayControl));
+        sections.AddChild(SettingSection("RACE PACING", "Next-round countdown", "Start the next round automatically after 1–10 seconds. Press Enter to start sooner.", delayControl));
         content.AddChild(new HSeparator());
         var footer = new HBoxContainer();
         _settingsNotice = Text("Changes save automatically.", 15, "#A8BEC5");
