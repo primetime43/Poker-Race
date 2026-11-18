@@ -593,4 +593,48 @@ public class GameEngineTests
         engine.Tick(TimeSpan.FromSeconds(-100));
         Assert.Equal(remaining, engine.PhaseTimerProgress);
     }
+
+    [Theory]
+    [InlineData(1, GamePhase.GameOver)]
+    [InlineData(2, GamePhase.Picking)]
+    public void RoundCountdown_AutoAdvancesOnlyAfterConfiguredDelay(int maxRounds, GamePhase nextPhase)
+    {
+        var engine = CreateEngine(new GameSettings
+        {
+            MaxRounds = maxRounds, FinishDistance = 1000000,
+            AutoAdvanceEnabled = true, AutoAdvanceDelaySeconds = 6
+        });
+        Assert.Equal(0, engine.RoundEndSecondsRemaining);
+        engine.JoinSeat(0); engine.PressDeal(0);
+        PickAllCardsAndWait(engine, 0);
+        engine.Tick(TimeSpan.FromSeconds(3));
+        Assert.Equal(6, engine.RoundEndSecondsRemaining);
+        engine.Tick(TimeSpan.FromSeconds(5.75));
+        Assert.Equal(GamePhase.RoundEnd, engine.Phase);
+        Assert.Equal(0.25, engine.RoundEndSecondsRemaining);
+        engine.Tick(TimeSpan.FromSeconds(0.25));
+        Assert.Equal(nextPhase, engine.Phase);
+        Assert.Equal(0, engine.RoundEndSecondsRemaining);
+        if (maxRounds == 2) Assert.Equal(2, engine.Round);
+    }
+
+    [Fact]
+    public void RoundCountdown_ReflectsDelayChangesAndAllowsImmediateContinue()
+    {
+        var engine = CreateEngine(new GameSettings
+        {
+            FinishDistance = 1000000, AutoAdvanceEnabled = true, AutoAdvanceDelaySeconds = 6
+        });
+        engine.JoinSeat(0); engine.PressDeal(0);
+        PickAllCardsAndWait(engine, 0);
+        engine.Tick(TimeSpan.FromSeconds(3));
+        engine.Tick(TimeSpan.FromSeconds(2));
+        Assert.Equal(4, engine.RoundEndSecondsRemaining);
+        engine.Settings.AutoAdvanceDelaySeconds = 10;
+        Assert.Equal(8, engine.RoundEndSecondsRemaining);
+        Assert.True(engine.PressContinue(0));
+        Assert.Equal(GamePhase.Picking, engine.Phase);
+        Assert.Equal(2, engine.Round);
+        Assert.Equal(0, engine.RoundEndSecondsRemaining);
+    }
 }

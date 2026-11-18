@@ -16,6 +16,8 @@ public class GameEngine
     public bool IsResultsEntryActive { get; private set; }
     public double ResultsSecondsRemaining => Phase == GamePhase.GameOver
         ? Math.Max(0, Settings.GameOverTimeoutSeconds - _phaseTimer) : 0;
+    public double RoundEndSecondsRemaining => Phase == GamePhase.RoundEnd && Settings.AutoAdvanceEnabled
+        ? Math.Max(0, Settings.AutoAdvanceDelaySeconds - _phaseTimer) : 0;
 
     public void SetResultsEntryActive(bool active)
     {

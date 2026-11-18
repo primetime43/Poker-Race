@@ -84,6 +84,12 @@ and choice tooltips. Both preferences save between sessions in Godot's
 pauses the race and preserves its previous pause state when closed with **S**,
 **Esc**, or the Back button.
 
+Rounds advance automatically after **6 seconds** by default. Change **Next-round
+countdown** in Settings (1–10 seconds); the preference saves between sessions and
+applies immediately. The between-round timer shows the time remaining, and
+**Enter / Next round** skips the wait. The final round counts down to results
+instead. Pausing or opening a dialog freezes the countdown.
+
 Install **Godot 4.5.1 .NET** and the **.NET 8 SDK**. Open
 `src/RacePoker.Godot/project.godot`, build, and press **F6** or **F5**. Alternatively:
 

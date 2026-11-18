@@ -9,6 +9,8 @@ public partial class Main
     private Control _settingsLayer = null!;
     private SettingSwitch _soundToggle = null!, _hintsToggle = null!;
     private Label _settingsNotice = null!;
+    private Label _roundDelayLabel = null!;
+    private Button _shorterDelay = null!, _longerDelay = null!;
     private bool _settingsOpen;
 
     private void SavePreferences()
@@ -32,6 +34,21 @@ public partial class Main
         _hintsToggle.SyncState(enabled);
         Refresh(); // Clears both the hand note and card tooltips immediately when disabled.
         SavePreferences();
+    }
+
+    private void SetRoundDelay(int seconds)
+    {
+        _preferences.NextRoundDelaySeconds = Math.Clamp(seconds, 1, 10);
+        _engine.Settings.AutoAdvanceDelaySeconds = _preferences.NextRoundDelaySeconds;
+        UpdateRoundDelayControl();
+        SavePreferences();
+    }
+
+    private void UpdateRoundDelayControl()
+    {
+        _roundDelayLabel.Text = $"{_preferences.NextRoundDelaySeconds} s";
+        _shorterDelay.Disabled = _preferences.NextRoundDelaySeconds <= 1;
+        _longerDelay.Disabled = _preferences.NextRoundDelaySeconds >= 10;
     }
 
     private void ToggleSettings() => ToggleDialog(_settingsLayer, true);
@@ -81,7 +98,7 @@ public partial class Main
         var header = new HBoxContainer();
         var heading = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         heading.AddChild(Text("Settings", 36, "#F1F8F5"));
-        heading.AddChild(Text("Sound and gameplay assistance", 17, "#A8BEC5"));
+        heading.AddChild(Text("Sound, assistance, and race pacing", 17, "#A8BEC5"));
         header.AddChild(heading);
         var close = ActionButton("×", ToggleSettings);
         close.CustomMinimumSize = new Vector2(44, 44);
@@ -95,6 +112,26 @@ public partial class Main
         content.AddChild(SettingSection("AUDIO", "Sound effects", "Card picks, payouts, and the finish fanfare.\nPress M to toggle sound anytime.", _soundToggle));
         _hintsToggle = SettingToggle("Last-card hints", _preferences.ShowLastCardHints, SetLastCardHints);
         content.AddChild(SettingSection("GAMEPLAY ASSISTANCE", "Last-card hints", "See the resulting hand and payout when you hover over your final card choice.", _hintsToggle));
+        var delayControl = new HBoxContainer();
+        delayControl.AddThemeConstantOverride("separation", 6);
+        _shorterDelay = ActionButton("−", () => SetRoundDelay(_preferences.NextRoundDelaySeconds - 1));
+        _longerDelay = ActionButton("+", () => SetRoundDelay(_preferences.NextRoundDelaySeconds + 1));
+        foreach (var button in new[] { _shorterDelay, _longerDelay })
+        {
+            button.CustomMinimumSize = new Vector2(38, 48);
+            button.FocusMode = FocusModeEnum.All;
+            button.AddThemeFontSizeOverride("font_size", 22);
+        }
+        _shorterDelay.TooltipText = "Shorter countdown";
+        _longerDelay.TooltipText = "Longer countdown";
+        _roundDelayLabel = Text("6 s", 22, "#F1F8F5");
+        _roundDelayLabel.CustomMinimumSize = new Vector2(44, 0);
+        _roundDelayLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        delayControl.AddChild(_shorterDelay);
+        delayControl.AddChild(_roundDelayLabel);
+        delayControl.AddChild(_longerDelay);
+        UpdateRoundDelayControl();
+        content.AddChild(SettingSection("RACE PACING", "Next-round countdown", "Start the next round automatically after 1–10 seconds. Press Enter to start sooner.", delayControl));
         content.AddChild(new HSeparator());
         var footer = new HBoxContainer();
         _settingsNotice = Text("Changes save automatically.", 15, "#A8BEC5");
@@ -116,7 +153,7 @@ public partial class Main
         content.AddChild(footer);
     }
 
-    private static VBoxContainer SettingSection(string category, string title, string description, SettingSwitch toggle)
+    private static VBoxContainer SettingSection(string category, string title, string description, Control toggle)
     {
         var section = new VBoxContainer();
         section.AddThemeConstantOverride("separation", 10);

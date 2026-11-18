@@ -32,6 +32,7 @@ public partial class Main : Control
     private int _displayedSeat = -1, _displayedHandCount;
     private Label _round = null!, _score = null!, _status = null!, _hint = null!;
     private CountdownBadge _timer = null!;
+    private CountdownBadge _roundCountdown = null!;
     private Button _continue = null!, _pause = null!;
     private bool _busy, _dealPending;
     private int _lastRound;
@@ -40,6 +41,8 @@ public partial class Main : Control
     private double _smokeTime, _nextPick;
     private int _smokeHands;
     private int _payoutPreviewsChecked;
+    private double _roundPauseStarted, _pausedRoundSeconds;
+    private bool _roundCountdownChecked, _automaticNextRoundObserved;
     private bool _smokePauseStarted, _smokePauseChecked;
     private int _pausedFrameChanges;
     private float _pausedScore;
@@ -55,7 +58,8 @@ public partial class Main : Control
     public override void _Ready()
     {
         _smoke = OS.GetCmdlineUserArgs().Contains("--smoke-test") || OS.GetCmdlineUserArgs().Contains("--capture-results")
-            || OS.GetCmdlineUserArgs().Contains("--capture-player-turn") || OS.GetCmdlineUserArgs().Contains("--capture-countdown");
+            || OS.GetCmdlineUserArgs().Contains("--capture-player-turn") || OS.GetCmdlineUserArgs().Contains("--capture-countdown")
+            || OS.GetCmdlineUserArgs().Contains("--capture-round-break");
         if (_smoke) _preferencesPath = "user://smoke-preferences.cfg";
         _preferences = PlayerPreferences.Load(_preferencesPath);
         BuildScreen();
@@ -120,7 +124,8 @@ public partial class Main : Control
             PickingTimeoutSeconds = _smoke && !OS.GetCmdlineUserArgs().Contains("--capture-player-turn")
                 && !OS.GetCmdlineUserArgs().Contains("--capture-countdown") ? 0 : 30,
             TurnDelaySeconds = 1.5, RacingDurationSeconds = 0.5,
-            AutoAdvanceEnabled = false, GameOverTimeoutSeconds = 300
+            AutoAdvanceEnabled = true, AutoAdvanceDelaySeconds = _preferences.NextRoundDelaySeconds,
+            GameOverTimeoutSeconds = 300
         }, rng: _smoke ? new SmokeRng() : null,
             highScores: new HighScoreService(ProjectSettings.GlobalizePath("user://prototype-scores.json")));
         _paused = false;
@@ -157,6 +162,11 @@ public partial class Main : Control
         _standing.Text = Math.Abs(lead) < 0.5f ? "NECK AND NECK" : lead > 0
             ? $"1ST PLACE   +{Math.Round(lead):N0} PTS" : $"2ND PLACE   {Math.Round(-lead):N0} PTS TO CATCH";
         _timer.UpdateTime(_engine.PhaseTimerProgress, _engine.Settings.PickingTimeoutSeconds, _paused);
+        double roundDelay = _engine.Settings.AutoAdvanceDelaySeconds;
+        bool resultsNext = _engine.Round >= _engine.Settings.MaxRounds || _engine.Seats.Any(s => s.TotalScore >= _engine.Settings.FinishDistance);
+        _roundCountdown.Caption = resultsNext ? "RESULTS IN" : "NEXT ROUND IN";
+        _roundCountdown.Detail = resultsNext ? "Enter to see now" : "Enter to start now";
+        _roundCountdown.UpdateTime(_engine.RoundEndSecondsRemaining / roundDelay, roundDelay, _paused);
         if (!_smoke) return;
         if ((OS.GetCmdlineUserArgs().Contains("--capture-player-turn") || OS.GetCmdlineUserArgs().Contains("--capture-countdown"))
             && _engine.ActiveSeatIndex == HumanSeat && !_busy)
@@ -208,6 +218,33 @@ public partial class Main : Control
             TogglePause();
             _rivalPauseChecked = true;
         }
+        if (_engine.Phase == GamePhase.RoundEnd && OS.GetCmdlineUserArgs().Contains("--capture-round-break"))
+        {
+            _smoke = false;
+            CapturePreview("godot-round-break.png");
+            return;
+        }
+        if (_engine.Phase == GamePhase.RoundEnd && !_roundCountdownChecked && _roundPauseStarted == 0)
+        {
+            ToggleSettings();
+            _pausedRoundSeconds = _engine.RoundEndSecondsRemaining;
+            _roundPauseStarted = _smokeTime;
+            int originalDelay = _preferences.NextRoundDelaySeconds;
+            SetRoundDelay(2);
+            if (PlayerPreferences.Load(_preferencesPath).NextRoundDelaySeconds != 2 || _engine.Settings.AutoAdvanceDelaySeconds != 2)
+            { FailSmoke("Next-round delay did not apply and save."); return; }
+            SetRoundDelay(originalDelay);
+            return;
+        }
+        if (_roundPauseStarted > 0 && !_roundCountdownChecked)
+        {
+            if (_smokeTime - _roundPauseStarted < 0.3) return;
+            if (_engine.RoundEndSecondsRemaining != _pausedRoundSeconds || !_roundCountdown.Visible)
+            { FailSmoke("Between-round countdown continued while settings were open."); return; }
+            ToggleSettings();
+            _roundCountdownChecked = true;
+        }
+        if (_engine.Round == 2) _automaticNextRoundObserved = true;
         if (_engine.Phase == GamePhase.Picking && _engine.ActiveSeatIndex == ComputerSeat)
         {
             if (_choices.Any(c => !c.Disabled) || _selectionContent.Visible || _handTitle.Text != "COMPUTER'S HAND"
@@ -255,13 +292,13 @@ public partial class Main : Control
                 _payoutPreviewsChecked++;
             }
         }
-        if (_engine.Phase == GamePhase.RoundEnd) Continue();
         if (_engine.Phase == GamePhase.GameOver)
         {
             if (_smokeHands != 2 || _engine.Seats[HumanSeat].TotalScore <= 0 || _track.DisplayScore <= 0 || _track.AnimationFrameChanges < 16
                 || _effects.CardsFlown != 10 || _effects.RewardsShown != 4 || _effects.CelebrationsShown != 1
                 || _rivalDriver.PicksMade != 10 || _engine.Seats[ComputerSeat].TotalScore <= 0 || _track.RivalDisplayScore <= 0 || !_rivalPauseChecked
-                || _effects.ComputerCardsRevealed != 10 || _effects.TurnAnnouncements != 4 || _payoutPreviewsChecked != 2)
+                || _effects.ComputerCardsRevealed != 10 || _effects.TurnAnnouncements != 4 || _payoutPreviewsChecked != 2
+                || !_roundCountdownChecked || !_automaticNextRoundObserved)
                 FailSmoke("Expected two rounds, ten picks per runner, four payouts, two running horses, and a celebration.");
             else
             {
@@ -512,8 +549,10 @@ public partial class Main : Control
             : seat.IsHandComplete ? "Your hand is scored. Watch your horse advance."
             : "Pick one of the five cards below. A new card replaces every pick.";
         _continue.Visible = _engine.Phase is GamePhase.RoundEnd or GamePhase.GameOver;
+        _roundCountdown.Visible = _engine.Phase == GamePhase.RoundEnd;
         _continue.Disabled = _paused || _busy;
-        _continue.Text = _engine.Phase == GamePhase.GameOver ? "Race again · Enter" : "Next hand · Enter";
+        bool resultsNext = _engine.Round >= _engine.Settings.MaxRounds || _engine.Seats.Any(s => s.TotalScore >= _engine.Settings.FinishDistance);
+        _continue.Text = _engine.Phase == GamePhase.GameOver ? "Race again · Enter" : resultsNext ? "Results · Enter" : "Next round · Enter";
         _timer.Visible = picking;
         _computerSummary.Text = rival.IsHandComplete ? $"{rival.HandName} · +{rival.RoundPoints:N0} pts"
             : rivalTurn ? $"Choosing cards · {rival.Hand.Length}/5" : "Computer plays first";
@@ -706,6 +745,9 @@ public partial class Main : Control
         var keys = Text("1–5 PICK     •     P PAUSE     •     M SOUND     •     F11 FULLSCREEN", 14, "#ADD0C7");
         keys.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         footer.AddChild(keys);
+        _roundCountdown = new CountdownBadge { Visible = false, WarnOnLowTime = false, SizeFlagsVertical = SizeFlags.ShrinkCenter };
+        footer.AddChild(_roundCountdown);
+        _roundCountdown.TooltipText = "The next round starts automatically. Press Enter to skip the wait.";
         footer.AddChild(ActionButton("Payouts · G", ToggleGuide));
         _continue = ActionButton("Next hand · Enter", Continue);
         footer.AddChild(_continue);

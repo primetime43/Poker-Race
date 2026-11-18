@@ -5,6 +5,9 @@ namespace RacePoker.Godot;
 /// <summary>A compact timer with a readable number and a smoothly draining progress ring.</summary>
 public partial class CountdownBadge : Control
 {
+    public string Caption { get; set; } = "";
+    public string Detail { get; set; } = "";
+    public bool WarnOnLowTime { get; set; } = true;
     private double _remaining = 30;
     private float _progress = 1;
     private bool _unlimited, _paused;
@@ -40,8 +43,8 @@ public partial class CountdownBadge : Control
 
     public override void _Draw()
     {
-        bool urgent = !_unlimited && _remaining <= 5;
-        var accent = Color.FromHtml(urgent ? "#FF927F" : !_unlimited && _remaining <= 10 ? "#F4CF75" : "#77E4BD");
+        bool urgent = WarnOnLowTime && !_unlimited && _remaining <= 5;
+        var accent = Color.FromHtml(urgent ? "#FF927F" : WarnOnLowTime && !_unlimited && _remaining <= 10 ? "#F4CF75" : "#77E4BD");
         _surface.BgColor = Color.FromHtml(urgent ? "#382326" : "#102B32");
         _surface.BorderColor = accent with { A = urgent ? 0.55f + 0.25f * (float)Math.Sin(_pulse * Math.Tau * 1.5) : 0.3f };
         DrawStyleBox(_surface, new Rect2(0, -5, Size.X, 38));
@@ -54,7 +57,7 @@ public partial class CountdownBadge : Control
         DrawLine(ring, ring + new Vector2(4, 3), accent, 1.5f, true);
         var font = ThemeDB.FallbackFont;
         DrawString(font, new Vector2(45, 24), _unlimited ? "∞" : Math.Ceiling(_remaining).ToString("00"), fontSize: 28, modulate: accent);
-        DrawString(font, new Vector2(97, 10), _unlimited ? "TAKE YOUR TIME" : urgent ? "FINAL SECONDS" : "TIME LEFT", fontSize: 11, modulate: accent);
-        DrawString(font, new Vector2(97, 25), _unlimited ? "No countdown" : urgent ? "Make your pick" : "Finish your hand", fontSize: 11, modulate: Color.FromHtml("#A8BEC5"));
+        DrawString(font, new Vector2(97, 10), Caption != "" ? Caption : _unlimited ? "TAKE YOUR TIME" : urgent ? "FINAL SECONDS" : "TIME LEFT", fontSize: 11, modulate: accent);
+        DrawString(font, new Vector2(97, 25), Detail != "" ? Detail : _unlimited ? "No countdown" : urgent ? "Make your pick" : "Finish your hand", fontSize: 11, modulate: Color.FromHtml("#A8BEC5"));
     }
 }
