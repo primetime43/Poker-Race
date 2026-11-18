@@ -23,7 +23,7 @@ concurrency:
 jobs:
   release:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     defaults:
       run:
         shell: pwsh
@@ -41,7 +41,9 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.x
       - name: Test game rules and persistence
         run: dotnet test src/RacePoker.Tests -c Release
       - name: Verify bundled game views and resources
@@ -51,32 +53,70 @@ jobs:
           & ./artifacts/VerifyRelease/VerifyGame.exe
       - name: Build single executable
         run: ./scripts/Publish-Release.ps1 -Version ($env:RELEASE_TAG -replace '^v', '')
-      - name: Attach executable to GitHub release
+      - name: Cache Godot tools
+        uses: actions/cache@v4
+        with:
+          path: artifacts/godot-tools
+          key: godot-4.5.1-mono-windows-x64-v1
+      - name: Install Godot export tools
+        run: |
+          $tools = 'artifacts/godot-tools'
+          New-Item -ItemType Directory -Path $tools -Force | Out-Null
+          $base = 'https://github.com/godotengine/godot/releases/download/4.5.1-stable'
+          $editor = "$tools/Godot_v4.5.1-stable_mono_win64"
+          if (!(Test-Path "$editor/Godot_v4.5.1-stable_mono_win64_console.exe")) {
+              Invoke-WebRequest "$base/Godot_v4.5.1-stable_mono_win64.zip" -OutFile "$tools/godot.zip"
+              Expand-Archive -LiteralPath "$tools/godot.zip" -DestinationPath $tools -Force
+          }
+          if (!(Test-Path "$tools/export-templates.tpz")) {
+              Invoke-WebRequest "$base/Godot_v4.5.1-stable_mono_export_templates.tpz" -OutFile "$tools/export-templates.tpz"
+          }
+      - name: Build portable Godot game
+        run: ./scripts/Publish-Godot.ps1 -Version ($env:RELEASE_TAG -replace '^v', '')
+      - name: Verify exported Godot game
+        run: |
+          $game = (Resolve-Path './artifacts/Godot/Windows/RacePoker.exe').Path
+          $log = Join-Path $env:RUNNER_TEMP 'godot-smoke.log'
+          $errors = Join-Path $env:RUNNER_TEMP 'godot-smoke-errors.log'
+          $env:APPDATA = Join-Path $env:RUNNER_TEMP 'race-poker-test-data'
+          $process = Start-Process -FilePath $game -ArgumentList '--headless', '--', '--smoke-test' -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $errors -PassThru
+          if (!$process.WaitForExit(120000)) {
+              $process.Kill()
+              throw 'Exported Godot smoke test timed out.'
+          }
+          Get-Content $log
+          Get-Content $errors
+          if ($process.ExitCode -ne 0 -or !(Select-String -LiteralPath $log -SimpleMatch 'SMOKE PASS: saved difficulty') -or
+              (Select-String -LiteralPath $errors -Pattern 'Exception|SMOKE FAIL')) {
+              throw 'Exported Godot smoke test failed.'
+          }
+      - name: Attach games to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           $notes = @'
-          Download RacePoker.Wpf.exe and run it on Windows x64.
-          Requires the .NET 10 Desktop Runtime (x64): https://dotnet.microsoft.com/download/dotnet/10.0
-          Game code, scoring, graphics, and other resources are included. The .NET runtime is not bundled.
+          Godot edition: extract the Windows-x64 ZIP and run RacePoker.exe. No editor or .NET installation required.
+          WPF edition: run RacePoker.Wpf.exe. Requires the .NET 10 Desktop Runtime (x64): https://dotnet.microsoft.com/download/dotnet/10.0
           '@
           $notesPath = Join-Path $env:RUNNER_TEMP 'race-poker-release-notes.md'
           Set-Content -LiteralPath $notesPath -Value $notes -Encoding utf8
+          $version = $env:RELEASE_TAG -replace '^v', ''
+          $assets = @('./artifacts/Release/RacePoker.Wpf.exe', "./artifacts/Godot/RacePoker-$version-Windows-x64.zip")
           gh release view $env:RELEASE_TAG --json id 2>$null | Out-Null
           if ($LASTEXITCODE -eq 0) {
               # Keep the existing release's notes, title, and publication settings.
-              gh release upload $env:RELEASE_TAG './artifacts/Release/RacePoker.Wpf.exe' --clobber
+              gh release upload $env:RELEASE_TAG @assets --clobber
           }
           else {
-              $releaseArguments = @('release', 'create', $env:RELEASE_TAG, './artifacts/Release/RacePoker.Wpf.exe', '--verify-tag', '--title', "Race Poker $env:RELEASE_TAG", '--notes-file', $notesPath)
+              $releaseArguments = @('release', 'create', $env:RELEASE_TAG) + $assets + @('--verify-tag', '--title', "Race Poker $env:RELEASE_TAG", '--notes-file', $notesPath)
               if ($env:RELEASE_TAG.Contains('-')) { $releaseArguments += '--prerelease' }
               & gh @releaseArguments
               if ($LASTEXITCODE -ne 0) {
                   # A release may have been created through GitHub while this build ran.
                   gh release view $env:RELEASE_TAG --json id 2>$null | Out-Null
                   if ($LASTEXITCODE -ne 0) { throw 'GitHub release creation failed.' }
-                  gh release upload $env:RELEASE_TAG './artifacts/Release/RacePoker.Wpf.exe' --clobber
+                  gh release upload $env:RELEASE_TAG @assets --clobber
               }
           }
           if ($LASTEXITCODE -ne 0) { throw 'GitHub release publishing failed.' }

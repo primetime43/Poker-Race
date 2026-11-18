@@ -42,7 +42,7 @@ See [scoring notes](docs/reference-scoring.md) for the photo-based payouts and c
 
 ## Development
 
-### Godot playable prototype
+### Godot game
 
 A separate Godot game for **1–4 local human players** reuses `RacePoker.Core.GameEngine` for dealing,
 card picks, payouts, round progression, and the finish rule. Build a five-card
@@ -121,12 +121,12 @@ Install **Godot 4.5.1 .NET** and the **.NET 8 SDK**. Open
 ./scripts/Start-Godot.ps1 -SmokeTest
 ```
 
-The prototype is separate from the WPF solution and release workflow. Its
+The Godot game is separate from the WPF solution and release workflow. Its
 assets are copied from the existing game, and it never writes WPF settings or
 leaderboards. The shared core targets .NET 8 and .NET 10 when built with a modern
 SDK; the pinned .NET 8 SDK builds only its .NET 8 target for Godot. WPF continues
 to target .NET 10 and uses the core's .NET 10 target. The Godot folder pins the .NET 8 SDK
-to avoid editor tooling conflicts with newer SDKs. This prototype has no
+to avoid editor tooling conflicts with newer SDKs. The Godot game has no
 online multiplayer or leaderboard UI.
 
 ### Computer difficulty and race history
@@ -162,13 +162,15 @@ Output: `artifacts/Release/RacePoker.Wpf.exe`. UI verification writes screenshot
 
 ## Create a release
 
-Commit and push your changes first. On GitHub, choose **Releases → Draft a new release**, create a tag such as `v1.0.1`, and publish. The [Release workflow](.github/workflows/release.yml) tests and builds the game, then attaches `RacePoker.Wpf.exe` to **that same release**, preserving your title, notes, and release settings. Reruns replace the EXE. No ZIP is needed.
-
-Alternatively, push a version tag to build and create a release automatically:
+Push a version tag after committing your changes:
 
 ```powershell
 git tag v1.0.1
 git push origin v1.0.1
 ```
 
-Tags with or without `v` set the game’s displayed version. To rebuild an existing tag, use **Actions → Release → Run workflow**.
+The [Release action](.github/workflows/release.yml) tests and builds both editions,
+then creates or updates the GitHub release with `RacePoker.Wpf.exe` and
+`RacePoker-<version>-Windows-x64.zip`. Extract the Godot ZIP and run `RacePoker.exe`;
+its runtime is included. Tags set both editions' versions, including prereleases.
+Rerun an existing tag through **Actions → Release → Run workflow**.

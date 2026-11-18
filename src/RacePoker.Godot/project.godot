@@ -2,7 +2,11 @@
 config_version=5
 
 [application]
-config/name="Race Poker • Godot Prototype"
+config/name="Race Poker"
+config/version="1.0.0"
+; Keep the prototype's existing saves when changing the display name.
+config/use_custom_user_dir=true
+config/custom_user_dir_name="Godot/app_userdata/Race Poker • Godot Prototype"
 run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.5", "C#", "GL Compatibility")
 
@@ -11,7 +15,10 @@ window/size/viewport_width=1280
 window/size/viewport_height=900
 window/size/window_width_override=1152
 window/size/window_height_override=810
+window/size/min_width=960
+window/size/min_height=675
 window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
 
 [dotnet]
 project/assembly_name="RacePoker.Godot"

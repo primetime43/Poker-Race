@@ -55,7 +55,15 @@ public partial class Main : Control
 
     public override void _Ready()
     {
-        _lineupCheck = OS.GetCmdlineUserArgs().Contains("--smoke-lineups") || OS.GetCmdlineUserArgs().Contains("--capture-multiplayer")
+        if (OS.GetCmdlineUserArgs().Contains("--release-readback"))
+        {
+            SetProcess(false);
+            SetProcessUnhandledKeyInput(false);
+            VerifyReleaseReadback();
+            return;
+        }
+        _releaseCheck = OS.GetCmdlineUserArgs().Contains("--release-check");
+        _lineupCheck = _releaseCheck || OS.GetCmdlineUserArgs().Contains("--smoke-lineups") || OS.GetCmdlineUserArgs().Contains("--capture-multiplayer")
             || OS.GetCmdlineUserArgs().Contains("--capture-four-human");
         _smoke = OS.GetCmdlineUserArgs().Contains("--smoke-test") || OS.GetCmdlineUserArgs().Contains("--capture-results")
             || OS.GetCmdlineUserArgs().Contains("--capture-player-turn") || OS.GetCmdlineUserArgs().Contains("--capture-countdown")
@@ -79,6 +87,8 @@ public partial class Main : Control
         BuildSettings();
         BuildHistory();
         BuildRaceSetup();
+        DisplayServer.WindowSetTitle($"Race Poker · v{ProjectSettings.GetSetting("application/config/version").AsString()}");
+        if (_releaseCheck) RunWindowChecks();
         if (!_smoke && !OS.GetCmdlineUserArgs().Any(a => a.StartsWith("--capture-"))) ToggleRaceSetup();
         if (OS.GetCmdlineUserArgs().Contains("--capture-preview")) CapturePreview("godot.png", 3.3);
         if (OS.GetCmdlineUserArgs().Contains("--capture-guide"))
@@ -139,7 +149,7 @@ public partial class Main : Control
         // This experiment never reads or writes the WPF game's leaderboard.
         _engine = new GameEngine(new GameSettings
         {
-            MaxSeats = _lineup.RacerCount, MaxRounds = _lineupCheck ? 1 : _smoke ? 2 : 10, FinishDistance = 150000,
+            MaxSeats = _lineup.RacerCount, MaxRounds = _releaseCheck ? 10 : _lineupCheck ? 1 : _smoke ? 2 : 10, FinishDistance = 150000,
             PickingTimeoutSeconds = _smoke && !OS.GetCmdlineUserArgs().Contains("--capture-player-turn")
                 && !OS.GetCmdlineUserArgs().Contains("--capture-countdown") ? 0 : 30,
             TurnDelaySeconds = _lineupCheck ? 0.35 : 1.5, RacingDurationSeconds = _lineupCheck ? 0.1 : 0.5,
@@ -422,6 +432,13 @@ public partial class Main : Control
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
+        if (key.Keycode == Key.F11)
+        {
+            DisplayServer.WindowSetMode(DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Fullscreen
+                ? DisplayServer.WindowMode.Windowed : DisplayServer.WindowMode.Fullscreen);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
         if (_openDialog != null)
         {
             if (_setupOpen)
@@ -454,9 +471,6 @@ public partial class Main : Control
         else if (key.Keycode is Key.Enter or Key.KpEnter) Continue();
         else if (key.Keycode == Key.P) TogglePause();
         else if (key.Keycode == Key.M) ToggleMute();
-        else if (key.Keycode == Key.F11)
-            DisplayServer.WindowSetMode(DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Fullscreen
-                ? DisplayServer.WindowMode.Windowed : DisplayServer.WindowMode.Fullscreen);
         else return;
         GetViewport().SetInputAsHandled();
     }

@@ -6,7 +6,7 @@ namespace RacePoker.Godot;
 public partial class Main
 {
     private bool _lineupCheck;
-    private string LineupCheckPrefix => OS.GetCmdlineUserArgs().Contains("--capture-multiplayer") ? "lineup-preview-mixed"
+    private string LineupCheckPrefix => _releaseCheck ? "release-check" : OS.GetCmdlineUserArgs().Contains("--capture-multiplayer") ? "lineup-preview-mixed"
         : OS.GetCmdlineUserArgs().Contains("--capture-four-human") ? "lineup-preview-four" : "lineup-smoke";
     private int _lineupCase;
     private double _lineupCheckTime;
@@ -24,6 +24,7 @@ public partial class Main
 
     private void CheckLineup(double delta)
     {
+        if (_releaseCheck && !_releaseWindowReady) return;
         if (!_setupFormVerified)
         {
             ToggleRaceSetup();
@@ -56,7 +57,7 @@ public partial class Main
             return;
         }
         _lineupCheckTime += delta;
-        if (_lineupCheckTime > 30) { FailSmoke("Timed out completing a local-player lineup."); return; }
+        if (_lineupCheckTime > (_releaseCheck ? 300 : 30)) { FailSmoke("Timed out completing a local-player lineup."); return; }
         if (_track.LaneCount != _lineup.RacerCount || _engine.Seats.Length != _lineup.RacerCount)
         { FailSmoke("Track lanes and core seats did not match the lineup."); return; }
         if (_engine.Phase == GamePhase.Picking && !_lineup.IsComputer(_engine.ActiveSeatIndex) && !_engine.IsTurnTransitioning && !_busy)
@@ -65,23 +66,23 @@ public partial class Main
             if (_currentHumanSeat != active || _choices.Any(c => c.Disabled) || !_selectionContent.Visible)
             { FailSmoke("The active human did not receive card controls."); return; }
             int before = _engine.Seats[active].Hand.Length;
-            Pick(before % 5);
+            _UnhandledKeyInput(new InputEventKey { Pressed = true, Keycode = Key.Key1 + before % 5 });
             if (_engine.Seats[active].Hand.Length == before + 1) _humanPicks[active]++;
         }
         if (_engine.Phase != GamePhase.GameOver) return;
         foreach (var racer in _lineup.Participants)
         {
-            if (!_engine.Seats[racer.SeatId].IsHandComplete || (!racer.IsComputer && _humanPicks[racer.SeatId] != 5))
+            if (!_engine.Seats[racer.SeatId].IsHandComplete || (!racer.IsComputer && _humanPicks[racer.SeatId] != 5 * _engine.Round))
             { FailSmoke("A human was skipped or did not receive five separate picks."); return; }
         }
         var saved = _history.Data.Recent.FirstOrDefault(e => e.RaceId == _raceId);
         if (_lineup.RacerCount > 4 || (_lineup.HumanPlayers == 1 && !_lineup.HasComputer)
-            || (_lineup.HumanPlayers == 4 && _lineup.HasComputer) || _rivalDriver.PicksMade != (_lineup.HasComputer ? 5 : 0)
+            || (_lineup.HumanPlayers == 4 && _lineup.HasComputer) || _rivalDriver.PicksMade != (_lineup.HasComputer ? 5 * _engine.Round : 0)
             || saved == null || saved.Racers.Count != _lineup.RacerCount || saved.HumanPlayers != _lineup.HumanPlayers
             || saved.HasComputer != _lineup.HasComputer || _history.Data.TotalRaces != _historyCountAtStart + _lineupCase + 1
             || !_recapPanel.Visible || _recapRunnerPanels.Count(p => p.Visible) != _lineup.RacerCount)
         { FailSmoke("Lineup constraints, recap, or complete-race history were incorrect."); return; }
-        GD.Print($"LINEUP PASS: {_lineup.HumanPlayers} humans, computer={_lineup.HasComputer}, {_lineup.RacerCount} racers; every human picked five cards.");
+        GD.Print($"LINEUP PASS: {_lineup.HumanPlayers} humans, computer={_lineup.HasComputer}, difficulty={_raceDifficulty}, {_lineup.RacerCount} racers, {_engine.Round} rounds; scores={string.Join(",", _engine.Seats.Select(s => s.TotalScore))}; every human picked {_engine.Round * 5} cards.");
         if (OS.GetCmdlineUserArgs().Contains("--capture-multiplayer") || OS.GetCmdlineUserArgs().Contains("--capture-four-human"))
         {
             _lineupCheck = _smoke = false;
@@ -91,7 +92,9 @@ public partial class Main
         _lineupCase++;
         if (_lineupCase == _lineupCases.Length)
         {
-            GD.Print("LINEUP SMOKE PASS: all seven requested/normalized lineups completed, with correct lanes, turns, recaps, and history.");
+            GD.Print(_releaseCheck ? "RELEASE CHECK PASS: seven full races completed; all difficulty levels, lineups, keyboard picks, recaps, and saved results verified."
+                : "LINEUP SMOKE PASS: all seven requested/normalized lineups completed, with correct lanes, turns, recaps, and history.");
+            Engine.TimeScale = 1;
             _audio.Stop();
             GetTree().Quit();
             return;

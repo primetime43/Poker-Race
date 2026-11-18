@@ -107,7 +107,7 @@ public partial class Main
         var header = new HBoxContainer();
         var heading = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         heading.AddChild(Text("Settings", 36, "#F1F8F5"));
-        heading.AddChild(Text("Sound, assistance, and race pacing", 17, "#A8BEC5"));
+        heading.AddChild(Text($"Race Poker v{ProjectSettings.GetSetting("application/config/version").AsString()} · Sound, assistance, and race pacing", 17, "#A8BEC5"));
         header.AddChild(heading);
         var close = ActionButton("×", ToggleSettings);
         close.CustomMinimumSize = new Vector2(44, 44);
