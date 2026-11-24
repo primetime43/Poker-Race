@@ -31,6 +31,16 @@ See [scoring notes](docs/reference-scoring.md) for the photo-based payouts and c
 
 ## Screenshots
 
+### Godot
+
+![Solo race against the computer with five cards to choose from](docs/screenshots/godot-race.png)
+
+| Race setup | Multiplayer results |
+| --- | --- |
+| ![Race setup with player count and computer difficulty](docs/screenshots/godot-setup.png) | ![Four racers and their scored hands](docs/screenshots/godot-multiplayer.png) |
+
+### WPF
+
 ![Four-player game with a hand in progress and five card choices](docs/screenshots/race.png)
 
 | Lobby | Results and touch initials |
