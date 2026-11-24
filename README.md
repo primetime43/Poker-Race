@@ -52,8 +52,8 @@ See [scoring notes](docs/reference-scoring.md) for the photo-based payouts and c
 Push a version tag after committing your changes:
 
 ```powershell
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 The [Release action](.github/workflows/release.yml) tests and builds both editions,

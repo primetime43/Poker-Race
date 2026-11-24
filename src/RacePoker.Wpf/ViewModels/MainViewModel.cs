@@ -33,7 +33,7 @@ public class MainViewModel : ViewModelBase
     private InitialsEntryViewModel? _activeInitialsEntry;
 
     public string VersionDisplay { get; } = "v" + (typeof(MainViewModel).Assembly
-        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "1.0.1");
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "1.1.0");
 
     public bool IsPaused { get => _isPaused; private set => SetProperty(ref _isPaused, value); }
     public string PauseReason { get => _pauseReason; private set => SetProperty(ref _pauseReason, value); }

@@ -3,7 +3,7 @@ config_version=5
 
 [application]
 config/name="Race Poker"
-config/version="1.0.0"
+config/version="1.1.0"
 ; Keep the prototype's existing saves when changing the display name.
 config/use_custom_user_dir=true
 config/custom_user_dir_name="Godot/app_userdata/Race Poker • Godot Prototype"

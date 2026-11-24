@@ -1,4 +1,4 @@
-RACE POKER 1.0.0 - WINDOWS x64
+RACE POKER 1.1.0 - WINDOWS x64
 
 Extract the entire ZIP into a folder, then open RacePoker.exe.
 Keep the data_RacePoker.Godot_windows_x86_64 folder beside the executable.
